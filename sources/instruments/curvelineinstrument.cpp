@@ -29,6 +29,7 @@
 
 #include <QPen>
 #include <QPainter>
+#include <QPainterPath>
 #include <QImage>
 
 CurveLineInstrument::CurveLineInstrument(QObject *parent) :

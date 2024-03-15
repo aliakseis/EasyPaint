@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.5)
 
 # set project's name
 set (PROJECT easypaint)
@@ -116,11 +116,12 @@ project (${PROJECT})
 
 include_directories (./)
 
-find_package (Qt4 REQUIRED)
-include (${QT_USE_FILE})
-qt4_add_resources (QRC_SOURCES ${RESOURCES})
-qt4_wrap_cpp (MOC_SOURCES ${HEADERS})
-qt4_add_translation( TRANSLATIONS_QM ${TRANSLATIONS} )
+find_package(QT NAMES Qt5 COMPONENTS Widgets PrintSupport LinguistTools REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets PrintSupport LinguistTools REQUIRED)
+#include (${QT_USE_FILE})
+qt5_add_resources (QRC_SOURCES ${RESOURCES})
+qt5_wrap_cpp (MOC_SOURCES ${HEADERS})
+qt5_add_translation( TRANSLATIONS_QM ${TRANSLATIONS} )
 
 add_definitions (-Wall)
 
@@ -132,7 +133,7 @@ source_group ("Resource Files" FILES ${QRC_SOURCES})
 #-------  build executable from sources ----------
 add_executable (${PROJECT} ${HEADERS} ${SOURCES} ${MOC_SOURCES} ${QRC_SOURCES} ${TRANSLATIONS_QM})
 
-target_link_libraries (${PROJECT} ${QT_LIBRARIES})
+target_link_libraries (${PROJECT} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::PrintSupport)
 
 #-------  installing ----------
 if(UNIX AND NOT APPLE)
@@ -147,3 +148,55 @@ if(UNIX AND NOT APPLE)
 
     INSTALL(FILES ${TRANSLATIONS_QM} DESTINATION share/easypaint/translations)
 endif(UNIX AND NOT APPLE)
+
+if(MSVC)
+	set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/bin")
+
+	set(BINARY_INSTALL_DIR .)
+
+	install(TARGETS ${PROJECT_NAME} DESTINATION ${BINARY_INSTALL_DIR})
+
+
+	set(BINARY_FILE "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.exe")
+
+	message( STATUS "CMAKE_TOOLCHAIN_FILE: ${CMAKE_TOOLCHAIN_FILE}" )
+
+	get_filename_component(CMAKE_TOOLCHAIN_DIRECTORY ${CMAKE_TOOLCHAIN_FILE} DIRECTORY)
+
+	#install(CODE "execute_process(COMMAND \"powershell\" \"-noprofile\" \"-executionpolicy\" \"Bypass\" \"-file\" \"${CMAKE_TOOLCHAIN_DIRECTORY}/msbuild/applocal.ps1\" \"-targetBinary\" \"${BINARY_FILE}\" \"-installedDir\" \"$ENV{GSTREAMER_ROOT_X86_64}/bin\" \"-OutVariable\" \"out\")")
+
+
+	if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+	    set( CMAKE_INSTALL_PLATFORM "x64-windows" )
+	else ()
+	    set( CMAKE_INSTALL_PLATFORM "x86-windows" )
+	endif ()
+
+	install(CODE "execute_process(COMMAND \"powershell\" \"-noprofile\" \"-executionpolicy\" \"Bypass\" \"-file\" \"${CMAKE_TOOLCHAIN_DIRECTORY}/msbuild/applocal.ps1\" \"-targetBinary\" \"${BINARY_FILE}\" \"-installedDir\" \"${CMAKE_TOOLCHAIN_DIRECTORY}/../../installed/${CMAKE_INSTALL_PLATFORM}/bin\" \"-OutVariable\" \"out\")")
+
+	# Install CRT
+	set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
+	#if(DEVELOPER_FEATURES)
+	#	set(CMAKE_INSTALL_DEBUG_LIBRARIES ON)
+	#endif(DEVELOPER_FEATURES)
+	set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+	set(CMAKE_INSTALL_OPENMP_LIBRARIES TRUE)
+	include (InstallRequiredSystemLibraries)
+
+# Retrieve the absolute path to qmake and then use that path to find
+# the windeployqt binary
+	get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
+	get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
+	find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
+
+	install(CODE "execute_process(COMMAND \"${WINDEPLOYQT_EXECUTABLE}\"  \"${BINARY_FILE}\" WORKING_DIRECTORY \"${_qt_bin_dir}\")")
+
+
+	#if (QT_QMAKE_EXECUTABLE)
+	#	get_filename_component(QT_BIN_DIRECTORY ${QT_QMAKE_EXECUTABLE} DIRECTORY)
+	#	install(CODE "execute_process(COMMAND \"${QT_BIN_DIRECTORY}/windeployqt\"  \"${BINARY_FILE}\" WORKING_DIRECTORY \"${QT_BIN_DIRECTORY}\")")
+	#else()
+	#	install(CODE "execute_process(COMMAND \"windeployqt\"  \"${BINARY_FILE}\" )")
+	#endif()
+
+endif()

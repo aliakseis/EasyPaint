@@ -29,3 +29,7 @@ easypaint-build-*
 ehthumbs.db
 Icon?
 Thumbs.db
+
+.vs/
+out/
+CMakeSettings.json
