@@ -199,4 +199,6 @@ if(MSVC)
 	#	install(CODE "execute_process(COMMAND \"windeployqt\"  \"${BINARY_FILE}\" )")
 	#endif()
 
+    INSTALL(FILES ${TRANSLATIONS_QM} DESTINATION translations)
+
 endif()
