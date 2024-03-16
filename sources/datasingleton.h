@@ -105,7 +105,8 @@ public:
 
 private:
     DataSingleton();
-    DataSingleton(DataSingleton const&){}
+    DataSingleton(DataSingleton const&) = delete;
+    DataSingleton& operator=(DataSingleton const&) = delete;
 
     static DataSingleton* m_pInstance;
     QColor mPrimaryColor,
