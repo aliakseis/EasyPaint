@@ -44,6 +44,14 @@
 #include <QUndoGroup>
 #include <QtCore/QTimer>
 #include <QtCore/QMap>
+#include <QSettings>
+#include <QFileInfo>
+
+
+static QString strippedName(const QString& fullFileName)
+{
+    return QFileInfo(fullFileName).fileName();
+}
 
 MainWindow::MainWindow(QStringList filePaths, QWidget *parent)
     : QMainWindow(parent), mPrevInstrumentSetted(false)
@@ -135,6 +143,7 @@ void MainWindow::initializeNewTab(const bool &isOpen, const QString &filePath)
         connect(imageArea, SIGNAL(sendEnableSelectionInstrument(bool)), this, SLOT(instumentsAct(bool)));
 
         setWindowTitle(QString("%1 - EasyPaint").arg(fileName));
+        setCurrentFile(imageArea->getFilePath());
     }
     else
     {
@@ -175,6 +184,21 @@ void MainWindow::initializeMainMenu()
     mCloseAction->setIconVisibleInMenu(true);
     connect(mCloseAction, SIGNAL(triggered()), this, SLOT(closeTabAct()));
     fileMenu->addAction(mCloseAction);
+
+
+    for (int i = 0; i < MaxRecentFiles; ++i) {
+        recentFileActs[i] = new QAction(this);
+        recentFileActs[i]->setVisible(false);
+        connect(recentFileActs[i], SIGNAL(triggered()),
+            this, SLOT(openRecentFile()));
+    }
+
+    separatorAct = fileMenu->addSeparator();
+    for (int i = 0; i < MaxRecentFiles; ++i)
+        fileMenu->addAction(recentFileActs[i]);
+
+    updateRecentFileActions();
+
 
     fileMenu->addSeparator();
 
@@ -532,16 +556,21 @@ void MainWindow::openAct()
 
 void MainWindow::saveAct()
 {
-    getCurrentImageArea()->save();
-    mTabWidget->setTabText(mTabWidget->currentIndex(), getCurrentImageArea()->getFileName().isEmpty() ?
-                               tr("Untitled Image") : getCurrentImageArea()->getFileName() );
+    auto oldFilePath = getCurrentImageArea()->getFilePath();
+    if (getCurrentImageArea()->save() && oldFilePath != getCurrentImageArea()->getFilePath()) {
+        mTabWidget->setTabText(mTabWidget->currentIndex(), getCurrentImageArea()->getFileName().isEmpty() ?
+            tr("Untitled Image") : getCurrentImageArea()->getFileName());
+        setCurrentFile(getCurrentImageArea()->getFilePath());
+    }
 }
 
 void MainWindow::saveAsAct()
 {
-    getCurrentImageArea()->saveAs();
-    mTabWidget->setTabText(mTabWidget->currentIndex(), getCurrentImageArea()->getFileName().isEmpty() ?
-                               tr("Untitled Image") : getCurrentImageArea()->getFileName() );
+    if (getCurrentImageArea()->saveAs()) {
+        mTabWidget->setTabText(mTabWidget->currentIndex(), getCurrentImageArea()->getFileName().isEmpty() ?
+            tr("Untitled Image") : getCurrentImageArea()->getFileName());
+        setCurrentFile(getCurrentImageArea()->getFilePath());
+    }
 }
 
 void MainWindow::printAct()
@@ -859,4 +888,48 @@ void MainWindow::helpAct()
                                "<br> %5")
                        .arg(tr("version")).arg(QApplication::applicationVersion()).arg(tr("Site")).arg(tr("Authors"))
                        .arg(tr("If you like <b>EasyPaint</b> and you want to share your opinion, or send a bug report, or want to suggest new features, we are waiting for you on our <a href=\"https://github.com/Gr1N/EasyPaint/issues?milestone=&sort=created&direction=desc&state=open\">tracker</a>.")));
+}
+
+const auto recentFileList = QStringLiteral("recentFileList");
+
+void MainWindow::setCurrentFile(const QString& fileName)
+{
+    if (fileName.isEmpty())
+        return;
+
+    QSettings settings;
+    QStringList files = settings.value(recentFileList).toStringList();
+    files.removeAll(fileName);
+    files.prepend(fileName);
+    while (files.size() > MaxRecentFiles)
+        files.removeLast();
+
+    settings.setValue(recentFileList, files);
+
+    updateRecentFileActions();
+}
+
+void MainWindow::updateRecentFileActions()
+{
+    QSettings settings;
+    QStringList files = settings.value(recentFileList).toStringList();
+
+    int numRecentFiles = qMin(files.size(), (int)MaxRecentFiles);
+
+    for (int i = 0; i < numRecentFiles; ++i) {
+        QString text = tr("&%1 %2").arg(i + 1).arg(strippedName(files[i]));
+        recentFileActs[i]->setText(text);
+        recentFileActs[i]->setData(files[i]);
+        recentFileActs[i]->setVisible(true);
+    }
+    for (int j = numRecentFiles; j < MaxRecentFiles; ++j)
+        recentFileActs[j]->setVisible(false);
+
+    separatorAct->setVisible(numRecentFiles > 0);
+}
+
+void MainWindow::openRecentFile()
+{
+    if (auto action = qobject_cast<QAction*>(sender()))
+        initializeNewTab(true, action->data().toString());
 }

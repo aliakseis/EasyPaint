@@ -91,6 +91,9 @@ private:
      */
     void updateShortcuts();
 
+    void setCurrentFile(const QString& fileName);
+    void updateRecentFileActions();
+
     QStatusBar *mStatusBar;
     QTabWidget *mTabWidget;
     ToolBar *mToolbar;
@@ -99,12 +102,16 @@ private:
 
     QMap<InstrumentsEnum, QAction*> mInstrumentsActMap;
     QMap<EffectsEnum, QAction*> mEffectsActMap;
-    QAction *mSaveAction, *mSaveAsAction, *mCloseAction, *mPrintAction,
+    QAction *mSaveAction, *mSaveAsAction, *mCloseAction, *separatorAct, *mPrintAction,
             *mUndoAction, *mRedoAction, *mCopyAction, *mCutAction,
             *mNewAction, *mOpenAction, *mExitAction, *mPasteAction, *mZoomInAction, *mZoomOutAction;
     QMenu *mInstrumentsMenu, *mEffectsMenu, *mToolsMenu;
     QUndoGroup *mUndoStackGroup;
     bool mPrevInstrumentSetted; /**< Used for magnifier */
+
+    enum { MaxRecentFiles = 5 };
+    QAction* recentFileActs[MaxRecentFiles];
+
 private slots:
     void activateTab(const int &index);
     void setNewSizeToSizeLabel(const QSize &size);
@@ -144,6 +151,7 @@ private slots:
     void clearImageSelection();
     void restorePreviousInstrument();
     void setInstrument(InstrumentsEnum instrument);
+    void openRecentFile();
 signals:
     void sendInstrumentChecked(InstrumentsEnum);
 
