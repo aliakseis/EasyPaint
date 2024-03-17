@@ -25,6 +25,7 @@ set (HEADERS
     sources/effects/gammaeffect.h
     sources/effects/gaussianblureffect.h
     sources/effects/sharpeneffect.h
+    sources/set_dark_theme.h
     sources/undocommand.h
     sources/widgets/toolbar.h
     sources/widgets/colorchooser.h
@@ -68,6 +69,7 @@ set (SOURCES
     sources/effects/binarizationeffect.cpp
     sources/effects/effectwithsettings.cpp
     sources/effects/gammaeffect.cpp
+    sources/set_dark_theme.cpp
     sources/undocommand.cpp
     sources/widgets/toolbar.cpp
     sources/widgets/colorchooser.cpp

@@ -29,9 +29,11 @@
 #include <QtCore/QFile>
 #include <QtCore/QTranslator>
 #include <QDir>
+#include <QStyleFactory>
 
 #include "mainwindow.h"
 #include "datasingleton.h"
+#include "set_dark_theme.h"
 
 void printHelpMessage()
 {
@@ -100,6 +102,12 @@ int main(int argc, char *argv[])
     {
         printVersion();
         return 0;
+    }
+
+    QApplication::setStyle(QStyleFactory::create("Fusion"));
+    if (DataSingleton::Instance()->getIsDarkMode())
+    {
+        ui_utils::setDarkTheme(true);
     }
 
     QTranslator appTranslator;

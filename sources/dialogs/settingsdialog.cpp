@@ -87,6 +87,9 @@ void SettingsDialog::initializeGui()
     mIsAskCanvasSize = new QCheckBox(tr("Ask canvas size on new image creation"));
     mIsAskCanvasSize->setChecked(DataSingleton::Instance()->getIsAskCanvasSize());
     vBox1->addWidget(mIsAskCanvasSize);
+    mIsDarkMode = new QCheckBox(tr("Enable dark mode"));
+    mIsDarkMode->setChecked(DataSingleton::Instance()->getIsDarkMode());
+    vBox1->addWidget(mIsDarkMode);
 
     QGroupBox *groupBox1 = new QGroupBox(tr("User interface"));
     groupBox1->setLayout(vBox1);
@@ -192,6 +195,7 @@ void SettingsDialog::sendSettingsToSingleton()
     DataSingleton::Instance()->setIsAutoSave(mIsAutoSave->isChecked());
     DataSingleton::Instance()->setIsRestoreWindowSize(mIsRestoreWindowSize->isChecked());
     DataSingleton::Instance()->setIsAskCanvasSize(mIsAskCanvasSize->isChecked());
+    DataSingleton::Instance()->setIsDarkMode(mIsDarkMode->isChecked());
     DataSingleton::Instance()->setAutoSaveInterval(mAutoSaveInterval->value());
 
     QStringList languages;

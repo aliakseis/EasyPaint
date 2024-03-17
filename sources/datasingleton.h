@@ -73,6 +73,8 @@ public:
     inline void setIsRestoreWindowSize(const bool &isRestoreWindowSize) { mIsRestoreWindowSize = isRestoreWindowSize; }
     inline bool getIsAskCanvasSize() { return mIsAskCanvasSize; }
     inline void setIsAskCanvasSize(const bool &isAskCanvasSize) { mIsAskCanvasSize = isAskCanvasSize; }
+    inline bool getIsDarkMode() { return mIsDarkMode; }
+    inline void setIsDarkMode(const bool& isDarkMode) { mIsDarkMode = isDarkMode; }
     inline bool getIsInitialized() { return mIsInitialized; }
     inline void setIsInitialized(const bool &isInitialized = true) { mIsInitialized = isInitialized; }
     inline QString getLastFilePath() { return mLastFilePath; }
@@ -114,7 +116,7 @@ private:
     int mPenSize;
     InstrumentsEnum mCurrentInstrument, mPreviousInstrument;
     QSize mBaseSize, mWindowSize;
-    bool mIsAutoSave, mIsRestoreWindowSize, mIsAskCanvasSize, mIsInitialized;
+    bool mIsAutoSave, mIsRestoreWindowSize, mIsAskCanvasSize, mIsDarkMode, mIsInitialized;
     bool mIsResetCurve; /**< Needs to correct work of Bezier curve instrument */
     int mAutoSaveInterval, mHistoryDepth;
     QString mAppLanguage;

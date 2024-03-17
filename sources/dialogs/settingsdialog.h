@@ -77,6 +77,7 @@ private:
     ShortcutEdit *mShortcutEdit;
     QTreeWidget *mShortcutsTree;
     QCheckBox *mIsAskCanvasSize;
+    QCheckBox* mIsDarkMode;
     
 signals:
     

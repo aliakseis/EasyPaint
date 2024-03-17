@@ -60,6 +60,7 @@ void DataSingleton::readSetting()
     mAppLanguage = settings.value("/Settings/AppLanguage", "system").toString();
     mIsRestoreWindowSize = settings.value("/Settings/IsRestoreWindowSize", true).toBool();
     mIsAskCanvasSize = settings.value("/Settings/IsAskCanvasSize", true).toBool();
+    mIsDarkMode = settings.value("/Settings/IsDarkMode", false).toBool();
 
     //read shortcuts for file menu
     mFileShortcuts.insert("New", settings.value("/Shortcuts/File/New", QKeySequence(QKeySequence::New)).value<QKeySequence>());
@@ -106,6 +107,7 @@ void DataSingleton::writeSettings()
     settings.setValue("/Settings/HistoryDepth", mHistoryDepth);
     settings.setValue("/Settings/AppLanguage", mAppLanguage);
     settings.setValue("/Settings/IsRestoreWindowSize", mIsRestoreWindowSize);
+    settings.setValue("/Settings/IsDarkMode", mIsDarkMode);
     settings.setValue("/Settings/IsAskCanvasSize", mIsAskCanvasSize);
 
     //write shortcuts for file menu

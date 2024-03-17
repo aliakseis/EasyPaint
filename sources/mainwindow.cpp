@@ -29,6 +29,7 @@
 #include "datasingleton.h"
 #include "dialogs/settingsdialog.h"
 #include "widgets/palettebar.h"
+#include "set_dark_theme.h"
 
 #include <QApplication>
 #include <QAction>
@@ -580,12 +581,17 @@ void MainWindow::printAct()
 
 void MainWindow::settingsAct()
 {
+    const bool wasDarkMode = DataSingleton::Instance()->getIsDarkMode();
     SettingsDialog settingsDialog(this);
     if(settingsDialog.exec() == QDialog::Accepted)
     {
         settingsDialog.sendSettingsToSingleton();
         DataSingleton::Instance()->writeSettings();
         updateShortcuts();
+        if (wasDarkMode != DataSingleton::Instance()->getIsDarkMode())
+        {
+            ui_utils::setDarkTheme(DataSingleton::Instance()->getIsDarkMode());
+        }
     }
 }
 
