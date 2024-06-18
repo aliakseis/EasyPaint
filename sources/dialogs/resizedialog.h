@@ -68,6 +68,8 @@ private:
     int mWidth, mHeight,
         mOrigWidth, mOrigHeight;
 
+    bool mRecursive = false;
+
 signals:
     
 private slots:

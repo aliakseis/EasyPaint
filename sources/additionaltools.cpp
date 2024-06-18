@@ -26,6 +26,7 @@
 #include "additionaltools.h"
 #include "imagearea.h"
 #include "dialogs/resizedialog.h"
+#include "avir/avir.h"
 
 #include <QImage>
 #include <QPainter>
@@ -34,6 +35,31 @@
 #include <QSize>
 #include <QClipboard>
 #include <QApplication>
+
+static QImage doResizeImage(const QImage& source, const QSize& newSize)
+{
+    int step = 0;
+    const auto format = source.format();
+    switch (format)
+    {
+    case QImage::Format_RGB32:
+    case QImage::Format_ARGB32:
+    case QImage::Format_ARGB32_Premultiplied:
+        step = 4;
+        break;
+    case QImage::Format_RGB888:
+        step = 3;
+        break;
+    default: return source.scaled(newSize);
+    }
+
+    avir::CImageResizer<> ImageResizer(8);
+    QImage result(newSize, format);
+    ImageResizer.resizeImage(source.bits(), source.size().width(), source.size().height(), 
+        source.bytesPerLine(), result.bits(), newSize.width(), newSize.height(), result.bytesPerLine(), step, 0);
+
+    return result;
+}
 
 AdditionalTools::AdditionalTools(ImageArea *pImageArea, QObject *parent) :
     QObject(parent)
@@ -85,7 +111,7 @@ void AdditionalTools::resizeImage()
     ResizeDialog resizeDialog(mPImageArea->getImage()->size(), qobject_cast<QWidget *>(this->parent()));
     if(resizeDialog.exec() == QDialog::Accepted)
     {
-        mPImageArea->setImage(mPImageArea->getImage()->scaled(resizeDialog.getNewSize()));
+        mPImageArea->setImage(doResizeImage(*mPImageArea->getImage(), resizeDialog.getNewSize())); //mPImageArea->getImage()->scaled(resizeDialog.getNewSize()));
         mPImageArea->resize(mPImageArea->getImage()->rect().right() + 6,
                             mPImageArea->getImage()->rect().bottom() + 6);
         mPImageArea->setEdited(true);

@@ -891,6 +891,7 @@ void MainWindow::helpAct()
                                "<li><a href=\"mailto:denis.klimenko.92@gmail.com\">Denis Klimenko</a> (DenisKlimenko)</li>"
                                "<li><a href=\"mailto:bahdan.siamionau@gmail.com\">Bahdan Siamionau</a> (Bahdan)</li>"
                                "</ul>"
+                               "<a href=\"https://github.com/avaneev/avir/\">AVIR - Image Resizing Algorithm</a>"
                                "<br> %5")
                        .arg(tr("version")).arg(QApplication::applicationVersion()).arg(tr("Site")).arg(tr("Authors"))
                        .arg(tr("If you like <b>EasyPaint</b> and you want to share your opinion, or send a bug report, or want to suggest new features, we are waiting for you on our <a href=\"https://github.com/Gr1N/EasyPaint/issues?milestone=&sort=created&direction=desc&state=open\">tracker</a>.")));

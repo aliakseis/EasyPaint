@@ -46,6 +46,8 @@ ResizeDialog::ResizeDialog(const QSize &size, QWidget *parent) :
 
 void ResizeDialog::initializeGui()
 {
+    enum { MAX_COEFF = 8 };
+
     QLabel *label1 = new QLabel(tr("Original size:"));
     QLabel *label2 = new QLabel(QString("%1 x %2").arg(mWidth).arg(mHeight));
     QLabel *label3 = new QLabel(tr("New size:"));
@@ -56,12 +58,12 @@ void ResizeDialog::initializeGui()
     connect(pixelButton, SIGNAL(clicked(bool)), this, SLOT(pixelsButtonClicked(bool)));
 
     mPixelWButton = new QSpinBox();
-    mPixelWButton->setRange(1, 9999);
+    mPixelWButton->setRange(1, qMax(mWidth * MAX_COEFF, 9999));
     mPixelWButton->setValue(mWidth);
     connect(mPixelWButton, SIGNAL(valueChanged(int)), this, SLOT(pixelsWValueChanged(int)));
 
     mPixelHButton = new QSpinBox();
-    mPixelHButton->setRange(1, 9999);
+    mPixelHButton->setRange(1, qMax(mHeight * MAX_COEFF, 9999));
     mPixelHButton->setValue(mHeight);
     connect(mPixelHButton, SIGNAL(valueChanged(int)), this, SLOT(pixelsHValueChanged(int)));
 
@@ -72,13 +74,13 @@ void ResizeDialog::initializeGui()
     connect(percentButton, SIGNAL(clicked(bool)), this, SLOT(percentButtonClicked(bool)));
 
     mPercentWButton = new QSpinBox();
-    mPercentWButton->setRange(1, 200);
+    mPercentWButton->setRange(1, MAX_COEFF * 100);
     mPercentWButton->setValue(100);
     mPercentWButton->setEnabled(false);
     connect(mPercentWButton, SIGNAL(valueChanged(int)), this, SLOT(percentWValueChanged(int)));
 
     mPercentHButton = new QSpinBox();
-    mPercentHButton->setRange(1, 200);
+    mPercentHButton->setRange(1, MAX_COEFF * 100);
     mPercentHButton->setValue(100);
     mPercentHButton->setEnabled(false);
     connect(mPercentHButton, SIGNAL(valueChanged(int)), this, SLOT(percentHValueChanged(int)));
@@ -151,6 +153,12 @@ void ResizeDialog::percentButtonClicked(bool flag)
 
 void ResizeDialog::pixelsWValueChanged(const int &value)
 {
+    if (mRecursive)
+    {
+        return;
+    }
+    mRecursive = true;
+
     if(mPreserveAspectBox->isChecked())
     {
         mHeight = mOrigHeight * value / mOrigWidth;
@@ -162,10 +170,18 @@ void ResizeDialog::pixelsWValueChanged(const int &value)
         mWidth = value;
     }
     mNewSizeLabel->setText(QString("%1 x %2").arg(mWidth).arg(mHeight));
+
+    mRecursive = false;
 }
 
 void ResizeDialog::pixelsHValueChanged(const int &value)
 {
+    if (mRecursive)
+    {
+        return;
+    }
+    mRecursive = true;
+
     if(mPreserveAspectBox->isChecked())
     {
         mWidth = mOrigWidth * value / mOrigHeight;
@@ -177,34 +193,52 @@ void ResizeDialog::pixelsHValueChanged(const int &value)
         mHeight = value;
     }
     mNewSizeLabel->setText(QString("%1 x %2").arg(mWidth).arg(mHeight));
+
+    mRecursive = false;
 }
 
 void ResizeDialog::percentWValueChanged(const int &value)
 {
+    if (mRecursive)
+    {
+        return;
+    }
+    mRecursive = true;
+
     if(mPreserveAspectBox->isChecked())
     {
         mPercentHButton->setValue(value);
-        mWidth = mOrigWidth / 100 * value;
-        mHeight = mOrigHeight / 100 * value;
+        mWidth = mOrigWidth * value / 100;
+        mHeight = mOrigHeight * value / 100;
     }
     else
     {
-        mWidth = mOrigWidth / 100 * value;
+        mWidth = mOrigWidth * value / 100;
     }
     mNewSizeLabel->setText(QString("%1 x %2").arg(mWidth).arg(mHeight));
+
+    mRecursive = false;
 }
 
 void ResizeDialog::percentHValueChanged(const int &value)
 {
+    if (mRecursive)
+    {
+        return;
+    }
+    mRecursive = true;
+
     if(mPreserveAspectBox->isChecked())
     {
         mPercentWButton->setValue(value);
-        mWidth = mOrigWidth / 100 * value;
-        mHeight = mOrigHeight / 100 * value;
+        mWidth = mOrigWidth * value / 100;
+        mHeight = mOrigHeight * value / 100;
     }
     else
     {
-        mHeight = mOrigHeight / 100 * value;
+        mHeight = mOrigHeight * value / 100;
     }
     mNewSizeLabel->setText(QString("%1 x %2").arg(mWidth).arg(mHeight));
+
+    mRecursive = false;
 }
