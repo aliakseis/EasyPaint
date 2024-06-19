@@ -75,7 +75,7 @@ protected:
 
     QPoint mBottomRightPoint, mTopLeftPoint, mMoveDiffPoint;
     bool mIsPaint, mIsSelectionExists, mIsSelectionMoving, mIsSelectionResizing, mIsImageSelected,
-         mIsMouseMoved, mIsSelectionAdjusting;;
+         mIsMouseMoved, mIsSelectionAdjusting;
     int mHeight, mWidth;
     Qt::MouseButton mButton;
 };

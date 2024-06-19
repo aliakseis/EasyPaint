@@ -320,6 +320,12 @@ void ImageArea::resizeCanvas()
     emit sendNewImageSize(mImage->size());
 }
 
+void ImageArea::resizeCanvas(int width, int height)
+{
+    mAdditionalTools->resizeCanvas(width, height, false);
+    emit sendNewImageSize(mImage->size());
+}
+
 void ImageArea::rotateImage(bool flag)
 {
     mAdditionalTools->rotateImage(flag);

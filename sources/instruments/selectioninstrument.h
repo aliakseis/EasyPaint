@@ -79,8 +79,7 @@ private:
     void paint(ImageArea &imageArea, bool = false, bool = false);
     void showMenu(ImageArea &);
 
-    QImage mSelectedImage, /**< Copy of selected image. */
-           mPasteImage; /**< Image to paste */
+    QImage mSelectedImage; /**< Copy of selected image. */
 
 signals:
     void sendEnableCopyCutActions(bool enable);

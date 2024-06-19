@@ -95,15 +95,17 @@ void SelectionInstrument::pasteImage(ImageArea &imageArea)
         mImageCopy = *imageArea.getImage();
     }
     makeUndoCommand(imageArea);
-    mPasteImage = globalClipboard->image();
-    if (!mPasteImage.isNull())
+    auto pasteImage = globalClipboard->image();
+    if (!pasteImage.isNull())
     {
-        mSelectedImage = mPasteImage;
+        imageArea.resizeCanvas(qMax(pasteImage.width(), imageArea.getImage()->width()),
+            qMax(pasteImage.height(), imageArea.getImage()->height()));
+        mSelectedImage = pasteImage;
         mImageCopy = *imageArea.getImage();
         mTopLeftPoint = QPoint(0, 0);
-        mBottomRightPoint = QPoint(mPasteImage.width(), mPasteImage.height()) - QPoint(1, 1);
-        mHeight = mPasteImage.height();
-        mWidth = mPasteImage.width();
+        mBottomRightPoint = QPoint(pasteImage.width(), pasteImage.height()) - QPoint(1, 1);
+        mHeight = pasteImage.height();
+        mWidth = pasteImage.width();
         mIsImageSelected = mIsSelectionExists = true;
         paint(imageArea);
         drawBorder(imageArea);

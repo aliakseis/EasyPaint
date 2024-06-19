@@ -85,6 +85,7 @@ public:
      *
      */
     void resizeCanvas();
+    void resizeCanvas(int width, int height);
     /**
      * @brief Rotate image.
      *
