@@ -274,7 +274,7 @@
     <message>
         <location filename="../mainwindow.cpp" line="291"/>
         <source>Rectangle</source>
-        <translation>Эллипс</translation>
+        <translation>Прямоугольник</translation>
     </message>
     <message>
         <location filename="../mainwindow.cpp" line="298"/>
