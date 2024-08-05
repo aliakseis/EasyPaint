@@ -50,17 +50,11 @@ void MagnifierInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &image
     {
         if(event->button() == Qt::LeftButton)
         {
-            if(imageArea.zoomImage(2.0))
-            {
-                imageArea.setZoomFactor(2.0);
-            }
+            imageArea.setZoomFactor(2.0);
         }
         else if(event->button() == Qt::RightButton)
         {
-            if(imageArea.zoomImage(0.5))
-            {
-                imageArea.setZoomFactor(0.5);
-            }
+            imageArea.setZoomFactor(0.5);
         }
         imageArea.setIsPaint(false);
     }

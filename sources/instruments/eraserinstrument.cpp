@@ -39,7 +39,7 @@ void EraserInstrument::mousePressEvent(QMouseEvent *event, ImageArea &imageArea)
 {
     if(event->button() == Qt::LeftButton || event->button() == Qt::RightButton)
     {
-        mStartPoint = mEndPoint = event->pos();
+        mStartPoint = mEndPoint = event->pos() / imageArea.getZoomFactor();
         imageArea.setIsPaint(true);
         makeUndoCommand(imageArea);
     }
@@ -49,9 +49,10 @@ void EraserInstrument::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
 {
     if(imageArea.isPaint())
     {
-        mEndPoint = event->pos();
+        const auto pos = event->pos() / imageArea.getZoomFactor();
+        mEndPoint = pos;
         paint(imageArea, false);
-        mStartPoint = event->pos();
+        mStartPoint = pos;
     }
 }
 
@@ -59,7 +60,7 @@ void EraserInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageAre
 {
     if(imageArea.isPaint())
     {
-        mEndPoint = event->pos();
+        mEndPoint = event->pos() / imageArea.getZoomFactor();
         paint(imageArea);
         imageArea.setIsPaint(false);
     }
@@ -69,7 +70,7 @@ void EraserInstrument::paint(ImageArea &imageArea, bool, bool)
 {
     QPainter painter(imageArea.getImage());
     painter.setPen(QPen(Qt::white,
-                        DataSingleton::Instance()->getPenSize() * imageArea.getZoomFactor(),
+                        DataSingleton::Instance()->getPenSize(), // * imageArea.getZoomFactor(),
                         Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
     if(mStartPoint != mEndPoint)

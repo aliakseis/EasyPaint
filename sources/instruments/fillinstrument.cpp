@@ -39,7 +39,7 @@ void FillInstrument::mousePressEvent(QMouseEvent *event, ImageArea &imageArea)
 {
     if(event->button() == Qt::LeftButton || event->button() == Qt::RightButton)
     {
-        mStartPoint = mEndPoint = event->pos();
+        mStartPoint = mEndPoint = event->pos() / imageArea.getZoomFactor();
         imageArea.setIsPaint(true);
         makeUndoCommand(imageArea);
     }

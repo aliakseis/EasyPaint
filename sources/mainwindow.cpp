@@ -675,13 +675,11 @@ void MainWindow::rotateRightImageAct()
 
 void MainWindow::zoomInAct()
 {
-    getCurrentImageArea()->zoomImage(2.0);
     getCurrentImageArea()->setZoomFactor(2.0);
 }
 
 void MainWindow::zoomOutAct()
 {
-    getCurrentImageArea()->zoomImage(0.5);
     getCurrentImageArea()->setZoomFactor(0.5);
 }
 
@@ -691,7 +689,6 @@ void MainWindow::advancedZoomAct()
     qreal factor = QInputDialog::getDouble(this, tr("Enter zoom factor"), tr("Zoom factor:"), 2.5, 0, 1000, 5, &ok);
     if (ok)
     {
-        getCurrentImageArea()->zoomImage(factor);
         getCurrentImageArea()->setZoomFactor(factor);
     }
 }

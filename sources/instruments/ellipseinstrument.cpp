@@ -39,7 +39,7 @@ void EllipseInstrument::mousePressEvent(QMouseEvent *event, ImageArea &imageArea
 {
     if(event->button() == Qt::LeftButton || event->button() == Qt::RightButton)
     {
-        mStartPoint = mEndPoint = event->pos();
+        mStartPoint = mEndPoint = event->pos() / imageArea.getZoomFactor();
         imageArea.setIsPaint(true);
         mImageCopy = *imageArea.getImage();
         makeUndoCommand(imageArea);
@@ -50,7 +50,7 @@ void EllipseInstrument::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
 {
     if(imageArea.isPaint())
     {
-        mEndPoint = event->pos();
+        mEndPoint = event->pos() / imageArea.getZoomFactor();
         imageArea.setImage(mImageCopy);
         if(event->buttons() & Qt::LeftButton)
         {
@@ -84,7 +84,7 @@ void EllipseInstrument::paint(ImageArea &imageArea, bool isSecondaryColor, bool)
 {
     QPainter painter(imageArea.getImage());
     painter.setPen(QPen(DataSingleton::Instance()->getPrimaryColor(),
-                        DataSingleton::Instance()->getPenSize() * imageArea.getZoomFactor(),
+                        DataSingleton::Instance()->getPenSize(), // * imageArea.getZoomFactor(),
                         Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     if(isSecondaryColor)
     {

@@ -42,7 +42,7 @@ void ColorpickerInstrument::mousePressEvent(QMouseEvent *event, ImageArea &image
 
 void ColorpickerInstrument::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
 {
-    QRgb pixel(imageArea.getImage()->pixel(event->pos()));
+    QRgb pixel(imageArea.getImage()->pixel(event->pos() / imageArea.getZoomFactor()));
     QColor getColor(pixel);
     imageArea.emitColor(getColor);
 }
@@ -51,7 +51,7 @@ void ColorpickerInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &ima
 {
     if(imageArea.isPaint())
     {
-        mStartPoint = mEndPoint = event->pos();
+        mStartPoint = mEndPoint = event->pos() / imageArea.getZoomFactor();
         if(event->button() == Qt::LeftButton)
         {
             paint(imageArea, false);

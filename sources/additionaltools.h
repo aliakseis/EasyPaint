@@ -72,23 +72,9 @@ public:
      * @param flag Left or right
      */
     void rotateImage(bool flag);
-    /**
-     * @brief Zoom image
-     *
-     * @param factor Scale factor
-     * @return returns true in case of success
-     */
-    bool zoomImage(qreal factor);
     
 private:
-    ImageArea *mPImageArea; /**< A pointer to ImageArea */
-    qreal mZoomedFactor; /**< Difference between original and current image */
-
-signals:
-    void sendNewImageSize(const QSize&);
-    
-public slots:
-    
+    ImageArea *mPImageArea; /**< A pointer to ImageArea */   
 };
 
 #endif // ADDITIONALTOOLS_H

@@ -65,12 +65,10 @@ AdditionalTools::AdditionalTools(ImageArea *pImageArea, QObject *parent) :
     QObject(parent)
 {
     mPImageArea = pImageArea;
-    mZoomedFactor = 1;
 }
 
 AdditionalTools::~AdditionalTools()
 {
-
 }
 
 void AdditionalTools::resizeCanvas(int width, int height, bool flag)
@@ -136,28 +134,4 @@ void AdditionalTools::rotateImage(bool flag)
     mPImageArea->update();
     mPImageArea->setEdited(true);
     mPImageArea->clearSelection();
-}
-
-bool AdditionalTools::zoomImage(qreal factor)
-{
-    mZoomedFactor *= factor;
-    if(mZoomedFactor < 0.25)
-    {
-        mZoomedFactor = 0.25;
-        return false;
-    }
-    else if(mZoomedFactor > 4)
-    {
-        mZoomedFactor = 4;
-        return false;
-    }
-    else
-    {
-        mPImageArea->setImage(mPImageArea->getImage()->transformed(QTransform::fromScale(factor, factor)));
-        mPImageArea->resize((mPImageArea->rect().width())*factor, (mPImageArea->rect().height())*factor);
-        emit sendNewImageSize(mPImageArea->size());
-        mPImageArea->setEdited(true);
-        mPImageArea->clearSelection();
-        return true;
-    }
 }

@@ -40,7 +40,7 @@ void LineInstrument::mousePressEvent(QMouseEvent *event, ImageArea &imageArea)
 {
     if(event->button() == Qt::LeftButton || event->button() == Qt::RightButton)
     {
-        mStartPoint = mEndPoint = event->pos();
+        mStartPoint = mEndPoint = event->pos() / imageArea.getZoomFactor();
         imageArea.setIsPaint(true);
         mImageCopy = *imageArea.getImage();
         makeUndoCommand(imageArea);
@@ -51,7 +51,7 @@ void LineInstrument::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
 {
     if(imageArea.isPaint())
     {
-        mEndPoint = event->pos();
+        mEndPoint = event->pos() / imageArea.getZoomFactor();
         imageArea.setImage(mImageCopy);
         if(event->buttons() & Qt::LeftButton)
         {
@@ -87,13 +87,13 @@ void LineInstrument::paint(ImageArea &imageArea, bool isSecondaryColor, bool)
     if(isSecondaryColor)
     {
         painter.setPen(QPen(DataSingleton::Instance()->getSecondaryColor(),
-                            DataSingleton::Instance()->getPenSize() * imageArea.getZoomFactor(),
+                            DataSingleton::Instance()->getPenSize(), // * imageArea.getZoomFactor(),
                             Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     }
     else
     {
         painter.setPen(QPen(DataSingleton::Instance()->getPrimaryColor(),
-                            DataSingleton::Instance()->getPenSize() * imageArea.getZoomFactor(),
+                            DataSingleton::Instance()->getPenSize(), // * imageArea.getZoomFactor(),
                             Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     }
 
