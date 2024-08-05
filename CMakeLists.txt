@@ -111,6 +111,7 @@ if(NOT NO_TRANSLATIONS)
     set (TRANSLATIONS
         sources/translations/easypaint_ru_RU.ts
         sources/translations/easypaint_cs_CZ.ts
+        sources/translations/easypaint_zh_CN.ts
         sources/translations/easypaint_fr_FR.ts)
 endif(NOT NO_TRANSLATIONS)
 

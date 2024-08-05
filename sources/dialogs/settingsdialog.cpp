@@ -73,6 +73,7 @@ void SettingsDialog::initializeGui()
     mLanguageBox->addItem("Czech");
     mLanguageBox->addItem("French");
     mLanguageBox->addItem("Russian");
+    mLanguageBox->addItem("Chinese");
     mLanguageBox->setCurrentIndex(getLanguageIndex());
     QHBoxLayout *hBox1 = new QHBoxLayout();
     hBox1->addWidget(label1);
@@ -199,7 +200,7 @@ void SettingsDialog::sendSettingsToSingleton()
     DataSingleton::Instance()->setAutoSaveInterval(mAutoSaveInterval->value());
 
     QStringList languages;
-    languages<<"system"<<"easypaint_en_EN"<<"easypaint_cs_CZ"<<"easypaint_fr_FR"<<"easypaint_ru_RU";
+    languages << "system" << "easypaint_en_EN" << "easypaint_cs_CZ" << "easypaint_fr_FR" << "easypaint_ru_RU" << "easypaint_zh_CN";
     DataSingleton::Instance()->setAppLanguage(languages.at(mLanguageBox->currentIndex()));
 
     QTreeWidgetItem *item;
