@@ -40,7 +40,9 @@ AbstractSelection::AbstractSelection(QObject *parent) :
 
 void AbstractSelection::mousePressEvent(QMouseEvent *event, ImageArea &imageArea)
 {
-    const auto pos = event->pos() / imageArea.getZoomFactor();
+    const auto pos = event->pos();
+    const auto topLeftPoint = mTopLeftPoint * imageArea.getZoomFactor();
+    const auto bottomRightPoint = mBottomRightPoint * imageArea.getZoomFactor();
 
     mButton = event->button();
     mIsMouseMoved = false;
@@ -53,10 +55,10 @@ void AbstractSelection::mousePressEvent(QMouseEvent *event, ImageArea &imageArea
             mIsSelectionAdjusting = true;
             startAdjusting(imageArea);
         }
-        if (pos.x() > mTopLeftPoint.x() &&
-            pos.x() < mBottomRightPoint.x() &&
-            pos.y() > mTopLeftPoint.y() &&
-            pos.y() < mBottomRightPoint.y())
+        if (pos.x() > topLeftPoint.x() &&
+            pos.x() < bottomRightPoint.x() &&
+            pos.y() > topLeftPoint.y() &&
+            pos.y() < bottomRightPoint.y())
         {
             if (!mIsSelectionAdjusting)
             {
@@ -75,13 +77,13 @@ void AbstractSelection::mousePressEvent(QMouseEvent *event, ImageArea &imageArea
                 drawBorder(imageArea);
             }
             mIsSelectionMoving = true;
-            mMoveDiffPoint = mBottomRightPoint - pos;
+            mMoveDiffPoint = mBottomRightPoint - pos / imageArea.getZoomFactor();
             return;
         }
-        else if (pos.x() >= mBottomRightPoint.x() &&
-            pos.x() <= mBottomRightPoint.x() + 6 &&
-            pos.y() >= mBottomRightPoint.y() &&
-            pos.y() <= mBottomRightPoint.y() + 6)
+        else if (pos.x() >= bottomRightPoint.x() &&
+            pos.x() <= bottomRightPoint.x() + 6 &&
+            pos.y() >= bottomRightPoint.y() &&
+            pos.y() <= bottomRightPoint.y() + 6)
         {
             if (!mIsSelectionAdjusting)
             {
@@ -98,7 +100,7 @@ void AbstractSelection::mousePressEvent(QMouseEvent *event, ImageArea &imageArea
     }
     if (event->button() == Qt::LeftButton)
     {
-        mBottomRightPoint = mTopLeftPoint = pos;
+        mBottomRightPoint = mTopLeftPoint = pos / imageArea.getZoomFactor();
         mHeight =  mWidth = 0;
         mImageCopy = *imageArea.getImage();
         startSelection(imageArea);
@@ -243,21 +245,23 @@ void AbstractSelection::saveImageChanges(ImageArea &)
 
 void AbstractSelection::updateCursor(QMouseEvent *event, ImageArea &imageArea)
 {
-    const auto pos = event->pos() / imageArea.getZoomFactor();
+    const auto pos = event->pos();
+    const auto topLeftPoint = mTopLeftPoint * imageArea.getZoomFactor();
+    const auto bottomRightPoint = mBottomRightPoint * imageArea.getZoomFactor();
 
     if (mIsSelectionExists)
     {
-        if (pos.x() > mTopLeftPoint.x() &&
-            pos.x() < mBottomRightPoint.x() &&
-            pos.y() > mTopLeftPoint.y() &&
-            pos.y() < mBottomRightPoint.y())
+        if (pos.x() > topLeftPoint.x() &&
+            pos.x() < bottomRightPoint.x() &&
+            pos.y() > topLeftPoint.y() &&
+            pos.y() < bottomRightPoint.y())
         { 
             imageArea.setCursor(Qt::SizeAllCursor);
         }
-        else if (pos.x() >= mBottomRightPoint.x() &&
-            pos.x() <= mBottomRightPoint.x() + 6 &&
-            pos.y() >= mBottomRightPoint.y() &&
-            pos.y() <= mBottomRightPoint.y() + 6)
+        else if (pos.x() >= bottomRightPoint.x() &&
+            pos.x() <= bottomRightPoint.x() + 6 &&
+            pos.y() >= bottomRightPoint.y() &&
+            pos.y() <= bottomRightPoint.y() + 6)
         {
             imageArea.setCursor(Qt::SizeFDiagCursor);
         }
