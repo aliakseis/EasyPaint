@@ -51,6 +51,9 @@
 #include "effects/sharpeneffect.h"
 #include "effects/customeffect.h"
 
+#include "dialogs/resizedialog.h"
+#include "avir/avir.h"
+
 #include <QApplication>
 #include <QPainter>
 #include <QFileDialog>
@@ -67,6 +70,69 @@
 #include <QMessageBox>
 #include <QClipboard>
 
+
+namespace {
+
+QImage doResizeImage(const QImage& source, const QSize& newSize)
+{
+    int step = 0;
+    const auto format = source.format();
+    switch (format)
+    {
+    case QImage::Format_RGB32:
+    case QImage::Format_ARGB32:
+    case QImage::Format_ARGB32_Premultiplied:
+        step = 4;
+        break;
+    case QImage::Format_RGB888:
+        step = 3;
+        break;
+    default: return source.scaled(newSize);
+    }
+
+    avir::CImageResizer<> ImageResizer(8);
+    QImage result(newSize, format);
+    ImageResizer.resizeImage(source.bits(), source.size().width(), source.size().height(), 
+        source.bytesPerLine(), result.bits(), newSize.width(), newSize.height(), result.bytesPerLine(), step, 0);
+
+    return result;
+}
+
+void doResizeCanvas(ImageArea *mPImageArea, int width, int height, bool flag)
+{
+    if(flag)
+    {
+        ResizeDialog resizeDialog(QSize(width, height), qobject_cast<QWidget *>(mPImageArea->parent()));
+        if(resizeDialog.exec() == QDialog::Accepted)
+        {
+            QSize newSize = resizeDialog.getNewSize();
+            width = newSize.width();
+            height = newSize.height();
+        } else {
+            return;
+        }
+    }
+
+    if(width < 1 || height < 1)
+        return;
+    QImage *tempImage = new QImage(width, height, QImage::Format_ARGB32_Premultiplied);
+    QPainter painter(tempImage);
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(QBrush(Qt::white));
+    painter.drawRect(QRect(0, 0, width, height));
+    painter.drawImage(0, 0, *mPImageArea->getImage());
+    painter.end();
+
+    mPImageArea->setImage(*tempImage);
+
+    mPImageArea->resize(mPImageArea->getImage()->rect().right() + 6,
+                        mPImageArea->getImage()->rect().bottom() + 6);
+    mPImageArea->setEdited(true);
+    mPImageArea->clearSelection();
+}
+
+}
+
 ImageArea::ImageArea(const bool &isOpen, const QString &filePath, QWidget *parent) :
     QWidget(parent), mIsEdited(false), mIsPaint(false), mIsResize(false)
 {
@@ -77,8 +143,6 @@ ImageArea::ImageArea(const bool &isOpen, const QString &filePath, QWidget *paren
     makeFormatsFilters();
     initializeImage();
     mZoomFactor = 1;
-
-    mAdditionalTools = new AdditionalTools(this, this->parent());
 
     mUndoStack = new QUndoStack(this);
     mUndoStack->setUndoLimit(DataSingleton::Instance()->getHistoryDepth());
@@ -112,7 +176,7 @@ ImageArea::ImageArea(const bool &isOpen, const QString &filePath, QWidget *paren
             QSize newSize = resizeDialog.getNewSize();
             width = newSize.width();
             height = newSize.height();
-            mAdditionalTools->resizeCanvas(width, height, false);
+            doResizeCanvas(this, width, height, false);
             mIsEdited = false;
         }
         QPainter *painter = new QPainter(mImage);
@@ -309,25 +373,40 @@ void ImageArea::print()
 
 void ImageArea::resizeImage()
 {
-    mAdditionalTools->resizeImage();
+    ResizeDialog resizeDialog(getImage()->size(), qobject_cast<QWidget*>(parent()));
+    if (resizeDialog.exec() == QDialog::Accepted)
+    {
+        setImage(doResizeImage(*getImage(), resizeDialog.getNewSize())); //mPImageArea->getImage()->scaled(resizeDialog.getNewSize()));
+        resize(getImage()->rect().right() * mZoomFactor + 6, getImage()->rect().bottom() * mZoomFactor + 6);
+        setEdited(true);
+        clearSelection();
+    }
+
     emit sendNewImageSize(mImage->size());
 }
 
 void ImageArea::resizeCanvas()
 {
-    mAdditionalTools->resizeCanvas(mImage->width(), mImage->height(), true);
+    doResizeCanvas(this, mImage->width(), mImage->height(), true);
     emit sendNewImageSize(mImage->size());
 }
 
 void ImageArea::resizeCanvas(int width, int height)
 {
-    mAdditionalTools->resizeCanvas(width, height, false);
+    doResizeCanvas(this, width, height, false);
     emit sendNewImageSize(mImage->size());
 }
 
 void ImageArea::rotateImage(bool flag)
 {
-    mAdditionalTools->rotateImage(flag);
+    QTransform transform;
+    transform.rotate(flag? 90 : -90);
+    setImage(getImage()->transformed(transform));
+    resize(getImage()->rect().right() * mZoomFactor + 6, getImage()->rect().bottom() * mZoomFactor + 6);
+    update();
+    setEdited(true);
+    clearSelection();
+
     emit sendNewImageSize(mImage->size());
 }
 
@@ -385,7 +464,7 @@ void ImageArea::mouseMoveEvent(QMouseEvent *event)
     mInstrumentHandler = mInstrumentsHandlers.at(DataSingleton::Instance()->getInstrument());
     if(mIsResize)
     {
-         mAdditionalTools->resizeCanvas(event->x(), event->y());
+         doResizeCanvas(this, event->x(), event->y(), false);
          emit sendNewImageSize(mImage->size());
     }
     else if(pos.x() < mImage->rect().right() + 6 &&

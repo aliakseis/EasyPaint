@@ -15,7 +15,6 @@ set (HEADERS
     sources/easypaintenums.h
     sources/imagearea.h
     sources/datasingleton.h
-    sources/additionaltools.h
     sources/effects/abstracteffect.h
     sources/effects/negativeeffect.h
     sources/effects/grayeffect.h
@@ -62,7 +61,6 @@ set (SOURCES
     sources/mainwindow.cpp
     sources/imagearea.cpp
     sources/datasingleton.cpp
-    sources/additionaltools.cpp
     sources/effects/abstracteffect.cpp
     sources/effects/negativeeffect.cpp
     sources/effects/grayeffect.cpp

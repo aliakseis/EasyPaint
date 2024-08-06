@@ -27,7 +27,6 @@
 #define IMAGEAREA_H
 
 #include "easypaintenums.h"
-#include "additionaltools.h"
 
 #include <QWidget>
 #include <QImage>
@@ -196,7 +195,6 @@ private:
 
     QImage *mImage,  /**< Main image. */
            mImageCopy; /**< Copy of main image, need for events. */ // ?????????????
-    AdditionalTools *mAdditionalTools;
     QString mFilePath; /**< Path where located image. */
     QString mOpenFilter; /**< Supported open formats filter. */
     QString mSaveFilter; /**< Supported save formats filter. */
