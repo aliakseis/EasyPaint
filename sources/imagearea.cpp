@@ -98,7 +98,7 @@ QImage doResizeImage(const QImage& source, const QSize& newSize)
     return result;
 }
 
-void doResizeCanvas(ImageArea *mPImageArea, int width, int height, bool flag)
+void doResizeCanvas(ImageArea *mPImageArea, int width, int height, bool flag, bool resizeWindow)
 {
     if(flag)
     {
@@ -124,9 +124,11 @@ void doResizeCanvas(ImageArea *mPImageArea, int width, int height, bool flag)
     painter.end();
 
     mPImageArea->setImage(*tempImage);
-
-    mPImageArea->resize(mPImageArea->getImage()->rect().right() + 6,
-                        mPImageArea->getImage()->rect().bottom() + 6);
+    if (resizeWindow)
+    {
+        mPImageArea->resize(mPImageArea->getImage()->rect().right() * mPImageArea->getZoomFactor() + 6,
+            mPImageArea->getImage()->rect().bottom() * mPImageArea->getZoomFactor() + 6);
+    }
     mPImageArea->setEdited(true);
     mPImageArea->clearSelection();
 }
@@ -176,15 +178,15 @@ ImageArea::ImageArea(const bool &isOpen, const QString &filePath, QWidget *paren
             QSize newSize = resizeDialog.getNewSize();
             width = newSize.width();
             height = newSize.height();
-            doResizeCanvas(this, width, height, false);
+            doResizeCanvas(this, width, height, false, false);
             mIsEdited = false;
         }
         QPainter *painter = new QPainter(mImage);
         painter->fillRect(0, 0, width, height, Qt::white);
         painter->end();
 
-        resize(mImage->rect().right() + 6,
-               mImage->rect().bottom() + 6);
+        resize(mImage->rect().right() * mZoomFactor + 6,
+               mImage->rect().bottom() * mZoomFactor + 6);
         mFilePath = QString(""); // empty name indicate that user has accepted tab creation
     }
 
@@ -387,13 +389,13 @@ void ImageArea::resizeImage()
 
 void ImageArea::resizeCanvas()
 {
-    doResizeCanvas(this, mImage->width(), mImage->height(), true);
+    doResizeCanvas(this, mImage->width(), mImage->height(), true, true);
     emit sendNewImageSize(mImage->size());
 }
 
 void ImageArea::resizeCanvas(int width, int height)
 {
-    doResizeCanvas(this, width, height, false);
+    doResizeCanvas(this, width, height, false, true);
     emit sendNewImageSize(mImage->size());
 }
 
@@ -464,7 +466,8 @@ void ImageArea::mouseMoveEvent(QMouseEvent *event)
     mInstrumentHandler = mInstrumentsHandlers.at(DataSingleton::Instance()->getInstrument());
     if(mIsResize)
     {
-         doResizeCanvas(this, event->x(), event->y(), false);
+         doResizeCanvas(this, pos.x(), pos.y(), false, false);
+         update();
          emit sendNewImageSize(mImage->size());
     }
     else if(pos.x() < mImage->rect().right() + 6 &&
@@ -496,7 +499,9 @@ void ImageArea::mouseReleaseEvent(QMouseEvent *event)
 {
     if(mIsResize)
     {
-       mIsResize = false;
+        resize(mImage->rect().right() * mZoomFactor + 6,
+            mImage->rect().bottom() * mZoomFactor + 6);
+        mIsResize = false;
        restoreCursor();
     }
     else if(DataSingleton::Instance()->getInstrument() != NONE_INSTRUMENT)
