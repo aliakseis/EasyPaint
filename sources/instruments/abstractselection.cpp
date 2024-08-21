@@ -150,12 +150,8 @@ void AbstractSelection::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
 
 void AbstractSelection::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageArea)
 {
-    int right = mTopLeftPoint.x() > mBottomRightPoint.x() ? mTopLeftPoint.x() : mBottomRightPoint.x();
-    int bottom = mTopLeftPoint.y() > mBottomRightPoint.y() ? mTopLeftPoint.y() : mBottomRightPoint.y();
-    int left = mTopLeftPoint.x() < mBottomRightPoint.x() ? mTopLeftPoint.x() : mBottomRightPoint.x();
-    int top = mTopLeftPoint.y() < mBottomRightPoint.y() ? mTopLeftPoint.y() : mBottomRightPoint.y();
-    mBottomRightPoint = QPoint(right, bottom);
-    mTopLeftPoint = QPoint(left, top);
+    std::tie(mTopLeftPoint.rx(), mBottomRightPoint.rx()) = std::minmax(mTopLeftPoint.x(), mBottomRightPoint.x());
+    std::tie(mTopLeftPoint.ry(), mBottomRightPoint.ry()) = std::minmax(mTopLeftPoint.y(), mBottomRightPoint.y());
     if (mIsSelectionExists)
     {
         updateCursor(event, imageArea);
@@ -212,7 +208,7 @@ void AbstractSelection::drawBorder(ImageArea &imageArea)
     if (mWidth > 1 && mHeight > 1)
     {
         QPainter painter(imageArea.getImage());
-        painter.setPen(QPen(Qt::blue, 1, Qt::DashLine, Qt::RoundCap, Qt::RoundJoin));
+        painter.setPen(QPen(Qt::blue, qMax(1, int(1 / imageArea.getZoomFactor())), Qt::DashLine, Qt::RoundCap, Qt::RoundJoin));
         painter.setBackgroundMode(Qt::TransparentMode);
         if(mTopLeftPoint != mBottomRightPoint)
         {
