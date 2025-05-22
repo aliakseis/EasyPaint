@@ -35,12 +35,14 @@ QT_BEGIN_NAMESPACE
 class QAction;
 class QStatusBar;
 class QTabWidget;
-class ToolBar;
-class PaletteBar;
-class ImageArea;
 class QLabel;
 class QUndoGroup;
 QT_END_NAMESPACE
+
+class ToolBar;
+class PaletteBar;
+class ImageArea;
+class ScriptModel;
 
 /**
  * @brief Main window class.
@@ -111,6 +113,8 @@ private:
 
     enum { MaxRecentFiles = 5 };
     QAction* recentFileActs[MaxRecentFiles];
+
+    ScriptModel* mScriptModel = nullptr;
 
 private slots:
     void activateTab(const int &index);

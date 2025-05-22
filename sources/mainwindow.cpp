@@ -30,6 +30,7 @@
 #include "dialogs/settingsdialog.h"
 #include "widgets/palettebar.h"
 #include "set_dark_theme.h"
+#include "ScriptModel.h"
 
 #include <QApplication>
 #include <QAction>
@@ -85,6 +86,8 @@ MainWindow::MainWindow(QStringList filePaths, QWidget *parent)
     }
     qRegisterMetaType<InstrumentsEnum>("InstrumentsEnum");
     DataSingleton::Instance()->setIsInitialized();
+
+    mScriptModel = new ScriptModel(this);
 }
 
 MainWindow::~MainWindow()
