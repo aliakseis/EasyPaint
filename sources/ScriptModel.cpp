@@ -65,9 +65,9 @@ ScriptModel::ScriptModel(QObject *parent)
     qDebug() << "Functions loaded from script.py:" << functionList;
     */
 
-    /*
+    //*
     // Instead of using "dir()", use globals()
-    QVariant globalsKeysVariant = mainContext.evalScript("list(globals().keys())");
+    QVariant globalsKeysVariant = mainContext.evalScript("list(globals().keys())", Py_eval_input);
     qDebug() << "Globals keys:" << globalsKeysVariant;
 
     QStringList functionList;
@@ -80,7 +80,7 @@ ScriptModel::ScriptModel(QObject *parent)
             // Build an expression to check if the object in globals() is callable.
             // This looks up the object by name and calls callable() on it.
             QString expr = QString("callable(globals()['%1'])").arg(name);
-            QVariant isCallableVariant = mainContext.evalScript(expr);
+            QVariant isCallableVariant = mainContext.evalScript(expr, Py_eval_input);
 
             if (isCallableVariant.isValid() && isCallableVariant.toBool()) {
                 functionList.append(name);
@@ -91,8 +91,9 @@ ScriptModel::ScriptModel(QObject *parent)
     else {
         qDebug() << "Error: Could not obtain a valid globals keys list!";
     }
-    */
+    //*/
 
+    /*
 
     // Call the helper function "list_functions" defined in the script.
     //QVariant funcNames = mainContext.evalScript("list_functions()");
@@ -108,6 +109,7 @@ ScriptModel::ScriptModel(QObject *parent)
     {
         qCritical() << "Error: list_functions() did not return a valid list:" << funcNames;
     }
+    */
 
     /*
 
