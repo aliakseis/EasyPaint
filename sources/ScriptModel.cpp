@@ -3,6 +3,9 @@
 #include "PythonQt.h"
 
 #include <QFileInfo>
+#include <QDir>
+
+#include <windows.h>
 
 ScriptModel::ScriptModel(QObject *parent)
     : QObject(parent)
@@ -23,11 +26,15 @@ ScriptModel::ScriptModel(QObject *parent)
         if (QFileInfo::exists(sitePackages))
         {
             pyQtInst->addSysPath(sitePackages);
+            QString root = QFileInfo(path.toString()).dir().path();
+            pyQtInst->addSysPath(root);
+            SetDllDirectoryW(qUtf16Printable(root));
+            //qputenv("PATH", qgetenv("PATH") + ";" + root.toLocal8Bit());  // Extend PATH for current session
         }
     }
 
-    QObject::connect(pyQtInst, &PythonQt::pythonStdOut, [](const QString& str) { qInfo() << str; });
-    QObject::connect(pyQtInst, &PythonQt::pythonStdErr, [](const QString& str) { qCritical() << str; });
+    QObject::connect(pyQtInst, &PythonQt::pythonStdOut, [](const QString& str) { if (str.length() > 1) qInfo() << str; });
+    QObject::connect(pyQtInst, &PythonQt::pythonStdErr, [](const QString& str) { if (str.length() > 1) qCritical() << str; });
 
     pyQtInst->getMainModule().evalFile(":/script.py");
 
@@ -36,7 +43,10 @@ ScriptModel::ScriptModel(QObject *parent)
 
     PythonQtObjectPtr mainContext = PythonQt::self()->getMainModule(); // Get the main Python module
 
-    QVariant  dirResult = mainContext.call("dir");  // Get all attributes
+    /*
+    //QVariant  dirResult = mainContext.call("dir");  // Get all attributes
+    QVariant dirResult = mainContext.evalScript("dir()");
+
     QStringList functionList;
 
     if (dirResult.canConvert<QStringList>()) {  // Ensure it's convertible
@@ -53,6 +63,51 @@ ScriptModel::ScriptModel(QObject *parent)
     }
     // Print out the function names
     qDebug() << "Functions loaded from script.py:" << functionList;
+    */
+
+    /*
+    // Instead of using "dir()", use globals()
+    QVariant globalsKeysVariant = mainContext.evalScript("list(globals().keys())");
+    qDebug() << "Globals keys:" << globalsKeysVariant;
+
+    QStringList functionList;
+
+    if (globalsKeysVariant.isValid() && globalsKeysVariant.type() == QVariant::List) {
+        QVariantList keysList = globalsKeysVariant.toList();
+        for (const QVariant& key : keysList) {
+            QString name = key.toString();
+
+            // Build an expression to check if the object in globals() is callable.
+            // This looks up the object by name and calls callable() on it.
+            QString expr = QString("callable(globals()['%1'])").arg(name);
+            QVariant isCallableVariant = mainContext.evalScript(expr);
+
+            if (isCallableVariant.isValid() && isCallableVariant.toBool()) {
+                functionList.append(name);
+            }
+        }
+        qDebug() << "Available Python functions:" << functionList;
+    }
+    else {
+        qDebug() << "Error: Could not obtain a valid globals keys list!";
+    }
+    */
+
+
+    // Call the helper function "list_functions" defined in the script.
+    QVariant funcNames = mainContext.evalScript("list_functions()");
+
+    // Validate and convert the result to a QStringList.
+    if (funcNames.isValid() && funcNames.type() == QVariant::List)
+    {
+        QStringList functionList = funcNames.toStringList();
+        qDebug() << "Available Python functions:" << functionList;
+    }
+    else
+    {
+        qCritical() << "Error: list_functions() did not return a valid list:" << funcNames;
+    }
+
     /*
 
     PythonQtObjectPtr script = mainContext.getVariable("script"); // Get the script object
