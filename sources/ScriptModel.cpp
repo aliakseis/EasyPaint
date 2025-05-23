@@ -95,7 +95,8 @@ ScriptModel::ScriptModel(QObject *parent)
 
 
     // Call the helper function "list_functions" defined in the script.
-    QVariant funcNames = mainContext.evalScript("list_functions()");
+    //QVariant funcNames = mainContext.evalScript("list_functions()");
+    auto funcNames = mainContext.call("list_functions", {});
 
     // Validate and convert the result to a QStringList.
     if (funcNames.isValid() && funcNames.type() == QVariant::List)
