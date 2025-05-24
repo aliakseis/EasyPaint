@@ -55,9 +55,9 @@ CustomFilterSettings::CustomFilterSettings(QWidget *parent) :
     setLayout(gLayout);
 }
 
-QList<double> CustomFilterSettings::getConvolutionMatrix()
+QList<QVariant> CustomFilterSettings::getEffectSettings()
 {
-   QList<double> matrix;
+   QList<QVariant> matrix;
 
    matrix << mSpinBox_11->value() << mSpinBox_12->value() << mSpinBox_13->value()
           << mSpinBox_21->value() << mSpinBox_22->value() << mSpinBox_23->value()

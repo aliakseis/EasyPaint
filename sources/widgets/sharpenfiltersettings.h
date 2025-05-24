@@ -37,7 +37,7 @@ public:
     explicit SharpenFilterSettings(QWidget *parent = 0);
     
 protected:
-    virtual QList<double> getConvolutionMatrix();
+    QList<QVariant> getEffectSettings() override;
 
 private:
     QSlider *mIntensitySlider;

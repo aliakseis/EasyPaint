@@ -53,7 +53,7 @@ private:
 
     QImage mImage;
 
-    QRgb convolutePixel(const QImage &image, int x, int y, const QList<double> &kernelMatrix);
+    QRgb convolutePixel(const QImage &image, int x, int y, const QList<QVariant> &kernelMatrix);
 
 private slots:
     void applyMatrix();

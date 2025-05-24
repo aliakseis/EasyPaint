@@ -25,6 +25,7 @@
 
 #include <QLabel>
 #include <QLayout>
+#include <QVariant>
 
 #include "gaussianblurfiltersettings.h"
 
@@ -48,9 +49,9 @@ GaussianBlurFilterSettings::GaussianBlurFilterSettings(QWidget *parent) :
     setLayout(vLayout);
 }
 
-QList<double> GaussianBlurFilterSettings::getConvolutionMatrix()
+QList<QVariant> GaussianBlurFilterSettings::getEffectSettings()
 {
-    QList<double> matrix;
+    QList<QVariant> matrix;
     int intensity = mIntensitySlider->value();
 
     matrix << 1 * intensity << 2 * intensity << 1 * intensity

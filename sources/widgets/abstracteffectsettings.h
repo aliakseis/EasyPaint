@@ -36,7 +36,7 @@ signals:
 public:
     explicit AbstractEffectSettings(QWidget *parent = 0) : QWidget(parent) {}
     
-    QList<double> virtual getConvolutionMatrix() = 0;
+    virtual QList<QVariant> getEffectSettings() = 0;
 };
 
 #endif // ABSTRACTEFFECTWIDGET_H
