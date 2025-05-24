@@ -88,6 +88,7 @@ MainWindow::MainWindow(QStringList filePaths, QWidget *parent)
     DataSingleton::Instance()->setIsInitialized();
 
     mScriptModel = new ScriptModel(this);
+    mScriptModel->setupActions(mEffectsMenu, mEffectsActMap);
 }
 
 MainWindow::~MainWindow()
@@ -354,6 +355,7 @@ void MainWindow::initializeMainMenu()
 
     mEffectsMenu = menuBar()->addMenu(tr("E&ffects"));
 
+    /*
     QAction *grayEfAction = new QAction(tr("Gray"), this);
     connect(grayEfAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
     mEffectsMenu->addAction(grayEfAction);
@@ -388,7 +390,31 @@ void MainWindow::initializeMainMenu()
     connect(customEfAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
     mEffectsMenu->addAction(customEfAction);
     mEffectsActMap.insert(CUSTOM, customEfAction);
+    */
 
+    // Define a mapping of effect types to their display names
+    struct EffectData {
+        EffectsEnum type;
+        QString name;
+    };
+
+    const QList<EffectData> effectsList = {
+        {GRAY, tr("Gray")},
+        {NEGATIVE, tr("Negative")},
+        {BINARIZATION, tr("Binarization")},
+        {GAUSSIANBLUR, tr("Gaussian Blur")},
+        {GAMMA, tr("Gamma")},
+        {SHARPEN, tr("Sharpen")},
+        {CUSTOM, tr("Custom")}
+    };
+
+    // Iterate through the effects list and create actions dynamically
+    for (const EffectData& effect : effectsList) {
+        QAction* effectAction = new QAction(tr(effect.name.toStdString().c_str()), this);
+        connect(effectAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
+        mEffectsMenu->addAction(effectAction);
+        mEffectsActMap.insert(effect.type, effectAction);
+    }
     mToolsMenu = menuBar()->addMenu(tr("&Tools"));
 
     QAction *resizeImAction = new QAction(tr("Image size..."), this);

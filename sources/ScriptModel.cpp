@@ -74,8 +74,6 @@ ScriptModel::ScriptModel(QObject *parent)
     QVariant globalsKeysVariant = mainContext.evalScript("list(globals().keys())", Py_eval_input);
     qDebug() << "Globals keys:" << globalsKeysVariant;
 
-    QStringList functionList;
-
     if (globalsKeysVariant.isValid() && globalsKeysVariant.type() == QVariant::List) {
         QVariantList keysList = globalsKeysVariant.toList();
         for (const QVariant& key : keysList) {
@@ -90,10 +88,10 @@ ScriptModel::ScriptModel(QObject *parent)
             QVariant isCallableVariant = mainContext.evalScript(expr, Py_eval_input);
 
             if (isCallableVariant.isValid() && isCallableVariant.toBool()) {
-                functionList.append(name);
+                mFunctionList.append(name);
             }
         }
-        qDebug() << "Available Python functions:" << functionList;
+        qDebug() << "Available Python functions:" << mFunctionList;
     }
     else {
         qDebug() << "Error: Could not obtain a valid globals keys list!";
@@ -134,4 +132,8 @@ ScriptModel::ScriptModel(QObject *parent)
 ScriptModel::~ScriptModel()
 {
     PythonQt::cleanup();
+}
+
+void ScriptModel::setupActions(QMenu* effectsMenu, QMap<EffectsEnum, QAction*>& effectsActMap)
+{
 }
