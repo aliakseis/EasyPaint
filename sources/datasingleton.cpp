@@ -25,6 +25,14 @@
 
 #include "datasingleton.h"
 
+#include "effects/negativeeffect.h"
+#include "effects/grayeffect.h"
+#include "effects/binarizationeffect.h"
+#include "effects/gaussianblureffect.h"
+#include "effects/gammaeffect.h"
+#include "effects/sharpeneffect.h"
+#include "effects/customeffect.h"
+
 #include <QtCore/QSettings>
 
 DataSingleton* DataSingleton::m_pInstance = 0;
@@ -40,6 +48,16 @@ DataSingleton::DataSingleton()
     mIsInitialized = false;
     readSetting();
     readState();
+
+    // Effects handlers
+    mEffectsHandlers.fill(0, (int)EFFECTS_COUNT);
+    mEffectsHandlers[NEGATIVE] = new NegativeEffect(this);
+    mEffectsHandlers[GRAY] = new GrayEffect(this);
+    mEffectsHandlers[BINARIZATION] = new BinarizationEffect(this);
+    mEffectsHandlers[GAUSSIANBLUR] = new GaussianBlurEffect(this);
+    mEffectsHandlers[GAMMA] = new GammaEffect(this);
+    mEffectsHandlers[SHARPEN] = new SharpenEffect(this);
+    mEffectsHandlers[CUSTOM] = new CustomEffect(this);
 }
 
 DataSingleton* DataSingleton::Instance()

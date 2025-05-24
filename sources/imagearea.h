@@ -203,9 +203,8 @@ private:
     QCursor *mCurrentCursor;
     qreal mZoomFactor;
     QUndoStack *mUndoStack;
-    QVector<AbstractInstrument*> mInstrumentsHandlers;
     AbstractInstrument *mInstrumentHandler;
-    QVector<AbstractEffect*> mEffectsHandlers;
+    QVector<AbstractInstrument*> mInstrumentsHandlers;
     AbstractEffect *mEffectHandler;
 
 signals:

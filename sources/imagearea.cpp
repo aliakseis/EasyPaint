@@ -28,6 +28,7 @@
 #include "undocommand.h"
 
 #include "instruments/abstractinstrument.h"
+#include "instruments/selectioninstrument.h"
 #include "instruments/pencilinstrument.h"
 #include "instruments/lineinstrument.h"
 #include "instruments/eraserinstrument.h"
@@ -37,21 +38,13 @@
 #include "instruments/sprayinstrument.h"
 #include "instruments/magnifierinstrument.h"
 #include "instruments/colorpickerinstrument.h"
-#include "instruments/selectioninstrument.h"
 #include "instruments/curvelineinstrument.h"
 #include "instruments/textinstrument.h"
+
 #include "dialogs/resizedialog.h"
 
 #include "effects/abstracteffect.h"
-#include "effects/negativeeffect.h"
-#include "effects/grayeffect.h"
-#include "effects/binarizationeffect.h"
-#include "effects/gaussianblureffect.h"
-#include "effects/gammaeffect.h"
-#include "effects/sharpeneffect.h"
-#include "effects/customeffect.h"
 
-#include "dialogs/resizedialog.h"
 #include "avir/avir.h"
 
 #include <QApplication>
@@ -196,7 +189,7 @@ ImageArea::ImageArea(const bool &isOpen, const QString &filePath, QWidget *paren
 
     autoSaveTimer->start();
 
-    SelectionInstrument *selectionInstrument = new SelectionInstrument(this);
+    SelectionInstrument* selectionInstrument = new SelectionInstrument(this);
     connect(selectionInstrument, SIGNAL(sendEnableCopyCutActions(bool)), this, SIGNAL(sendEnableCopyCutActions(bool)));
     connect(selectionInstrument, SIGNAL(sendEnableSelectionInstrument(bool)), this, SIGNAL(sendEnableSelectionInstrument(bool)));
 
@@ -214,16 +207,6 @@ ImageArea::ImageArea(const bool &isOpen, const QString &filePath, QWidget *paren
     mInstrumentsHandlers[COLORPICKER] = new ColorpickerInstrument(this);
     mInstrumentsHandlers[CURVELINE] = new CurveLineInstrument(this);
     mInstrumentsHandlers[TEXT] = new TextInstrument(this);
-
-    // Effects handlers
-    mEffectsHandlers.fill(0, (int)EFFECTS_COUNT);
-    mEffectsHandlers[NEGATIVE] = new NegativeEffect(this);
-    mEffectsHandlers[GRAY] = new GrayEffect(this);
-    mEffectsHandlers[BINARIZATION] = new BinarizationEffect(this);
-    mEffectsHandlers[GAUSSIANBLUR] = new GaussianBlurEffect(this);
-    mEffectsHandlers[GAMMA] = new GammaEffect(this);
-    mEffectsHandlers[SHARPEN] = new SharpenEffect(this);
-    mEffectsHandlers[CUSTOM] = new CustomEffect(this);
 }
 
 ImageArea::~ImageArea()
@@ -414,13 +397,14 @@ void ImageArea::rotateImage(bool flag)
 
 void ImageArea::applyEffect(EffectsEnum effect)
 {
-    mEffectHandler = mEffectsHandlers.at(effect);
+    mEffectHandler = DataSingleton::Instance()->mEffectsHandlers.at(effect);
     mEffectHandler->applyEffect(*this);
 }
 
 void ImageArea::copyImage()
 {
-    SelectionInstrument *instrument = static_cast <SelectionInstrument*> (mInstrumentsHandlers.at(CURSOR));
+    SelectionInstrument *instrument = static_cast <SelectionInstrument*> 
+        (mInstrumentsHandlers.at(CURSOR));
     instrument->copyImage(*this);
 }
 
@@ -428,13 +412,15 @@ void ImageArea::pasteImage()
 {
     if(DataSingleton::Instance()->getInstrument() != CURSOR)
         emit sendSetInstrument(CURSOR);
-    SelectionInstrument *instrument = static_cast <SelectionInstrument*> (mInstrumentsHandlers.at(CURSOR));
+    SelectionInstrument *instrument = static_cast <SelectionInstrument*> 
+        (mInstrumentsHandlers.at(CURSOR));
     instrument->pasteImage(*this);
 }
 
 void ImageArea::cutImage()
 {
-    SelectionInstrument *instrument = static_cast <SelectionInstrument*> (mInstrumentsHandlers.at(CURSOR));
+    SelectionInstrument *instrument = static_cast <SelectionInstrument*> 
+        (mInstrumentsHandlers.at(CURSOR));
     instrument->cutImage(*this);
 }
 
@@ -453,7 +439,8 @@ void ImageArea::mousePressEvent(QMouseEvent *event)
     }
     else if(DataSingleton::Instance()->getInstrument() != NONE_INSTRUMENT)
     {
-        mInstrumentHandler = mInstrumentsHandlers.at(DataSingleton::Instance()->getInstrument());
+        mInstrumentHandler = mInstrumentsHandlers.at(
+            DataSingleton::Instance()->getInstrument());
         mInstrumentHandler->mousePressEvent(event, *this);
     }
 }
@@ -463,7 +450,8 @@ void ImageArea::mouseMoveEvent(QMouseEvent *event)
     const auto pos = event->pos() / getZoomFactor();
 
     InstrumentsEnum instrument = DataSingleton::Instance()->getInstrument();
-    mInstrumentHandler = mInstrumentsHandlers.at(DataSingleton::Instance()->getInstrument());
+    mInstrumentHandler = mInstrumentsHandlers.at(
+        DataSingleton::Instance()->getInstrument());
     if(mIsResize)
     {
          doResizeCanvas(this, pos.x(), pos.y(), false, false);
@@ -506,7 +494,8 @@ void ImageArea::mouseReleaseEvent(QMouseEvent *event)
     }
     else if(DataSingleton::Instance()->getInstrument() != NONE_INSTRUMENT)
     {
-        mInstrumentHandler = mInstrumentsHandlers.at(DataSingleton::Instance()->getInstrument());
+        mInstrumentHandler = mInstrumentsHandlers.at(
+            DataSingleton::Instance()->getInstrument());
         mInstrumentHandler->mouseReleaseEvent(event, *this);
     }
 }
