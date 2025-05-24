@@ -2,14 +2,14 @@ import cv2
 import numpy as np
 from PIL import Image
 
-def list_functions():
-    """
-    Returns a list of names of functions defined in this module.
-    
-    Returns:
-        list: A list of strings representing the names of callable functions.
-    """
-    return [name for name, obj in globals().items() if callable(obj) and not name.startswith("__")]
+#def list_functions():
+#    """
+#    Returns a list of names of functions defined in this module.
+#    
+#    Returns:
+#        list: A list of strings representing the names of callable functions.
+#    """
+#    return [name for name, obj in globals().items() if callable(obj) and not name.startswith("__")]
 
 def denoise_image(image: np.ndarray, strength: int = 10) -> np.ndarray:
     """Applies denoising to an image using OpenCV's fastNlMeansDenoising.

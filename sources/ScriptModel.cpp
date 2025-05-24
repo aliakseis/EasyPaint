@@ -5,7 +5,9 @@
 #include <QFileInfo>
 #include <QDir>
 
+#ifdef Q_OS_WIN
 #include <windows.h>
+#endif
 
 ScriptModel::ScriptModel(QObject *parent)
     : QObject(parent)
@@ -26,9 +28,11 @@ ScriptModel::ScriptModel(QObject *parent)
         if (QFileInfo::exists(sitePackages))
         {
             pyQtInst->addSysPath(sitePackages);
+#ifdef Q_OS_WIN
             QString root = QFileInfo(path.toString()).dir().path();
-            pyQtInst->addSysPath(root);
             SetDllDirectoryW(qUtf16Printable(root));
+#endif
+            //pyQtInst->addSysPath(root);
             //qputenv("PATH", qgetenv("PATH") + ";" + root.toLocal8Bit());  // Extend PATH for current session
         }
     }
@@ -76,6 +80,9 @@ ScriptModel::ScriptModel(QObject *parent)
         QVariantList keysList = globalsKeysVariant.toList();
         for (const QVariant& key : keysList) {
             QString name = key.toString();
+
+            if (name.startsWith('_'))
+                continue;
 
             // Build an expression to check if the object in globals() is callable.
             // This looks up the object by name and calls callable() on it.
