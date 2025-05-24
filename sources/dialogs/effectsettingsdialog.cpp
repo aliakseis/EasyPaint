@@ -97,11 +97,12 @@ void EffectSettingsDialog::applyMatrix()
 {
     QImage copy(mImage);
 
+    const auto matrix = mSettingsWidget->getEffectSettings();
     for(int i = 2; i < copy.height() - 2; ++i)
     {
         for(int j = 2; j < copy.width() - 2; ++j)
         {
-            copy.setPixel(j, i, convolutePixel(mImage, j, i, mSettingsWidget->getEffectSettings()));
+            copy.setPixel(j, i, convolutePixel(mImage, j, i, matrix));
         }
     }
 
