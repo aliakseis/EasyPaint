@@ -162,12 +162,49 @@ ScriptModel::ScriptModel(QObject *parent)
     QObject::connect(pyQtInst, &PythonQt::pythonStdOut, [](const QString& str) { if (str.length() > 1) qInfo() << str; });
     QObject::connect(pyQtInst, &PythonQt::pythonStdErr, [](const QString& str) { if (str.length() > 1) qCritical() << str; });
 
-    pyQtInst->getMainModule().evalFile(":/script.py");
+    PythonQtObjectPtr mainContext = PythonQt::self()->getMainModule(); // Get the main Python module
 
+    // Load the helper code to define get_function_info() and get_all_functions_info()
+    mainContext.evalScript(
+        "import inspect\n"
+        "def _get_function_info(func):\n"
+        "    sig = inspect.signature(func)\n"
+        "    parameters = []\n"
+        "    for name, param in sig.parameters.items():\n"
+        "        parameters.append({\n"
+        "            'name': name,\n"
+        "            'kind': str(param.kind),\n"
+        "            'default': None if param.default is param.empty else param.default,\n"
+        "            'annotation': None if param.annotation is param.empty else str(param.annotation)\n"
+        "        })\n"
+        "    info = {\n"
+        "        'name': func.__name__,\n"
+        "        'signature': str(sig),\n"
+        "        'parameters': parameters,\n"
+        "        'doc': inspect.getdoc(func) or \"\"\n"
+        "    }\n"
+        "    return info\n"
+        "\n"
+        "def _get_all_functions_info():\n"
+        "    functions_info = []\n"
+        "    for name, obj in globals().items():\n"
+        "        if callable(obj) and not name.startswith('_'):\n"
+        "            try:\n"
+        "                functions_info.append(_get_function_info(obj))\n"
+        "            except Exception as e:\n"
+        "                # Optionally log or handle functions that cannot be introspected\n"
+        "                pass\n"
+        "    return functions_info\n"
+    );
+
+    mainContext.evalFile(":/script.py");
+
+    QVariant allFunctionsInfo = mainContext.call("_get_all_functions_info");
+
+    qDebug() << "All functions' info:" << allFunctionsInfo;
 
     /////////////////////
 
-    PythonQtObjectPtr mainContext = PythonQt::self()->getMainModule(); // Get the main Python module
 
     /*
     //QVariant  dirResult = mainContext.call("dir");  // Get all attributes
