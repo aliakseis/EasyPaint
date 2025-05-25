@@ -200,8 +200,9 @@ ScriptModel::ScriptModel(QObject *parent)
     mainContext.evalFile(":/script.py");
 
     QVariant allFunctionsInfo = mainContext.call("_get_all_functions_info");
+    mFunctionInfoList = allFunctionsInfo.toList();
 
-    qDebug() << "All functions' info:" << allFunctionsInfo;
+    qDebug() << "All functions' info:" << mFunctionInfoList;
 
     /////////////////////
 
@@ -228,7 +229,7 @@ ScriptModel::ScriptModel(QObject *parent)
     qDebug() << "Functions loaded from script.py:" << functionList;
     */
 
-    //*
+    /*
     // Instead of using "dir()", use globals()
     QVariant globalsKeysVariant = mainContext.evalScript("list(globals().keys())", Py_eval_input);
     qDebug() << "Globals keys:" << globalsKeysVariant;

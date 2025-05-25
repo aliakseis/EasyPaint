@@ -23,6 +23,8 @@ set (HEADERS
     sources/effects/effectwithsettings.h
     sources/effects/gammaeffect.h
     sources/effects/gaussianblureffect.h
+    sources/effects/scripteffect.h
+    sources/effects/scripteffectwithsettings.h
     sources/effects/sharpeneffect.h
     sources/set_dark_theme.h
     sources/ScriptModel.h
@@ -41,6 +43,7 @@ set (HEADERS
     sources/dialogs/settingsdialog.h
     sources/dialogs/textdialog.h
     sources/dialogs/effectsettingsdialog.h
+    sources/dialogs/scripteffectsettingsdialog.h
     sources/instruments/abstractinstrument.h
     sources/instruments/abstractselection.h
     sources/instruments/selectioninstrument.h
@@ -69,6 +72,8 @@ set (SOURCES
     sources/effects/binarizationeffect.cpp
     sources/effects/effectwithsettings.cpp
     sources/effects/gammaeffect.cpp
+    sources/effects/scripteffect.cpp
+    sources/effects/scripteffectwithsettings.cpp
     sources/set_dark_theme.cpp
     sources/ScriptModel.cpp
     sources/undocommand.cpp
@@ -85,6 +90,7 @@ set (SOURCES
     sources/dialogs/settingsdialog.cpp
     sources/dialogs/textdialog.cpp
     sources/dialogs/effectsettingsdialog.cpp
+    sources/dialogs/scripteffectsettingsdialog.cpp
     sources/instruments/abstractinstrument.cpp
     sources/instruments/abstractselection.cpp
     sources/instruments/selectioninstrument.cpp

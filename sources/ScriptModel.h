@@ -18,6 +18,5 @@ public:
     void setupActions(QMenu* effectsMenu, QMap<EffectsEnum, QAction*>& effectsActMap);
 
 private:
-    QStringList mFunctionList;
-
+    QVariantList mFunctionInfoList;
 };
