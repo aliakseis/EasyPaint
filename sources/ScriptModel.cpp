@@ -16,6 +16,8 @@
 #include <QPushButton>
 #include <QDialog>
 
+#include <utility>
+
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
@@ -41,30 +43,38 @@ QString getDocString(const QString& callable)
 
 // Returns a list of parameter definitions as QVariantMaps.
 // Each QVariantMap contains keys like "name", "type", and "description".
-QVariantList parseDocstring(const QString& docString) {
+auto parseDocstring(const QString& docString) {
+    //QVariantMap result;
     QVariantList params;
+
+    // Extract the common description (first paragraph of the docstring)
+    QRegularExpression descExp(R"(^([\s\S]*?)\n\n)");
+    auto descMatch = descExp.match(docString);
+    QString description = descMatch.hasMatch() ? descMatch.captured(1).trimmed() : "";
+
     // Locate the Args: section (a simple approach)
     QRegularExpression argsSectionExp(R"(Args:\s*((?:.|\n)*))");
     auto argsMatch = argsSectionExp.match(docString);
-    if (!argsMatch.hasMatch())
-        return params;
+    if (argsMatch.hasMatch()) {
+        QString argsSection = argsMatch.captured(1);
 
-    QString argsSection = argsMatch.captured(1);
-    // Use a regex to capture parameter lines (assumes one parameter per line)
-    // Format assumed: <name> (<type>[, optional]): <description> [Defaults to <default>].
-    QRegularExpression paramExp(R"(^\s*(\w+)\s*\(([^,)]+)(?:,\s*optional)?\):\s*(.+)$)",
-        QRegularExpression::MultilineOption);
-    QRegularExpressionMatchIterator it = paramExp.globalMatch(argsSection);
-    while (it.hasNext()) {
-        QRegularExpressionMatch match = it.next();
-        QVariantMap param;
-        param["name"] = match.captured(1);
-        param["type"] = match.captured(2);
-        param["description"] = match.captured(3);
-        // Further parsing could extract default values if needed.
-        params.append(param);
+        // Use a regex to capture parameter lines (assumes one parameter per line)
+        QRegularExpression paramExp(R"(^\s*(\w+)\s*\(([^,)]+)(?:,\s*optional)?\):\s*(.+)$)",
+            QRegularExpression::MultilineOption);
+        QRegularExpressionMatchIterator it = paramExp.globalMatch(argsSection);
+        while (it.hasNext()) {
+            QRegularExpressionMatch match = it.next();
+            QVariantMap param;
+            param["name"] = match.captured(1);
+            param["type"] = match.captured(2);
+            param["description"] = match.captured(3);
+            params.append(param);
+        }
     }
-    return params;
+
+    //result["parameters"] = params;
+    //return result;
+    return std::make_pair(description, params);
 }
 
 /// Creates a widget with input controls for each parameter.
