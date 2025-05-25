@@ -41,7 +41,7 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage &img,
 {
     mSettingsWidget = effectWithSettings->getSettingsWidget();
     mImagePreview = new ImagePreview(&mImage, this);
-    mImagePreview->setMinimumSize(140, 140);
+    mImagePreview->setMinimumSize(320, 320);
 
     mOkButton = new QPushButton(tr("Ok"), this);
     connect(mOkButton, SIGNAL(clicked()), this, SLOT(applyMatrix()));
