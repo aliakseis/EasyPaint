@@ -26,16 +26,16 @@
 #ifndef SHARPENEFFECT_H
 #define SHARPENEFFECT_H
 
-#include "effectwithsettings.h"
+#include "customeffect.h"
 #include "../widgets/sharpenfiltersettings.h"
 
 #include <QtCore/QObject>
 
-class SharpenEffect : public EffectWithSettings
+class SharpenEffect : public CustomEffect
 {
     Q_OBJECT
 public:
-    explicit SharpenEffect(QObject *parent = 0) : EffectWithSettings(parent) {}
+    explicit SharpenEffect(QObject *parent = 0) : CustomEffect(parent) {}
 
 protected:
     // TODO: change type of widget

@@ -29,7 +29,6 @@
 #include "../widgets/abstracteffectsettings.h"
 #include "../widgets/imagepreview.h"
 
-#include <cmath>
 
 #include <QVariant>
 #include <QHBoxLayout>
@@ -38,7 +37,7 @@
 
 EffectSettingsDialog::EffectSettingsDialog(const QImage &img, 
     EffectWithSettings* effectWithSettings, QWidget *parent) :
-    QDialog(parent), mImage(img)
+    QDialog(parent), mEffectWithSettings(effectWithSettings), mImage(img)
 {
     mSettingsWidget = effectWithSettings->getSettingsWidget();
     mImagePreview = new ImagePreview(&mImage, this);
@@ -72,45 +71,7 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage &img,
     setLayout(vLayout);
 }
 
-QRgb EffectSettingsDialog::convolutePixel(const QImage &image, int x, int y, const QList<QVariant> &kernelMatrix)
-{
-    int kernelSize = sqrt(kernelMatrix.size());
-
-    double total = 0;
-    double red = 0;
-    double green = 0;
-    double blue = 0;
-    // TODO: some optimization can be made (maybe use OpenCV in future
-    for(int r = -kernelSize / 2; r <= kernelSize / 2; ++r)
-    {
-        for(int c = -kernelSize / 2; c <= kernelSize / 2; ++c)
-        {
-            int kernelValue = kernelMatrix[(kernelSize / 2 + r) * kernelSize + (kernelSize / 2 + c)].toDouble();
-            total += kernelValue;
-            red += qRed(image.pixel(x + c, y + r)) * kernelValue;
-            green += qGreen(image.pixel(x + c, y + r)) * kernelValue;
-            blue += qBlue(image.pixel(x + c, y + r)) * kernelValue;
-        }
-    }
-
-    if(total == 0)
-        return qRgb(qBound(0, qRound(red), 255), qBound(0, qRound(green), 255), qBound(0, qRound(blue), 255));
-
-    return qRgb(qBound(0, qRound(red / total), 255), qBound(0, qRound(green / total), 255), qBound(0, qRound(blue / total), 255));
-}
-
 void EffectSettingsDialog::applyMatrix()
 {
-    QImage copy(mImage);
-
-    const auto matrix = mSettingsWidget->getEffectSettings();
-    for(int i = 2; i < copy.height() - 2; ++i)
-    {
-        for(int j = 2; j < copy.width() - 2; ++j)
-        {
-            copy.setPixel(j, i, convolutePixel(mImage, j, i, matrix));
-        }
-    }
-
-    mImage = copy;
+    mEffectWithSettings->convertImage(mImage, mSettingsWidget->getEffectSettings());
 }

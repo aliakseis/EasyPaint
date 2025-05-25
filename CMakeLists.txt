@@ -63,6 +63,7 @@ set (SOURCES
     sources/imagearea.cpp
     sources/datasingleton.cpp
     sources/effects/abstracteffect.cpp
+    sources/effects/customeffect.cpp
     sources/effects/negativeeffect.cpp
     sources/effects/grayeffect.cpp
     sources/effects/binarizationeffect.cpp
