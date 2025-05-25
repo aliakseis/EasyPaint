@@ -23,18 +23,24 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "effectsettingsdialog.h"
+
+#include "../effects/effectwithsettings.h"
+#include "../widgets/abstracteffectsettings.h"
+#include "../widgets/imagepreview.h"
+
 #include <cmath>
 
 #include <QVariant>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#include "effectsettingsdialog.h"
 
-EffectSettingsDialog::EffectSettingsDialog(const QImage &img, AbstractEffectSettings *settingsWidget, QWidget *parent) :
+EffectSettingsDialog::EffectSettingsDialog(const QImage &img, 
+    EffectWithSettings* effectWithSettings, QWidget *parent) :
     QDialog(parent), mImage(img)
 {
-    mSettingsWidget = settingsWidget;
+    mSettingsWidget = effectWithSettings->getSettingsWidget();
     mImagePreview = new ImagePreview(&mImage, this);
     mImagePreview->setMinimumSize(140, 140);
 

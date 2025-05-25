@@ -45,8 +45,6 @@ public:
     explicit EffectWithSettings(QObject *parent = 0);
 
     virtual void applyEffect(ImageArea &imageArea);
-
-protected:
     virtual AbstractEffectSettings* getSettingsWidget() = 0;
 
 };
