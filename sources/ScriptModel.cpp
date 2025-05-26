@@ -16,6 +16,7 @@
 #include <QPushButton>
 #include <QDialog>
 
+#include <map>
 #include <utility>
 
 #ifdef Q_OS_WIN
@@ -40,12 +41,20 @@ QString getDocString(const QString& callable)
     }
 }
 
+struct DocParamInfo {
+    QString type;
+    QString description;
+};
 
 // Returns a list of parameter definitions as QVariantMaps.
 // Each QVariantMap contains keys like "name", "type", and "description".
-auto parseDocstring(const QString& docString) {
+std::pair<QString, std::map<QString, DocParamInfo>> parseDocstring(const QString& docString) {
+
+    if (docString.isEmpty())
+        return {};
+
     //QVariantMap result;
-    QVariantList params;
+    std::map<QString, DocParamInfo> params;
 
     // Extract the common description (first paragraph of the docstring)
     QRegularExpression descExp(R"(^([\s\S]*?)\n\n)");
@@ -64,17 +73,17 @@ auto parseDocstring(const QString& docString) {
         QRegularExpressionMatchIterator it = paramExp.globalMatch(argsSection);
         while (it.hasNext()) {
             QRegularExpressionMatch match = it.next();
-            QVariantMap param;
-            param["name"] = match.captured(1);
-            param["type"] = match.captured(2);
-            param["description"] = match.captured(3);
-            params.append(param);
+            auto name = match.captured(1);
+            DocParamInfo param;
+            param.type = match.captured(2);
+            param.description = match.captured(3);
+            params[name] = param;
         }
     }
 
     //result["parameters"] = params;
     //return result;
-    return std::make_pair(description, params);
+    return { description, params };
 }
 
 /// Creates a widget with input controls for each parameter.
@@ -209,10 +218,47 @@ ScriptModel::ScriptModel(QObject *parent)
 
     mainContext.evalFile(":/script.py");
 
-    QVariant allFunctionsInfo = mainContext.call("_get_all_functions_info");
-    mFunctionInfoList = allFunctionsInfo.toList();
+    auto allFunctionsInfo = mainContext.call("_get_all_functions_info").toList();
 
-    qDebug() << "All functions' info:" << mFunctionInfoList;
+    for (auto& functionInfo : allFunctionsInfo)
+    {
+        FunctionInfo info;
+
+        auto map = functionInfo.toMap();
+        info.name = map["name"].toString();
+        info.signature = map["signature"].toString();
+        info.doc = map["doc"].toString();
+        auto docInfo = parseDocstring(info.doc);
+        info.fullName = docInfo.first.isEmpty() ? info.name : docInfo.first;
+
+        auto parameters = map["parameters"].toList();
+        for (const auto& v : parameters)
+        {
+            auto in = v.toMap();
+            ParameterInfo param;
+            param.name = in["name"].toString();
+            param.fullName = param.name;
+            param.kind = in["kind"].toString();
+            param.default = in["default"];
+            param.description = in["description"].toString();
+            param.annotation = in["annotation"].toString();
+            auto it = docInfo.second.find(param.name);
+            if (it != docInfo.second.end())
+            {
+                if (!it->second.description.isEmpty())
+                {
+                    param.fullName = it->second.description;
+                    param.description = it->second.description;
+                }
+            }
+            info.parameters.push_back(std::move(param));
+        }
+
+        mFunctionInfos.push_back(std::move(info));
+    }
+
+    qDebug() << "All functions' info:" << allFunctionsInfo;
+
 
     /////////////////////
 
