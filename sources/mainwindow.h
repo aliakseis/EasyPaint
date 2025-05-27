@@ -103,7 +103,7 @@ private:
     QLabel *mSizeLabel, *mPosLabel, *mColorPreviewLabel, *mColorRGBLabel;
 
     QMap<InstrumentsEnum, QAction*> mInstrumentsActMap;
-    QMap<EffectsEnum, QAction*> mEffectsActMap;
+    QMap<int, QAction*> mEffectsActMap;
     QAction *mSaveAction, *mSaveAsAction, *mCloseAction, *separatorAct, *mPrintAction,
             *mUndoAction, *mRedoAction, *mCopyAction, *mCutAction,
             *mNewAction, *mOpenAction, *mExitAction, *mPasteAction, *mZoomInAction, *mZoomOutAction;

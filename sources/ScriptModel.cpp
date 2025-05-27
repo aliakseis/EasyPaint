@@ -1,5 +1,7 @@
 #include "ScriptModel.h"
 
+#include "datasingleton.h"
+
 #include "PythonQt.h"
 
 #include <QFileInfo>
@@ -15,6 +17,8 @@
 #include <QVariantList>
 #include <QPushButton>
 #include <QDialog>
+#include <QAction>
+#include <QMenu>
 
 #include <map>
 #include <utility>
@@ -350,6 +354,16 @@ ScriptModel::~ScriptModel()
     PythonQt::cleanup();
 }
 
-void ScriptModel::setupActions(QMenu* effectsMenu, QMap<EffectsEnum, QAction*>& effectsActMap)
+void ScriptModel::setupActions(QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap)
 {
+    const auto parent = this->parent();
+
+    for (const auto& funcInfo : mFunctionInfos)
+    {
+        int type = DataSingleton::Instance()->addScriptActionHandler(this, funcInfo);
+        QAction* effectAction = new QAction(funcInfo.fullName, this);
+        connect(effectAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
+        effectsMenu->addAction(effectAction);
+        effectsActMap.insert(type, effectAction);
+    }
 }

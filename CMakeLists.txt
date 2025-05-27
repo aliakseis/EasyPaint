@@ -27,6 +27,7 @@ set (HEADERS
     sources/effects/scripteffectwithsettings.h
     sources/effects/sharpeneffect.h
     sources/set_dark_theme.h
+    sources/ScriptInfo.h
     sources/ScriptModel.h
     sources/undocommand.h
     sources/widgets/toolbar.h

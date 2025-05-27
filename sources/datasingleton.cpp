@@ -174,3 +174,8 @@ void DataSingleton::writeState()
         settings.setValue("/State/WindowSize", mWindowSize);
     }
 }
+
+int DataSingleton::addScriptActionHandler(ScriptModel* scriprModel, const FunctionInfo& functionInfo)
+{
+    return 0;
+}

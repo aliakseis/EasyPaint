@@ -355,43 +355,6 @@ void MainWindow::initializeMainMenu()
 
     mEffectsMenu = menuBar()->addMenu(tr("E&ffects"));
 
-    /*
-    QAction *grayEfAction = new QAction(tr("Gray"), this);
-    connect(grayEfAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
-    mEffectsMenu->addAction(grayEfAction);
-    mEffectsActMap.insert(GRAY, grayEfAction);
-
-    QAction *negativeEfAction = new QAction(tr("Negative"), this);
-    connect(negativeEfAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
-    mEffectsMenu->addAction(negativeEfAction);
-    mEffectsActMap.insert(NEGATIVE, negativeEfAction);
-
-    QAction *binarizationEfAction = new QAction(tr("Binarization"), this);
-    connect(binarizationEfAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
-    mEffectsMenu->addAction(binarizationEfAction);
-    mEffectsActMap.insert(BINARIZATION, binarizationEfAction);
-
-    QAction *gaussianBlurEfAction = new QAction(tr("Gaussian Blur"), this);
-    connect(gaussianBlurEfAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
-    mEffectsMenu->addAction(gaussianBlurEfAction);
-    mEffectsActMap.insert(GAUSSIANBLUR, gaussianBlurEfAction);
-
-    QAction *gammaEfAction = new QAction(tr("Gamma"), this);
-    connect(gammaEfAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
-    mEffectsMenu->addAction(gammaEfAction);
-    mEffectsActMap.insert(GAMMA, gammaEfAction);
-
-    QAction *sharpenEfAction = new QAction(tr("Sharpen"), this);
-    connect(sharpenEfAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
-    mEffectsMenu->addAction(sharpenEfAction);
-    mEffectsActMap.insert(SHARPEN, sharpenEfAction);
-
-    QAction *customEfAction = new QAction(tr("Custom"), this);
-    connect(customEfAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
-    mEffectsMenu->addAction(customEfAction);
-    mEffectsActMap.insert(CUSTOM, customEfAction);
-    */
-
     // Define a mapping of effect types to their display names
     struct EffectData {
         EffectsEnum type;
@@ -410,7 +373,7 @@ void MainWindow::initializeMainMenu()
 
     // Iterate through the effects list and create actions dynamically
     for (const EffectData& effect : effectsList) {
-        QAction* effectAction = new QAction(tr(effect.name.toStdString().c_str()), this);
+        QAction* effectAction = new QAction(effect.name, this);
         connect(effectAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
         mEffectsMenu->addAction(effectAction);
         mEffectsActMap.insert(effect.type, effectAction);

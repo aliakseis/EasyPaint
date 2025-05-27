@@ -113,7 +113,7 @@ public:
      * @brief applyEffect Apply effect for image.
      * @param effect Name of affect for apply.
      */
-    void applyEffect(EffectsEnum effect);
+    void applyEffect(int effect);
     /**
      * @brief Restores previous cursor image.
      *

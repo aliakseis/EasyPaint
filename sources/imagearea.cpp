@@ -395,7 +395,7 @@ void ImageArea::rotateImage(bool flag)
     emit sendNewImageSize(mImage->size());
 }
 
-void ImageArea::applyEffect(EffectsEnum effect)
+void ImageArea::applyEffect(int effect)
 {
     mEffectHandler = DataSingleton::Instance()->mEffectsHandlers.at(effect);
     mEffectHandler->applyEffect(*this);

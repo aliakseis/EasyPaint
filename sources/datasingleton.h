@@ -37,6 +37,8 @@
 
 class AbstractEffect;
 class AbstractInstrument;
+struct FunctionInfo;
+class ScriptModel;
 
 /**
  * @brief Singleton for variables needed for the program.
@@ -109,6 +111,7 @@ public:
     void writeState();
 
     QVector<AbstractEffect*> mEffectsHandlers;
+    int addScriptActionHandler(ScriptModel* scriprModel, const FunctionInfo& functionInfo);
 
 private:
     DataSingleton();
