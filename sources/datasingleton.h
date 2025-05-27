@@ -111,7 +111,7 @@ public:
     void writeState();
 
     QVector<AbstractEffect*> mEffectsHandlers;
-    int addScriptActionHandler(ScriptModel* scriprModel, const FunctionInfo& functionInfo);
+    int addScriptActionHandler(ScriptModel* scriptModel, const FunctionInfo& functionInfo);
 
 private:
     DataSingleton();

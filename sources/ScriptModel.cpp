@@ -361,8 +361,8 @@ void ScriptModel::setupActions(QMenu* effectsMenu, QMap<int, QAction*>& effectsA
     for (const auto& funcInfo : mFunctionInfos)
     {
         int type = DataSingleton::Instance()->addScriptActionHandler(this, funcInfo);
-        QAction* effectAction = new QAction(funcInfo.fullName, this);
-        connect(effectAction, SIGNAL(triggered()), this, SLOT(effectsAct()));
+        QAction* effectAction = new QAction(funcInfo.fullName, parent);
+        connect(effectAction, SIGNAL(triggered()), parent, SLOT(effectsAct()));
         effectsMenu->addAction(effectAction);
         effectsActMap.insert(type, effectAction);
     }

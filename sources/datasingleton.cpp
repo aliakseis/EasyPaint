@@ -32,6 +32,10 @@
 #include "effects/gammaeffect.h"
 #include "effects/sharpeneffect.h"
 #include "effects/customeffect.h"
+#include "effects/scripteffect.h"
+#include "effects/scripteffectwithsettings.h"
+
+#include "ScriptInfo.h"
 
 #include <QtCore/QSettings>
 
@@ -175,7 +179,13 @@ void DataSingleton::writeState()
     }
 }
 
-int DataSingleton::addScriptActionHandler(ScriptModel* scriprModel, const FunctionInfo& functionInfo)
+int DataSingleton::addScriptActionHandler(ScriptModel* scriptModel, const FunctionInfo& functionInfo)
 {
-    return 0;
+    int result = mEffectsHandlers.size();
+
+    mEffectsHandlers.push_back(functionInfo.parameters.size() > 1
+        ? static_cast<AbstractEffect*>(new ScriptEffectWithSettings(scriptModel, functionInfo))
+        : new ScriptEffect(scriptModel, functionInfo));
+
+    return result;
 }
