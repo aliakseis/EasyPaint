@@ -40,11 +40,11 @@ set (HEADERS
     sources/widgets/sharpenfiltersettings.h
     sources/widgets/gaussianblurfiltersettings.h
     sources/widgets/imagepreview.h
+    sources/widgets/scripteffectsettings.h
     sources/dialogs/resizedialog.h
     sources/dialogs/settingsdialog.h
     sources/dialogs/textdialog.h
     sources/dialogs/effectsettingsdialog.h
-    sources/dialogs/scripteffectsettingsdialog.h
     sources/instruments/abstractinstrument.h
     sources/instruments/abstractselection.h
     sources/instruments/selectioninstrument.h
@@ -87,11 +87,11 @@ set (SOURCES
     sources/widgets/sharpenfiltersettings.cpp
     sources/widgets/gaussianblurfiltersettings.cpp
     sources/widgets/imagepreview.cpp
+    sources/widgets/scripteffectsettings.cpp
     sources/dialogs/resizedialog.cpp
     sources/dialogs/settingsdialog.cpp
     sources/dialogs/textdialog.cpp
     sources/dialogs/effectsettingsdialog.cpp
-    sources/dialogs/scripteffectsettingsdialog.cpp
     sources/instruments/abstractinstrument.cpp
     sources/instruments/abstractselection.cpp
     sources/instruments/selectioninstrument.cpp

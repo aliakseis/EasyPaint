@@ -1,8 +1,10 @@
 #include "scripteffectwithsettings.h"
 
+#include "../widgets/scripteffectsettings.h"
+
 AbstractEffectSettings* ScriptEffectWithSettings::getSettingsWidget()
 {
-    return nullptr;
+    return new ScriptEffectSettings(mFunctionInfo);
 }
 
 void ScriptEffectWithSettings::convertImage(QImage& image, const QVariantList& matrix)
