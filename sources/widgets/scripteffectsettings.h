@@ -6,12 +6,9 @@
 class ScriptEffectSettings : public AbstractEffectSettings
 {
 public:
-    ScriptEffectSettings(const FunctionInfo& functionInfo, QWidget* parent = 0)
-        : AbstractEffectSettings(parent), mFunctionInfo(functionInfo) {}
+    ScriptEffectSettings(const FunctionInfo& functionInfo, QWidget* parent = 0);
 
 private:
-    FunctionInfo mFunctionInfo;
-
     // Inherited via AbstractEffectSettings
     QList<QVariant> getEffectSettings() override;
 };

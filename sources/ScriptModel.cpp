@@ -243,7 +243,7 @@ ScriptModel::ScriptModel(QObject *parent)
             param.name = in["name"].toString();
             param.fullName = param.name;
             param.kind = in["kind"].toString();
-            param.default = in["default"];
+            param.defaultValue = in["default"];
             param.description = in["description"].toString();
             param.annotation = in["annotation"].toString();
             auto it = docInfo.second.find(param.name);

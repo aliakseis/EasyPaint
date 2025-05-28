@@ -52,17 +52,18 @@ def gamma_correct(image: np.ndarray, gamma: float = 1.2) -> np.ndarray:
     lookup_table = np.array([((i / 255.0) ** inv_gamma) * 255 for i in range(256)]).astype("uint8")
     return cv2.LUT(image, lookup_table)
 
-def enhance_contrast(image: np.ndarray, clip_limit: float = 2.0, tile_grid_size: tuple = (8, 8)) -> np.ndarray:
+def enhance_contrast(image: np.ndarray, clip_limit: float = 2.0, tile_grid_width: int = 8, tile_grid_height: int = 8) -> np.ndarray:
     """Enhances image contrast using CLAHE (Contrast Limited Adaptive Histogram Equalization).
 
     Args:
         image (np.ndarray): Input grayscale image as a NumPy array.
         clip_limit (float, optional): Threshold for contrast clipping. Defaults to 2.0.
-        tile_grid_size (tuple, optional): Grid size for local histogram equalization. Defaults to (8, 8).
+        tile_grid_width (int, optional): Width of the grid for local histogram equalization. Defaults to 8.
+        tile_grid_height (int, optional): Height of the grid for local histogram equalization. Defaults to 8.
 
     Returns:
         np.ndarray: Contrast-enhanced image.
     """
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=tile_grid_size)
+    clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=(tile_grid_width, tile_grid_height))
     return clahe.apply(gray)

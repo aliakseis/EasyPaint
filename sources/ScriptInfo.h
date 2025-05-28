@@ -6,10 +6,10 @@
 struct ParameterInfo {
     QString name;
     QString fullName;
-    QString kind; // POSITIONAL_OR_KEYWORD
+    QString kind; // POSITIONAL_OR_KEYWORD etc.
     QString description;
-    QVariant default;
-    QString annotation; // <class 'float'>
+    QVariant defaultValue;
+    QString annotation; // for example <class 'float'>
 };
 
 struct FunctionInfo {
