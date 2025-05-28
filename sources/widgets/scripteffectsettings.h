@@ -11,5 +11,7 @@ public:
 private:
     // Inherited via AbstractEffectSettings
     QList<QVariant> getEffectSettings() override;
+
+    std::vector<std::function<void(QVariant&, bool)>> mDataExchange;
 };
 
