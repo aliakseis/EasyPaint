@@ -1,77 +1,165 @@
+// ScriptModel.cpp
 #include "ScriptModel.h"
-
 #include "datasingleton.h"
 
-#include "PythonQt.h"
 
 #include <QFileInfo>
 #include <QDir>
 #include <QRegularExpression>
-
-#include <QWidget>
-#include <QFormLayout>
-#include <QSpinBox>
-#include <QDoubleSpinBox>
-#include <QLineEdit>
+#include <QDebug>
 #include <QVariantMap>
 #include <QVariantList>
-#include <QPushButton>
-#include <QDialog>
+#include <QImage>
 #include <QAction>
 #include <QMenu>
-
-#include <map>
-#include <utility>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
+#undef slots
+
+#include <pybind11/embed.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/numpy.h>
+
+
+namespace py = pybind11;
+using namespace py::literals;
+
 namespace {
 
-QString getDocString(const QString& callable)
-{ 
-    // Get the docstring using PythonQt's introspection.
-    if (auto obj = PythonQt::self()->lookupObject(PythonQt::self()->getMainModule(), callable)) {
-        if (auto pDocString = PyObject_GetAttrString(obj, "__doc__")) {
-            const char* docString = PyUnicode_AsUTF8(pDocString);
-            if (docString) {
-                QString result(docString);
-                qInfo() << "Docstring for" << callable << ":" << result;
-                // Now you have the docstring to parse.
-            }
-            Py_DECREF(pDocString);
-        }
+
+// These functions must be implemented elsewhere
+py::array qimage_to_nparray(const QImage& image);   // Converts QImage -> contiguous numpy array
+QImage nparray_to_qimage(const py::array& a);         // Converts numpy array -> QImage
+
+//------------------------------------------------------------------------------
+// Converts a QImage to a contiguous pybind11::array (NumPy array).
+// The function ensures the QImage is in Format_RGB888 (3-channel format).
+py::array qimage_to_nparray(const QImage& inImage) {
+    // Convert image to a well-defined RGB format.
+    QImage image = inImage.convertToFormat(QImage::Format_RGB888);
+
+    int height = image.height();
+    int width = image.width();
+    constexpr int channels = 3; // RGB
+
+    // Allocate a new contiguous NumPy array with shape (height, width, 3).
+    py::array_t<uchar> arr({ height, width, channels });
+    py::buffer_info buf = arr.request();
+    uchar* dest = static_cast<uchar*>(buf.ptr);
+
+    // Copy row-by-row to ensure a contiguous memory layout.
+    for (int i = 0; i < height; i++) {
+        const uchar* src = image.constScanLine(i);
+        std::memcpy(dest + i * (width * channels), src, width * channels);
     }
+
+    return arr;
 }
 
+//------------------------------------------------------------------------------
+// Converts a NumPy array (pybind11::array) back into a QImage.
+// The array must be contiguous and have shape (height, width, 3), dtype uint8.
+QImage nparray_to_qimage(const py::array& a) {
+    // Get buffer info.
+    py::buffer_info info = a.request();
+
+    // Ensure the NumPy array has the correct shape and type.
+    if (info.ndim != 3 || info.shape[2] != 3) {
+        throw std::invalid_argument("nparray_to_qimage: Expected shape (height, width, 3)");
+    }
+    if (info.format != py::format_descriptor<uchar>::format()) {
+        throw std::invalid_argument("nparray_to_qimage: Expected dtype=uint8");
+    }
+
+    int height = static_cast<int>(info.shape[0]);
+    int width = static_cast<int>(info.shape[1]);
+    constexpr int channels = 3;
+
+    // Create an empty QImage with Format_RGB888.
+    QImage image(width, height, QImage::Format_RGB888);
+
+    // Copy row-by-row.
+    const uchar* src = static_cast<const uchar*>(info.ptr);
+    for (int i = 0; i < height; i++) {
+        uchar* dest = image.scanLine(i);
+        std::memcpy(dest, src + i * (width * channels), width * channels);
+    }
+
+    return image;
+}
+
+//------------------------------------------------------------------------------
+// Helper: Convert a QVariant to a py::object with better type handling
+py::object convertQVariantToPyObject(const QVariant& var)
+{
+    // If the QVariant wraps a QImage, use our conversion function.
+    if (var.canConvert<QImage>()) {
+        QImage image = var.value<QImage>();
+        return qimage_to_nparray(image);  // Returns a py::array for an image.
+    }
+    // Handle fundamental types.
+    if (var.type() == QMetaType::Int)
+        return py::cast(var.toInt());
+    if (var.type() == QMetaType::Double)
+        return py::cast(var.toDouble());
+    if (var.type() == QMetaType::Bool)
+        return py::cast(var.toBool());
+    if (var.type() == QMetaType::QString)
+        return py::cast(var.toString().toStdString());
+
+    // Handle lists.
+    if (var.canConvert<QVariantList>()) {
+        QVariantList list = var.toList();
+        py::list pyList;
+        for (const QVariant& item : list) {
+            pyList.append(convertQVariantToPyObject(item));
+        }
+        return pyList;
+    }
+    // Handle maps.
+    if (var.canConvert<QVariantMap>()) {
+        QVariantMap map = var.toMap();
+        py::dict pyDict;
+        for (auto it = map.constBegin(); it != map.constEnd(); ++it) {
+            pyDict[py::cast(it.key().toStdString())] =
+                convertQVariantToPyObject(it.value());
+        }
+        return pyDict;
+    }
+    // Fallback: convert to string.
+    return py::cast(var.toString().toStdString());
+}
+
+
+// Helper structure for docstring parameter info.
 struct DocParamInfo {
     QString type;
     QString description;
 };
 
-// Returns a list of parameter definitions as QVariantMaps.
-// Each QVariantMap contains keys like "name", "type", and "description".
+// Returns a pair where the first element is the common description (first paragraph)
+// and the second element is a map from parameter names to DocParamInfo.
 std::pair<QString, std::map<QString, DocParamInfo>> parseDocstring(const QString& docString) {
-
     if (docString.isEmpty())
         return {};
 
-    //QVariantMap result;
     std::map<QString, DocParamInfo> params;
 
-    // Extract the common description (first paragraph of the docstring)
+    // Extract the common description (first paragraph)
     QRegularExpression descExp(R"(^([\s\S]*?)\n\n)");
     auto descMatch = descExp.match(docString);
     QString description = descMatch.hasMatch() ? descMatch.captured(1).trimmed() : "";
 
-    // Locate the Args: section (a simple approach)
+    // Locate the Args: section
     QRegularExpression argsSectionExp(R"(Args:\s*((?:.|\n)*))");
     auto argsMatch = argsSectionExp.match(docString);
     if (argsMatch.hasMatch()) {
         QString argsSection = argsMatch.captured(1);
-
-        // Use a regex to capture parameter lines (assumes one parameter per line)
+        // Capture parameter lines (one parameter per line)
         QRegularExpression paramExp(R"(^\s*(\w+)\s*\(([^,)]+)(?:,\s*optional)?\):\s*(.+)$)",
             QRegularExpression::MultilineOption);
         QRegularExpressionMatchIterator it = paramExp.globalMatch(argsSection);
@@ -84,286 +172,213 @@ std::pair<QString, std::map<QString, DocParamInfo>> parseDocstring(const QString
             params[name] = param;
         }
     }
-
-    //result["parameters"] = params;
-    //return result;
     return { description, params };
-}
-
-/// Creates a widget with input controls for each parameter.
-QWidget* createParameterDialog(const QVariantList& params, QMap<QString, QWidget*>& outWidgets, QWidget* parent = nullptr) {
-    QWidget* widget = new QWidget(parent);
-    QFormLayout* formLayout = new QFormLayout(widget);
-
-    // Iterate over each parameter extracted from the docstring.
-    for (const QVariant& v : params) {
-        QVariantMap param = v.toMap();
-        QString name = param["name"].toString();
-        QString type = param["type"].toString().toLower();
-
-        QWidget* inputWidget = nullptr;
-        if (type.contains("int")) {
-            // For int parameters, use a spin box.
-            QSpinBox* spinBox = new QSpinBox(widget);
-            spinBox->setMinimum(0);  // Set suitable min/max as needed
-            spinBox->setMaximum(100);
-            spinBox->setValue(5);    // Default value, could be parsed from the docstring too.
-            inputWidget = spinBox;
-        }
-        else if (type.contains("float") || type.contains("double")) {
-            // For floating point numbers, use a double spin box.
-            QDoubleSpinBox* doubleSpinBox = new QDoubleSpinBox(widget);
-            doubleSpinBox->setMinimum(0.0);
-            doubleSpinBox->setMaximum(100.0);
-            doubleSpinBox->setValue(1.0);
-            inputWidget = doubleSpinBox;
-        }
-        else if (type.contains("str") || type.contains("string")) {
-            // For string parameters, use a line edit.
-            QLineEdit* lineEdit = new QLineEdit(widget);
-            inputWidget = lineEdit;
-        }
-        // Extend this with more types as needed.
-        if (inputWidget) {
-            formLayout->addRow(name, inputWidget);
-            // Store the widget so we can later retrieve its value.
-            outWidgets[name] = inputWidget;
-        }
-    }
-
-    widget->setLayout(formLayout);
-    return widget;
-}
-
-QVariantList gatherParameters(const QMap<QString, QWidget*>& widgets) {
-    QVariantList args;
-    // Iterate over the stored widgets.
-    for (auto key : widgets.keys()) {
-        QWidget* w = widgets.value(key);
-        if (auto spin = qobject_cast<QSpinBox*>(w))
-            args.append(spin->value());
-        else if (auto dspin = qobject_cast<QDoubleSpinBox*>(w))
-            args.append(dspin->value());
-        else if (auto lineEdit = qobject_cast<QLineEdit*>(w))
-            args.append(lineEdit->text());
-        // Extend as needed.
-    }
-    return args;
 }
 
 } // namespace
 
+// ----------------------------------------------------------------
+// ScriptModel implementation using pybind11 for embedding Python.
 
-ScriptModel::ScriptModel(QObject *parent)
+ScriptModel::ScriptModel(QObject* parent)
     : QObject(parent)
 {
-    PythonQt::init(/*PythonQt::IgnoreSiteModule |*/ PythonQt::RedirectStdOut);
+    // Initialize the Python interpreter if not already done.
+    //if (!py::is_initialized()) {
+        py::initialize_interpreter();
+    //}
 
-    const auto pyQtInst = PythonQt::self();
-
-    auto sys = pyQtInst->importModule("sys");
-    auto paths = pyQtInst->getVariable(sys, "path");
-
-    qDebug() << "Python sys.path:" << paths;
-
-    for (auto path : paths.value<QVariantList>())
-    {
-        auto sitePackages = path.toString() + QStringLiteral("/site-packages");
-
-        if (QFileInfo::exists(sitePackages))
-        {
-            pyQtInst->addSysPath(sitePackages);
+    // Get the sys module and adjust sys.path.
+    py::module_ sys = py::module_::import("sys");
+    py::list sysPath = sys.attr("path");
+    qDebug() << "Python sys.path:" << QString::fromStdString(py::str(sysPath).cast<std::string>());
+    for (py::handle path_item : sysPath) {
+        std::string pathStr = py::str(path_item).cast<std::string>();
+        QString qpath = QString::fromStdString(pathStr) + "/site-packages";
+        if (QFileInfo::exists(qpath)) {
+            // Append path to sys.path if needed.
+            sys.attr("path").attr("append")(qpath.toStdString());
 #ifdef Q_OS_WIN
-            QString root = QFileInfo(path.toString()).dir().path();
-            SetDllDirectoryW(qUtf16Printable(root));
+            QString root = QFileInfo(QString::fromStdString(pathStr)).dir().path();
+            SetDllDirectoryW(reinterpret_cast<LPCWSTR>(root.utf16()));
 #endif
-            //pyQtInst->addSysPath(root);
-            //qputenv("PATH", qgetenv("PATH") + ";" + root.toLocal8Bit());  // Extend PATH for current session
         }
     }
 
-    QObject::connect(pyQtInst, &PythonQt::pythonStdOut, [](const QString& str) { if (str.length() > 1) qInfo() << str; });
-    QObject::connect(pyQtInst, &PythonQt::pythonStdErr, [](const QString& str) { if (str.length() > 1) qCritical() << str; });
+    // (Optional) Redirect Python stdout/stderr by reassigning sys.stdout/sys.stderr if desired.
 
-    PythonQtObjectPtr mainContext = PythonQt::self()->getMainModule(); // Get the main Python module
+    // Get the __main__ module.
+    py::module_ mainModule = py::module_::import("__main__");
+    py::dict globals = mainModule.attr("__dict__");
 
-    // Load the helper code to define get_function_info() and get_all_functions_info()
-    mainContext.evalScript(
-        "import inspect\n"
-        "def _get_function_info(func):\n"
-        "    sig = inspect.signature(func)\n"
-        "    parameters = []\n"
-        "    for name, param in sig.parameters.items():\n"
-        "        parameters.append({\n"
-        "            'name': name,\n"
-        "            'kind': str(param.kind),\n"
-        "            'default': None if param.default is param.empty else param.default,\n"
-        "            'annotation': None if param.annotation is param.empty else str(param.annotation)\n"
-        "        })\n"
-        "    info = {\n"
-        "        'name': func.__name__,\n"
-        "        'signature': str(sig),\n"
-        "        'parameters': parameters,\n"
-        "        'doc': inspect.getdoc(func) or \"\"\n"
-        "    }\n"
-        "    return info\n"
-        "\n"
-        "def _get_all_functions_info():\n"
-        "    functions_info = []\n"
-        "    for name, obj in globals().items():\n"
-        "        if callable(obj) and not name.startswith('_'):\n"
-        "            try:\n"
-        "                functions_info.append(_get_function_info(obj))\n"
-        "            except Exception as e:\n"
-        "                # Optionally log or handle functions that cannot be introspected\n"
-        "                pass\n"
-        "    return functions_info\n"
-    );
+    // Load helper functions via exec.
+    py::exec(R"(
+import inspect
+def _get_function_info(func):
+    sig = inspect.signature(func)
+    parameters = []
+    for name, param in sig.parameters.items():
+        parameters.append({
+            'name': name,
+            'kind': str(param.kind),
+            'default': None if param.default is param.empty else param.default,
+            'annotation': None if param.annotation is param.empty else str(param.annotation)
+        })
+    info = {
+        'name': func.__name__,
+        'signature': str(sig),
+        'parameters': parameters,
+        'doc': inspect.getdoc(func) or ""
+    }
+    return info
 
-    mainContext.evalFile(":/script.py");
+def _get_all_functions_info():
+    functions_info = []
+    for name, obj in globals().items():
+        if callable(obj) and not name.startswith('_'):
+            try:
+                functions_info.append(_get_function_info(obj))
+            except Exception as e:
+                pass
+    return functions_info
+    )", globals);
 
-    auto allFunctionsInfo = mainContext.call("_get_all_functions_info").toList();
+    // Execute an external script file.
+    // (Assuming "script.py" is accessible—adjust the path as needed.)
+    try {
+        // Load the script from Qt's resource system
+        QFile file(":/script.py");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            throw std::runtime_error("Failed to open script.py resource");
+        }
 
-    for (auto& functionInfo : allFunctionsInfo)
-    {
+        QTextStream in(&file);
+        auto text = in.readAll().toStdString();
+        py::eval<py::eval_statements>(text, globals);
+    }
+    catch (const std::exception& e) {
+        qWarning() << "Error executing script.py:" << e.what();
+    }
+
+    // Retrieve the functions info by calling _get_all_functions_info.
+    py::object allFuncsObj = globals["_get_all_functions_info"]();
+    std::vector<py::object> allFunctionsInfo = allFuncsObj.cast<std::vector<py::object>>();
+    qDebug() << "Found" << allFunctionsInfo.size() << "functions.";
+
+    // Iterate over the returned list and convert to FunctionInfo.
+    for (const auto& funcInfoObj : allFunctionsInfo) {
+        py::dict funcDict = funcInfoObj.cast<py::dict>();
+
         FunctionInfo info;
-
-        auto map = functionInfo.toMap();
-        info.name = map["name"].toString();
-        info.signature = map["signature"].toString();
-        info.doc = map["doc"].toString();
+        info.name = QString::fromStdString(py::str(funcDict["name"]));
+        info.signature = QString::fromStdString(py::str(funcDict["signature"]));
+        info.doc = QString::fromStdString(py::str(funcDict["doc"]));
         auto docInfo = parseDocstring(info.doc);
         info.fullName = docInfo.first.isEmpty() ? info.name : docInfo.first;
 
-        auto parameters = map["parameters"].toList();
-        for (const auto& v : parameters)
-        {
-            auto in = v.toMap();
+        // Retrieve the parameters list.
+        py::list paramsList = funcDict["parameters"];
+        for (py::handle paramHandle : paramsList) {
+            py::dict paramDict = paramHandle.cast<py::dict>();
             ParameterInfo param;
-            param.name = in["name"].toString();
+            param.name = QString::fromStdString(py::str(paramDict["name"]));
             param.fullName = param.name;
-            param.kind = in["kind"].toString();
-            param.defaultValue = in["default"];
-            param.description = in["description"].toString();
-            param.annotation = in["annotation"].toString();
-            auto it = docInfo.second.find(param.name);
-            if (it != docInfo.second.end())
-            {
-                if (!it->second.description.isEmpty())
-                {
-                    param.fullName = it->second.description;
-                    param.description = it->second.description;
+            param.kind = QString::fromStdString(py::str(paramDict["kind"]));
+            // Save default value as a string for simplicity (or use QVariant conversion if needed)
+            py::object defVal = paramDict["default"];
+            if (!defVal.is_none())
+                param.defaultValue = QString::fromStdString(py::str(defVal));
+            else
+                param.defaultValue = QVariant();
+            param.annotation = QString::fromStdString(py::str(paramDict["annotation"]));
+            // If extra parameter description exists, update it.
+            if (docInfo.second.find(param.name) != docInfo.second.end()) {
+                auto iter = docInfo.second.find(param.name);
+                if (!iter->second.description.isEmpty()) {
+                    param.fullName = iter->second.description;
+                    param.description = iter->second.description;
                 }
             }
+
             info.parameters.push_back(std::move(param));
         }
-
         mFunctionInfos.push_back(std::move(info));
     }
-
-    qDebug() << "All functions' info:" << allFunctionsInfo;
-
-
-    /////////////////////
-
-
-    /*
-    //QVariant  dirResult = mainContext.call("dir");  // Get all attributes
-    QVariant dirResult = mainContext.evalScript("dir()");
-
-    QStringList functionList;
-
-    if (dirResult.canConvert<QStringList>()) {  // Ensure it's convertible
-        for (const QVariant& item : dirResult.toList()) {
-            QString name = item.toString();
-
-            // Use PythonQt's `evalScript` to determine if an attribute is a function
-            QVariant isFunction = mainContext.evalScript(QString("callable(%1)").arg(name));
-
-            if (isFunction.toBool()) {  // If the attribute is callable, it's a function
-                functionList.append(name);
-            }
-        }
-    }
-    // Print out the function names
-    qDebug() << "Functions loaded from script.py:" << functionList;
-    */
-
-    /*
-    // Instead of using "dir()", use globals()
-    QVariant globalsKeysVariant = mainContext.evalScript("list(globals().keys())", Py_eval_input);
-    qDebug() << "Globals keys:" << globalsKeysVariant;
-
-    if (globalsKeysVariant.isValid() && globalsKeysVariant.type() == QVariant::List) {
-        QVariantList keysList = globalsKeysVariant.toList();
-        for (const QVariant& key : keysList) {
-            QString name = key.toString();
-
-            if (name.startsWith('_'))
-                continue;
-
-            // Build an expression to check if the object in globals() is callable.
-            // This looks up the object by name and calls callable() on it.
-            QString expr = QString("callable(globals()['%1'])").arg(name);
-            QVariant isCallableVariant = mainContext.evalScript(expr, Py_eval_input);
-
-            if (isCallableVariant.isValid() && isCallableVariant.toBool()) {
-                mFunctionList.append(name);
-            }
-        }
-        qDebug() << "Available Python functions:" << mFunctionList;
-    }
-    else {
-        qDebug() << "Error: Could not obtain a valid globals keys list!";
-    }
-    //*/
-
-    /*
-
-    // Call the helper function "list_functions" defined in the script.
-    //QVariant funcNames = mainContext.evalScript("list_functions()");
-    auto funcNames = mainContext.call("list_functions", {});
-
-    // Validate and convert the result to a QStringList.
-    if (funcNames.isValid() && funcNames.type() == QVariant::List)
-    {
-        QStringList functionList = funcNames.toStringList();
-        qDebug() << "Available Python functions:" << functionList;
-    }
-    else
-    {
-        qCritical() << "Error: list_functions() did not return a valid list:" << funcNames;
-    }
-    */
-
-    /*
-
-    PythonQtObjectPtr script = mainContext.getVariable("script"); // Get the script object
-    QList<PythonQtArgument> arguments = script->getArguments(); // Get the arguments of the script
-    for (auto argument : arguments) {
-        QString name = argument.name(); // Get the name of each argument
-        QString type = argument.type(); // Get the type of each argument
-        QVariant default_value = argument.defaultValue(); // Get the default value of each argument
-        QString doc = argument.doc(); // Get the docstring of each argument
-
-    */        
+    qDebug() << "All functions' info loaded.";
 }
 
-ScriptModel::~ScriptModel()
-{
-    PythonQt::cleanup();
+ScriptModel::~ScriptModel() {
+    // Finalize the interpreter (if you are sure no other code is using it).
+    //if (py::is_initialized()) {
+        py::finalize_interpreter();
+    //}
 }
 
-void ScriptModel::setupActions(QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap)
-{
+void ScriptModel::setupActions(QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap) {
     const auto parent = this->parent();
-
-    for (const auto& funcInfo : mFunctionInfos)
-    {
+    // Use DataSingleton to register each function.
+    for (const auto& funcInfo : mFunctionInfos) {
         int type = DataSingleton::Instance()->addScriptActionHandler(this, funcInfo);
         QAction* effectAction = new QAction(funcInfo.fullName, parent);
-        connect(effectAction, SIGNAL(triggered()), parent, SLOT(effectsAct()));
+        QObject::connect(effectAction, SIGNAL(triggered()), parent, SLOT(effectsAct()));
         effectsMenu->addAction(effectAction);
         effectsActMap.insert(type, effectAction);
     }
+}
+
+QVariant ScriptModel::call(const QString& callable,
+    const QVariantList& args,
+    const QVariantMap& kwargs)
+{
+    // Obtain the __main__ module and its globals.
+    py::module_ mainModule = py::module_::import("__main__");
+    py::dict globals = mainModule.attr("__dict__");
+
+    // Lookup the callable function by name.
+    std::string funcName = callable.toStdString();
+    py::object pyFunc = globals[funcName.c_str()];
+    if (!pyFunc) {
+        qWarning() << "Function" << callable << "not found.";
+        return QVariant();
+    }
+
+    // Build positional arguments list.
+    py::list pyArgs;
+    for (const QVariant& arg : args) {
+        pyArgs.append(convertQVariantToPyObject(arg));
+    }
+
+    // Build keyword arguments dictionary.
+    py::dict pyKwargs;
+    for (auto it = kwargs.constBegin(); it != kwargs.constEnd(); ++it) {
+        std::string key = it.key().toStdString();
+        pyKwargs[py::cast(key)] = convertQVariantToPyObject(it.value());
+    }
+
+    // Call the Python function.
+    py::object result;
+    try {
+        result = pyFunc(*pyArgs, **pyKwargs);
+    }
+    catch (const std::exception& e) {
+        qWarning() << "Error calling function" << callable << ":" << e.what();
+        return QVariant();
+    }
+
+    // If the result is a NumPy array, assume it is an image and convert to QImage.
+    if (py::isinstance<py::array>(result)) {
+        try {
+            py::array arr = result.cast<py::array>();
+            QImage img = nparray_to_qimage(arr);
+            return QVariant::fromValue(img);
+        }
+        catch (const std::exception& ex) {
+            qWarning() << "Failed to convert numpy array to QImage:" << ex.what();
+            // Fall through to return as a string.
+        }
+    }
+
+    // For other types, convert the result to a string.
+    std::string resStr = py::str(result);
+    return QVariant(QString::fromStdString(resStr));
 }

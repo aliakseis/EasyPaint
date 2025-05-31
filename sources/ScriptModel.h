@@ -1,6 +1,5 @@
 #pragma once
 
-//#include "easypaintenums.h"
 #include "ScriptInfo.h"
 
 #include <QObject>
@@ -20,6 +19,8 @@ public:
     ~ScriptModel();
 
     void setupActions(QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap);
+
+    QVariant call(const QString& callable, const QVariantList& args = QVariantList(), const QVariantMap& kwargs = QVariantMap());
 
 private:
     std::vector<FunctionInfo> mFunctionInfos;

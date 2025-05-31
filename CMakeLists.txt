@@ -172,10 +172,13 @@ INCLUDE_DIRECTORIES(
 )
 
 
+find_package(pybind11 CONFIG REQUIRED)
+
+
 #-------  build executable from sources ----------
 add_executable (${PROJECT} ${HEADERS} ${SOURCES} ${MOC_SOURCES} ${QRC_SOURCES} ${TRANSLATIONS_QM})
 
-target_link_libraries (${PROJECT} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::PrintSupport pythonqt)
+target_link_libraries (${PROJECT} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::PrintSupport pythonqt pybind11::pybind11)
 
 #-------  installing ----------
 if(UNIX AND NOT APPLE)
