@@ -141,44 +141,16 @@ source_group ("Source Files" FILES ${SOURCES})
 source_group ("Generated Files" FILES ${MOC_SOURCES})
 source_group ("Resource Files" FILES ${QRC_SOURCES})
 
-
-# PythonQt
-
 find_package (Python3 COMPONENTS Interpreter Development REQUIRED)
 
 message ("    *** Python: (${Python3_INCLUDE_DIRS})")
 
-file(GLOB PYTHONQT_SRCS 
-	sources/pythonqt/src/*.cpp 
-	sources/pythonqt/generated_cpp_56/com_trolltech_qt_core_builtin/*.cpp
-	sources/pythonqt/generated_cpp_56/com_trolltech_qt_gui_builtin/*.cpp
-)
-file(GLOB PYTHONQT_HDRS 
-	sources/pythonqt/src/*.h
-	sources/pythonqt/generated_cpp_56/com_trolltech_qt_core_builtin/*.h
-	sources/pythonqt/generated_cpp_56/com_trolltech_qt_gui_builtin/*.h
-)
-QT5_WRAP_CPP(PYTHONQT_MOC_FILES ${PYTHONQT_HDRS})              
-add_library(pythonqt SHARED
-               ${PYTHONQT_SRCS} ${PYTHONQT_MOC_FILES})
-target_include_directories(pythonqt PRIVATE sources/pythonqt/src ${Python3_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS}/cpython ${Qt5Core_PRIVATE_INCLUDE_DIRS})
-target_compile_definitions(pythonqt PRIVATE PYTHONQT_EXPORTS)
-target_link_libraries(pythonqt
-                      ${Python3_LIBRARIES} Qt5::Core Qt5::Gui Qt5::Widgets)
-
-INCLUDE_DIRECTORIES(
-	sources/pythonqt/src
-	${Python3_INCLUDE_DIRS}
-)
-
-
 find_package(pybind11 CONFIG REQUIRED)
-
 
 #-------  build executable from sources ----------
 add_executable (${PROJECT} ${HEADERS} ${SOURCES} ${MOC_SOURCES} ${QRC_SOURCES} ${TRANSLATIONS_QM})
 
-target_link_libraries (${PROJECT} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::PrintSupport pythonqt pybind11::pybind11)
+target_link_libraries (${PROJECT} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::PrintSupport ${Python3_LIBRARIES} pybind11::pybind11)
 
 #-------  installing ----------
 if(UNIX AND NOT APPLE)
