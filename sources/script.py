@@ -15,7 +15,7 @@ def denoise_image(image: np.ndarray, strength: int = 10) -> np.ndarray:
     return cv2.fastNlMeansDenoisingColored(image, None, strength, strength, 7, 21)
 
 def blur_image(image: np.ndarray, kernel_size: int = 5) -> np.ndarray:
-    """Applies filtering for basic image lurring, preserving color.
+    """Applies filtering for basic image blurring, preserving color.
 
     Args:
         image (np.ndarray): Input blurry image as a NumPy array (should be BGR).
