@@ -76,10 +76,10 @@ def gamma_correct(image: np.ndarray, gamma: float = 1.2) -> np.ndarray:
     return cv2.LUT(image, lookup_table)
 
 def enhance_contrast(image: np.ndarray, clip_limit: float = 2.0, tile_grid_width: int = 8, tile_grid_height: int = 8) -> np.ndarray:
-    """Enhances image contrast using CLAHE, preserving color.
+    """Enhances contrast of a color image using CLAHE applied to the L channel in LAB space.
 
     Args:
-        image (np.ndarray): Input color image as a NumPy array (should be BGR).
+        image (np.ndarray): Input color image (BGR format).
         clip_limit (float, optional): Threshold for contrast clipping. Defaults to 2.0.
         tile_grid_width (int, optional): Width of the grid for local histogram equalization. Defaults to 8.
         tile_grid_height (int, optional): Height of the grid for local histogram equalization. Defaults to 8.
@@ -87,11 +87,16 @@ def enhance_contrast(image: np.ndarray, clip_limit: float = 2.0, tile_grid_width
     Returns:
         np.ndarray: Contrast-enhanced image.
     """
+    # Convert to LAB color space
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    
+    # Apply CLAHE only to the L channel
+    l, a, b = cv2.split(lab)
     clahe = cv2.createCLAHE(clipLimit=clip_limit, tileGridSize=(tile_grid_width, tile_grid_height))
-    
-    # Apply CLAHE to each channel separately for color correction
-    channels = cv2.split(image)
-    enhanced_channels = [clahe.apply(channel) for channel in channels]
-    
-    # Merge channels back
-    return cv2.merge(enhanced_channels)
+    l = clahe.apply(l)
+
+    # Merge channels back and convert to BGR
+    enhanced_lab = cv2.merge([l, a, b])
+    enhanced_image = cv2.cvtColor(enhanced_lab, cv2.COLOR_LAB2BGR)
+
+    return enhanced_image
