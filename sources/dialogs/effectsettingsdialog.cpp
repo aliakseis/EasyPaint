@@ -23,19 +23,25 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <cmath>
+#include "effectsettingsdialog.h"
 
+#include "../effects/effectwithsettings.h"
+#include "../widgets/abstracteffectsettings.h"
+#include "../widgets/imagepreview.h"
+
+
+#include <QVariant>
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 
-#include "effectsettingsdialog.h"
 
-EffectSettingsDialog::EffectSettingsDialog(const QImage &img, AbstractEffectSettings *settingsWidget, QWidget *parent) :
-    QDialog(parent), mImage(img)
+EffectSettingsDialog::EffectSettingsDialog(const QImage &img, 
+    EffectWithSettings* effectWithSettings, QWidget *parent) :
+    QDialog(parent), mEffectWithSettings(effectWithSettings), mImage(img)
 {
-    mSettingsWidget = settingsWidget;
+    mSettingsWidget = effectWithSettings->getSettingsWidget();
     mImagePreview = new ImagePreview(&mImage, this);
-    mImagePreview->setMinimumSize(140, 140);
+    mImagePreview->setMinimumSize(320, 320);
 
     mOkButton = new QPushButton(tr("Ok"), this);
     connect(mOkButton, SIGNAL(clicked()), this, SLOT(applyMatrix()));
@@ -65,44 +71,7 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage &img, AbstractEffectSett
     setLayout(vLayout);
 }
 
-QRgb EffectSettingsDialog::convolutePixel(const QImage &image, int x, int y, const QList<double> &kernelMatrix)
-{
-    int kernelSize = sqrt(kernelMatrix.size());
-
-    double total = 0;
-    double red = 0;
-    double green = 0;
-    double blue = 0;
-    // TODO: some optimization can be made (maybe use OpenCV in future
-    for(int r = -kernelSize / 2; r <= kernelSize / 2; ++r)
-    {
-        for(int c = -kernelSize / 2; c <= kernelSize / 2; ++c)
-        {
-            int kernelValue = kernelMatrix[(kernelSize / 2 + r) * kernelSize + (kernelSize / 2 + c)];
-            total += kernelValue;
-            red += qRed(image.pixel(x + c, y + r)) * kernelValue;
-            green += qGreen(image.pixel(x + c, y + r)) * kernelValue;
-            blue += qBlue(image.pixel(x + c, y + r)) * kernelValue;
-        }
-    }
-
-    if(total == 0)
-        return qRgb(qBound(0, qRound(red), 255), qBound(0, qRound(green), 255), qBound(0, qRound(blue), 255));
-
-    return qRgb(qBound(0, qRound(red / total), 255), qBound(0, qRound(green / total), 255), qBound(0, qRound(blue / total), 255));
-}
-
 void EffectSettingsDialog::applyMatrix()
 {
-    QImage copy(mImage);
-
-    for(int i = 2; i < copy.height() - 2; ++i)
-    {
-        for(int j = 2; j < copy.width() - 2; ++j)
-        {
-            copy.setPixel(j, i, convolutePixel(mImage, j, i, mSettingsWidget->getConvolutionMatrix()));
-        }
-    }
-
-    mImage = copy;
+    mEffectWithSettings->convertImage(mImage, mSettingsWidget->getEffectSettings());
 }

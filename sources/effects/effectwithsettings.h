@@ -45,10 +45,9 @@ public:
     explicit EffectWithSettings(QObject *parent = 0);
 
     virtual void applyEffect(ImageArea &imageArea);
-
-protected:
     virtual AbstractEffectSettings* getSettingsWidget() = 0;
 
+    virtual void convertImage(QImage& image, const QVariantList& matrix) = 0;
 };
 
 #endif // CONVOLUTIONMATRIXEFFECT_H

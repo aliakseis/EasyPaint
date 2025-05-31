@@ -25,6 +25,7 @@
 
 #include <QLabel>
 #include <QLayout>
+#include <QVariant>
 
 #include "sharpenfiltersettings.h"
 
@@ -48,9 +49,9 @@ SharpenFilterSettings::SharpenFilterSettings(QWidget *parent) :
     setLayout(vLayout);
 }
 
-QList<double> SharpenFilterSettings::getConvolutionMatrix()
+QList<QVariant> SharpenFilterSettings::getEffectSettings()
 {
-    QList<double> matrix;
+    QList<QVariant> matrix;
     int intensity = mIntensitySlider->value();
 
     matrix << 0            << -(intensity)        << 0

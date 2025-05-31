@@ -35,11 +35,16 @@
 
 #include "easypaintenums.h"
 
+class AbstractEffect;
+class AbstractInstrument;
+struct FunctionInfo;
+class ScriptModel;
+
 /**
  * @brief Singleton for variables needed for the program.
  *
  */
-class DataSingleton
+class DataSingleton : public QObject
 {
 public:
     /**
@@ -104,6 +109,9 @@ public:
     void writeSettings();
     void readState();
     void writeState();
+
+    QVector<AbstractEffect*> mEffectsHandlers;
+    int addScriptActionHandler(ScriptModel* scriptModel, const FunctionInfo& functionInfo);
 
 private:
     DataSingleton();

@@ -36,7 +36,7 @@ EffectWithSettings::EffectWithSettings(QObject *parent) :
 
 void EffectWithSettings::applyEffect(ImageArea &imageArea)
 {
-    EffectSettingsDialog dlg(*imageArea.getImage(), getSettingsWidget());
+    EffectSettingsDialog dlg(*imageArea.getImage(), this);
 
     if(dlg.exec())
     {

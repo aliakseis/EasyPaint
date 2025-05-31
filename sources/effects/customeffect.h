@@ -37,6 +37,7 @@ public:
     
 protected:
     virtual AbstractEffectSettings* getSettingsWidget() { return new CustomFilterSettings(); }
+    void convertImage(QImage& image, const QVariantList& matrix) override;
 };
 
 #endif // CUSTOMEFFECT_H

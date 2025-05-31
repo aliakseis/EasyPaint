@@ -26,7 +26,7 @@
 #ifndef GAUSSIANBLUREFFECT_H
 #define GAUSSIANBLUREFFECT_H
 
-#include "effectwithsettings.h"
+#include "customeffect.h"
 #include "../widgets/gaussianblurfiltersettings.h"
 
 #include <QtCore/QObject>
@@ -35,11 +35,11 @@
  * @brief Gaussian Blur effect class.
  *
  */
-class GaussianBlurEffect : public EffectWithSettings
+class GaussianBlurEffect : public CustomEffect
 {
     Q_OBJECT
 public:
-    explicit GaussianBlurEffect(QObject *parent = 0) : EffectWithSettings(parent) {}
+    explicit GaussianBlurEffect(QObject *parent = 0) : CustomEffect(parent) {}
     
 protected:
     // TODO: change type of widget

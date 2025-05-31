@@ -25,6 +25,18 @@
 
 #include "datasingleton.h"
 
+#include "effects/negativeeffect.h"
+#include "effects/grayeffect.h"
+#include "effects/binarizationeffect.h"
+#include "effects/gaussianblureffect.h"
+#include "effects/gammaeffect.h"
+#include "effects/sharpeneffect.h"
+#include "effects/customeffect.h"
+#include "effects/scripteffect.h"
+#include "effects/scripteffectwithsettings.h"
+
+#include "ScriptInfo.h"
+
 #include <QtCore/QSettings>
 
 DataSingleton* DataSingleton::m_pInstance = 0;
@@ -40,6 +52,16 @@ DataSingleton::DataSingleton()
     mIsInitialized = false;
     readSetting();
     readState();
+
+    // Effects handlers
+    mEffectsHandlers.fill(0, (int)EFFECTS_COUNT);
+    mEffectsHandlers[NEGATIVE] = new NegativeEffect(this);
+    mEffectsHandlers[GRAY] = new GrayEffect(this);
+    mEffectsHandlers[BINARIZATION] = new BinarizationEffect(this);
+    mEffectsHandlers[GAUSSIANBLUR] = new GaussianBlurEffect(this);
+    mEffectsHandlers[GAMMA] = new GammaEffect(this);
+    mEffectsHandlers[SHARPEN] = new SharpenEffect(this);
+    mEffectsHandlers[CUSTOM] = new CustomEffect(this);
 }
 
 DataSingleton* DataSingleton::Instance()
@@ -155,4 +177,15 @@ void DataSingleton::writeState()
     if (mWindowSize.isValid()) {
         settings.setValue("/State/WindowSize", mWindowSize);
     }
+}
+
+int DataSingleton::addScriptActionHandler(ScriptModel* scriptModel, const FunctionInfo& functionInfo)
+{
+    int result = mEffectsHandlers.size();
+
+    mEffectsHandlers.push_back(functionInfo.parameters.size() > 1
+        ? static_cast<AbstractEffect*>(new ScriptEffectWithSettings(scriptModel, functionInfo))
+        : new ScriptEffect(scriptModel, functionInfo));
+
+    return result;
 }

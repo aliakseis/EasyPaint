@@ -29,14 +29,16 @@
 #include <QDialog>
 #include <QPushButton>
 
-#include "../widgets/abstracteffectsettings.h"
-#include "../widgets/imagepreview.h"
+
+class EffectWithSettings;
+class AbstractEffectSettings;
+class ImagePreview;
 
 class EffectSettingsDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit EffectSettingsDialog(const QImage &img, AbstractEffectSettings *settingsWidget, QWidget *parent = 0);
+    explicit EffectSettingsDialog(const QImage &img, EffectWithSettings* effectWithSettings, QWidget *parent = 0);
     
     inline QImage getChangedImage() { return mImage; }
 signals:
@@ -48,12 +50,11 @@ private:
     QPushButton *mCancelButton;
     QPushButton *mApplyButton;
 
+    EffectWithSettings* mEffectWithSettings;
     AbstractEffectSettings *mSettingsWidget;
     ImagePreview *mImagePreview;
 
     QImage mImage;
-
-    QRgb convolutePixel(const QImage &image, int x, int y, const QList<double> &kernelMatrix);
 
 private slots:
     void applyMatrix();

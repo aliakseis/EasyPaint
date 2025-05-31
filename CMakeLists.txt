@@ -23,8 +23,12 @@ set (HEADERS
     sources/effects/effectwithsettings.h
     sources/effects/gammaeffect.h
     sources/effects/gaussianblureffect.h
+    sources/effects/scripteffect.h
+    sources/effects/scripteffectwithsettings.h
     sources/effects/sharpeneffect.h
     sources/set_dark_theme.h
+    sources/ScriptInfo.h
+    sources/ScriptModel.h
     sources/undocommand.h
     sources/widgets/toolbar.h
     sources/widgets/colorchooser.h
@@ -36,6 +40,7 @@ set (HEADERS
     sources/widgets/sharpenfiltersettings.h
     sources/widgets/gaussianblurfiltersettings.h
     sources/widgets/imagepreview.h
+    sources/widgets/scripteffectsettings.h
     sources/dialogs/resizedialog.h
     sources/dialogs/settingsdialog.h
     sources/dialogs/textdialog.h
@@ -62,12 +67,16 @@ set (SOURCES
     sources/imagearea.cpp
     sources/datasingleton.cpp
     sources/effects/abstracteffect.cpp
+    sources/effects/customeffect.cpp
     sources/effects/negativeeffect.cpp
     sources/effects/grayeffect.cpp
     sources/effects/binarizationeffect.cpp
     sources/effects/effectwithsettings.cpp
     sources/effects/gammaeffect.cpp
+    sources/effects/scripteffect.cpp
+    sources/effects/scripteffectwithsettings.cpp
     sources/set_dark_theme.cpp
+    sources/ScriptModel.cpp
     sources/undocommand.cpp
     sources/widgets/toolbar.cpp
     sources/widgets/colorchooser.cpp
@@ -78,6 +87,7 @@ set (SOURCES
     sources/widgets/sharpenfiltersettings.cpp
     sources/widgets/gaussianblurfiltersettings.cpp
     sources/widgets/imagepreview.cpp
+    sources/widgets/scripteffectsettings.cpp
     sources/dialogs/resizedialog.cpp
     sources/dialogs/settingsdialog.cpp
     sources/dialogs/textdialog.cpp
@@ -131,10 +141,16 @@ source_group ("Source Files" FILES ${SOURCES})
 source_group ("Generated Files" FILES ${MOC_SOURCES})
 source_group ("Resource Files" FILES ${QRC_SOURCES})
 
+find_package (Python3 COMPONENTS Interpreter Development REQUIRED)
+
+message ("    *** Python: (${Python3_INCLUDE_DIRS})")
+
+find_package(pybind11 CONFIG REQUIRED)
+
 #-------  build executable from sources ----------
 add_executable (${PROJECT} ${HEADERS} ${SOURCES} ${MOC_SOURCES} ${QRC_SOURCES} ${TRANSLATIONS_QM})
 
-target_link_libraries (${PROJECT} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::PrintSupport)
+target_link_libraries (${PROJECT} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::PrintSupport ${Python3_LIBRARIES} pybind11::pybind11)
 
 #-------  installing ----------
 if(UNIX AND NOT APPLE)

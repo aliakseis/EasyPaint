@@ -35,12 +35,14 @@ QT_BEGIN_NAMESPACE
 class QAction;
 class QStatusBar;
 class QTabWidget;
-class ToolBar;
-class PaletteBar;
-class ImageArea;
 class QLabel;
 class QUndoGroup;
 QT_END_NAMESPACE
+
+class ToolBar;
+class PaletteBar;
+class ImageArea;
+class ScriptModel;
 
 /**
  * @brief Main window class.
@@ -101,7 +103,7 @@ private:
     QLabel *mSizeLabel, *mPosLabel, *mColorPreviewLabel, *mColorRGBLabel;
 
     QMap<InstrumentsEnum, QAction*> mInstrumentsActMap;
-    QMap<EffectsEnum, QAction*> mEffectsActMap;
+    QMap<int, QAction*> mEffectsActMap;
     QAction *mSaveAction, *mSaveAsAction, *mCloseAction, *separatorAct, *mPrintAction,
             *mUndoAction, *mRedoAction, *mCopyAction, *mCutAction,
             *mNewAction, *mOpenAction, *mExitAction, *mPasteAction, *mZoomInAction, *mZoomOutAction;
@@ -111,6 +113,8 @@ private:
 
     enum { MaxRecentFiles = 5 };
     QAction* recentFileActs[MaxRecentFiles];
+
+    ScriptModel* mScriptModel = nullptr;
 
 private slots:
     void activateTab(const int &index);

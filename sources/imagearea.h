@@ -113,7 +113,7 @@ public:
      * @brief applyEffect Apply effect for image.
      * @param effect Name of affect for apply.
      */
-    void applyEffect(EffectsEnum effect);
+    void applyEffect(int effect);
     /**
      * @brief Restores previous cursor image.
      *
@@ -203,9 +203,8 @@ private:
     QCursor *mCurrentCursor;
     qreal mZoomFactor;
     QUndoStack *mUndoStack;
-    QVector<AbstractInstrument*> mInstrumentsHandlers;
     AbstractInstrument *mInstrumentHandler;
-    QVector<AbstractEffect*> mEffectsHandlers;
+    QVector<AbstractInstrument*> mInstrumentsHandlers;
     AbstractEffect *mEffectHandler;
 
 signals:
