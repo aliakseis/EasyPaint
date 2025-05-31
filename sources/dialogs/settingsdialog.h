@@ -32,6 +32,7 @@ QT_BEGIN_NAMESPACE
 class QComboBox;
 class QSpinBox;
 class QCheckBox;
+class QGroupBox;
 class QLineEdit;
 class QTreeWidget;
 class QTreeWidgetItem;
@@ -60,6 +61,11 @@ public:
     void sendSettingsToSingleton();
 
 private:
+    QGroupBox* createLanguageSettings();
+    QGroupBox* createUISettings();
+    QGroupBox* createImageSettings();
+    QGroupBox* createKeyboardSettings();
+    QGroupBox* createShortcutSettings();
     void initializeGui();
     int getLanguageIndex();
     /**

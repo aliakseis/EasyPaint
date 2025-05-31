@@ -54,61 +54,69 @@ SettingsDialog::~SettingsDialog()
 
 }
 
-void SettingsDialog::initializeGui()
-{
-    QTabWidget *tabWidget = new QTabWidget(this);
-    QVBoxLayout *mainLayout = new QVBoxLayout();
-    QDialogButtonBox *buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok |
-                                                       QDialogButtonBox::Cancel);
-    connect(buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-    connect(buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
-    mainLayout->addWidget(tabWidget);
-    mainLayout->addWidget(buttonBox);
-    setLayout(mainLayout);
-
-    QLabel *label1 = new QLabel(tr("Language:"));
+// Helper function to create language selection UI
+QGroupBox* SettingsDialog::createLanguageSettings() {
+    QLabel* label = new QLabel(tr("Language:"));
     mLanguageBox = new QComboBox();
-    mLanguageBox->addItem(tr("<System>"));
-    mLanguageBox->addItem("English");
-    mLanguageBox->addItem("Czech");
-    mLanguageBox->addItem("French");
-    mLanguageBox->addItem("Russian");
-    mLanguageBox->addItem("Chinese");
+    mLanguageBox->addItems({ tr("<System>"), "English", "Czech", "French", "Russian", "Chinese" });
     mLanguageBox->setCurrentIndex(getLanguageIndex());
-    QHBoxLayout *hBox1 = new QHBoxLayout();
-    hBox1->addWidget(label1);
-    hBox1->addWidget(mLanguageBox);
-    QVBoxLayout *vBox1 = new QVBoxLayout();
-    vBox1->addLayout(hBox1);
-    QLabel *label4 = new QLabel(tr("Note: language changing requires application restart"));
-    vBox1->addWidget(label4);
+
+    QHBoxLayout* layout = new QHBoxLayout();
+    layout->addWidget(label);
+    layout->addWidget(mLanguageBox);
+
+    QLabel* noteLabel = new QLabel(tr("Note: Language changing requires application restart"));
+
+    QVBoxLayout* vLayout = new QVBoxLayout();
+    vLayout->addLayout(layout);
+    vLayout->addWidget(noteLabel);
+
+    QGroupBox* groupBox = new QGroupBox(tr("Language Settings"));
+    groupBox->setLayout(vLayout);
+
+    return groupBox;
+}
+
+// Helper function to create general UI settings
+QGroupBox* SettingsDialog::createUISettings() {
     mIsRestoreWindowSize = new QCheckBox(tr("Restore window size on start"));
     mIsRestoreWindowSize->setChecked(DataSingleton::Instance()->getIsRestoreWindowSize());
-    vBox1->addWidget(mIsRestoreWindowSize);
+
     mIsAskCanvasSize = new QCheckBox(tr("Ask canvas size on new image creation"));
     mIsAskCanvasSize->setChecked(DataSingleton::Instance()->getIsAskCanvasSize());
-    vBox1->addWidget(mIsAskCanvasSize);
+
     mIsDarkMode = new QCheckBox(tr("Enable dark mode"));
     mIsDarkMode->setChecked(DataSingleton::Instance()->getIsDarkMode());
-    vBox1->addWidget(mIsDarkMode);
 
-    QGroupBox *groupBox1 = new QGroupBox(tr("User interface"));
-    groupBox1->setLayout(vBox1);
+    QVBoxLayout* layout = new QVBoxLayout();
+    layout->addWidget(mIsRestoreWindowSize);
+    layout->addWidget(mIsAskCanvasSize);
+    layout->addWidget(mIsDarkMode);
 
-    QLabel *label2 = new QLabel(tr("Base size:"));
-    QLabel *label3 = new QLabel(" x ");
+    QGroupBox* groupBox = new QGroupBox(tr("User Interface"));
+    groupBox->setLayout(layout);
+
+    return groupBox;
+}
+
+// Helper function to create image settings
+QGroupBox* SettingsDialog::createImageSettings() {
+    QLabel* labelSize = new QLabel(tr("Base size:"));
+    QLabel* labelSep = new QLabel(" x ");
     mWidth = new QSpinBox();
     mWidth->setRange(1, 9999);
     mWidth->setValue(DataSingleton::Instance()->getBaseSize().width());
+
     mHeight = new QSpinBox();
     mHeight->setRange(1, 9999);
     mHeight->setValue(DataSingleton::Instance()->getBaseSize().height());
-    QHBoxLayout *hBox2 = new QHBoxLayout();
-    hBox2->addWidget(mWidth);
-    hBox2->addWidget(label3);
-    hBox2->addWidget(mHeight);
 
-    QLabel *label5 = new QLabel(tr("History depth:"));
+    QHBoxLayout* sizeLayout = new QHBoxLayout();
+    sizeLayout->addWidget(mWidth);
+    sizeLayout->addWidget(labelSep);
+    sizeLayout->addWidget(mHeight);
+
+    QLabel* labelHistoryDepth = new QLabel(tr("History depth:"));
     mHistoryDepth = new QSpinBox();
     mHistoryDepth->setRange(1, 99);
     mHistoryDepth->setValue(DataSingleton::Instance()->getHistoryDepth());
@@ -116,70 +124,96 @@ void SettingsDialog::initializeGui()
 
     mIsAutoSave = new QCheckBox(tr("Autosave"));
     mIsAutoSave->setChecked(DataSingleton::Instance()->getIsAutoSave());
-    QLabel *label6 = new QLabel(tr("Autosave interval (sec):"));
+
+    QLabel* labelAutoSave = new QLabel(tr("Autosave interval (sec):"));
     mAutoSaveInterval = new QSpinBox();
     mAutoSaveInterval->setRange(1, 3000);
     mAutoSaveInterval->setValue(DataSingleton::Instance()->getAutoSaveInterval());
     mAutoSaveInterval->setFixedWidth(80);
 
-    QGridLayout *gLayout = new QGridLayout();
-    gLayout->addWidget(label2, 0, 0);
-    gLayout->addLayout(hBox2, 0, 1);
-    gLayout->addWidget(label5, 1, 0);
-    gLayout->addWidget(mHistoryDepth, 1, 1);
-    gLayout->addWidget(mIsAutoSave, 2, 0);
-    gLayout->addWidget(label6, 3, 0);
-    gLayout->addWidget(mAutoSaveInterval, 3, 1);
+    QGridLayout* gridLayout = new QGridLayout();
+    gridLayout->addWidget(labelSize, 0, 0);
+    gridLayout->addLayout(sizeLayout, 0, 1);
+    gridLayout->addWidget(labelHistoryDepth, 1, 0);
+    gridLayout->addWidget(mHistoryDepth, 1, 1);
+    gridLayout->addWidget(mIsAutoSave, 2, 0);
+    gridLayout->addWidget(labelAutoSave, 3, 0);
+    gridLayout->addWidget(mAutoSaveInterval, 3, 1);
 
-    QGroupBox *groupBox2 = new QGroupBox(tr("Image"));
-    groupBox2->setLayout(gLayout);
+    QGroupBox* groupBox = new QGroupBox(tr("Image Settings"));
+    groupBox->setLayout(gridLayout);
 
-    QVBoxLayout *vBox2 = new QVBoxLayout();
-    vBox2->addWidget(groupBox1);
-    vBox2->addWidget(groupBox2);
+    return groupBox;
+}
 
-    QWidget *firstTabWidget = new QWidget();
-    firstTabWidget->setLayout(vBox2);
-
-    tabWidget->addTab(firstTabWidget, tr("General"));
-
-    QGroupBox *groupBox3 = new QGroupBox(tr("Keyboard shortcuts"));
-    QVBoxLayout *vBox3 = new QVBoxLayout();
-    groupBox3->setLayout(vBox3);
-
+// Helper function to create keyboard shortcut UI
+QGroupBox* SettingsDialog::createKeyboardSettings() {
     mShortcutsTree = new QTreeWidget();
-    QStringList header;
-    header<<tr("Command")<<tr("Shortcut");
-    mShortcutsTree->setHeaderLabels(header);
-    connect(mShortcutsTree, SIGNAL(itemSelectionChanged()),
-            this, SLOT(itemSelectionChanged()));
+    mShortcutsTree->setHeaderLabels({ tr("Command"), tr("Shortcut") });
+    connect(mShortcutsTree, &QTreeWidget::itemSelectionChanged, this, &SettingsDialog::itemSelectionChanged);
 
     createItemsGroup("File", DataSingleton::Instance()->getFileShortcuts());
     createItemsGroup("Edit", DataSingleton::Instance()->getEditShortcuts());
     createItemsGroup("Instruments", DataSingleton::Instance()->getInstrumentsShortcuts());
     createItemsGroup("Tools", DataSingleton::Instance()->getToolsShortcuts());
 
-    vBox3->addWidget(mShortcutsTree);
+    QVBoxLayout* layout = new QVBoxLayout();
+    layout->addWidget(mShortcutsTree);
 
-    QGroupBox *groupBox4 = new QGroupBox(tr("Shortcut"));
-    QHBoxLayout *hBox5 = new QHBoxLayout();
-    groupBox4->setLayout(hBox5);
+    QGroupBox* groupBox = new QGroupBox(tr("Keyboard Shortcuts"));
+    groupBox->setLayout(layout);
 
-    QLabel *label7 = new QLabel(tr("Key sequence:"));
+    return groupBox;
+}
+
+// Helper function to create shortcut editing UI
+QGroupBox* SettingsDialog::createShortcutSettings() {
+    QLabel* label = new QLabel(tr("Key sequence:"));
     mShortcutEdit = new ShortcutEdit();
     mShortcutEdit->setEnabled(false);
-    connect(mShortcutEdit, SIGNAL(textChanged(QString)), this, SLOT(textChanged(QString)));
-    hBox5->addWidget(label7);
-    hBox5->addWidget(mShortcutEdit);
+    connect(mShortcutEdit, &ShortcutEdit::textChanged, this, &SettingsDialog::textChanged);
 
-    QVBoxLayout *vBox5 = new QVBoxLayout();
-    vBox5->addWidget(groupBox3);
-    vBox5->addWidget(groupBox4);
+    QHBoxLayout* layout = new QHBoxLayout();
+    layout->addWidget(label);
+    layout->addWidget(mShortcutEdit);
 
-    QWidget *secondTabWidget = new QWidget();
-    secondTabWidget->setLayout(vBox5);
+    QGroupBox* groupBox = new QGroupBox(tr("Shortcut Settings"));
+    groupBox->setLayout(layout);
 
-    tabWidget->addTab(secondTabWidget, tr("Keyboard"));
+    return groupBox;
+}
+
+// Main function to initialize GUI
+void SettingsDialog::initializeGui() {
+    QTabWidget* tabWidget = new QTabWidget(this);
+    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+
+    connect(buttonBox, &QDialogButtonBox::accepted, this, &SettingsDialog::accept);
+    connect(buttonBox, &QDialogButtonBox::rejected, this, &SettingsDialog::reject);
+
+    mainLayout->addWidget(tabWidget);
+    mainLayout->addWidget(buttonBox);
+    setLayout(mainLayout);
+
+    // Create first tab: General Settings
+    QVBoxLayout* generalLayout = new QVBoxLayout();
+    generalLayout->addWidget(createLanguageSettings());
+    generalLayout->addWidget(createUISettings());
+    generalLayout->addWidget(createImageSettings());
+
+    QWidget* generalTab = new QWidget();
+    generalTab->setLayout(generalLayout);
+    tabWidget->addTab(generalTab, tr("General"));
+
+    // Create second tab: Keyboard Shortcuts
+    QVBoxLayout* keyboardLayout = new QVBoxLayout();
+    keyboardLayout->addWidget(createKeyboardSettings());
+    keyboardLayout->addWidget(createShortcutSettings());
+
+    QWidget* keyboardTab = new QWidget();
+    keyboardTab->setLayout(keyboardLayout);
+    tabWidget->addTab(keyboardTab, tr("Keyboard"));
 }
 
 int SettingsDialog::getLanguageIndex()
