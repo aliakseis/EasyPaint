@@ -40,6 +40,7 @@
 #include <QTreeWidget>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QFileDialog>
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent)
@@ -183,6 +184,49 @@ QGroupBox* SettingsDialog::createShortcutSettings() {
     return groupBox;
 }
 
+// Helper function to create script - loading settings
+QGroupBox* SettingsDialog::createScriptSettings() {
+    mLoadScriptCheckbox = new QCheckBox(tr("Load Script"));
+    mLoadScriptCheckbox->setChecked(DataSingleton::Instance()->getIsLoadScript());
+
+    QLabel* scriptPathLabel = new QLabel(tr("Script Path:"));
+    mScriptPathInput = new QLineEdit();
+    mScriptPathInput->setText(DataSingleton::Instance()->getScriptPath());
+    mScriptPathInput->setEnabled(mLoadScriptCheckbox->isChecked());
+
+    auto mChooseScriptButton = new QPushButton(tr("Browse..."));
+    mChooseScriptButton->setEnabled(mLoadScriptCheckbox->isChecked());
+
+    // Enable/disable script path input & button based on checkbox state
+    connect(mLoadScriptCheckbox, &QCheckBox::toggled, [this, mChooseScriptButton](bool checked) {
+        mScriptPathInput->setEnabled(checked);
+        mChooseScriptButton->setEnabled(checked);
+        });
+
+    // Open file dialog to choose a script file
+    connect(mChooseScriptButton, &QPushButton::clicked, [this]() {
+        QString scriptPath = QFileDialog::getOpenFileName(this, tr("Select Script"), QString(), tr("Python Scripts (*.py);;All Files (*)"));
+        if (!scriptPath.isEmpty()) {
+            mScriptPathInput->setText(scriptPath);
+        }
+        });
+
+    // Layout for script settings
+    QHBoxLayout* scriptLayout = new QHBoxLayout();
+    scriptLayout->addWidget(scriptPathLabel);
+    scriptLayout->addWidget(mScriptPathInput);
+    scriptLayout->addWidget(mChooseScriptButton);
+
+    QVBoxLayout* vLayout = new QVBoxLayout();
+    vLayout->addWidget(mLoadScriptCheckbox);
+    vLayout->addLayout(scriptLayout);
+
+    QGroupBox* groupBox = new QGroupBox(tr("Script Settings"));
+    groupBox->setLayout(vLayout);
+
+    return groupBox;
+}
+
 // Main function to initialize GUI
 void SettingsDialog::initializeGui() {
     QTabWidget* tabWidget = new QTabWidget(this);
@@ -196,17 +240,25 @@ void SettingsDialog::initializeGui() {
     mainLayout->addWidget(buttonBox);
     setLayout(mainLayout);
 
-    // Create first tab: General Settings
-    QVBoxLayout* generalLayout = new QVBoxLayout();
-    generalLayout->addWidget(createLanguageSettings());
-    generalLayout->addWidget(createUISettings());
-    generalLayout->addWidget(createImageSettings());
+    // **Tab 1: User Interface & Language**
+    QVBoxLayout* uiLanguageLayout = new QVBoxLayout();
+    uiLanguageLayout->addWidget(createLanguageSettings());
+    uiLanguageLayout->addWidget(createUISettings());
 
-    QWidget* generalTab = new QWidget();
-    generalTab->setLayout(generalLayout);
-    tabWidget->addTab(generalTab, tr("General"));
+    QWidget* uiLanguageTab = new QWidget();
+    uiLanguageTab->setLayout(uiLanguageLayout);
+    tabWidget->addTab(uiLanguageTab, tr("General"));
 
-    // Create second tab: Keyboard Shortcuts
+    // **Tab 2: Image Settings & Script**
+    QVBoxLayout* imageScriptLayout = new QVBoxLayout();
+    imageScriptLayout->addWidget(createImageSettings());
+    imageScriptLayout->addWidget(createScriptSettings());
+
+    QWidget* imageScriptTab = new QWidget();
+    imageScriptTab->setLayout(imageScriptLayout);
+    tabWidget->addTab(imageScriptTab, tr("Image"));
+
+    // **Tab 3: Keyboard Shortcuts**
     QVBoxLayout* keyboardLayout = new QVBoxLayout();
     keyboardLayout->addWidget(createKeyboardSettings());
     keyboardLayout->addWidget(createShortcutSettings());
@@ -232,6 +284,8 @@ void SettingsDialog::sendSettingsToSingleton()
     DataSingleton::Instance()->setIsAskCanvasSize(mIsAskCanvasSize->isChecked());
     DataSingleton::Instance()->setIsDarkMode(mIsDarkMode->isChecked());
     DataSingleton::Instance()->setAutoSaveInterval(mAutoSaveInterval->value());
+    DataSingleton::Instance()->setIsLoadScript(mLoadScriptCheckbox->isChecked());
+    DataSingleton::Instance()->setScriptPath(mScriptPathInput->text());
 
     QStringList languages;
     languages << "system" << "easypaint_en_EN" << "easypaint_cs_CZ" << "easypaint_fr_FR" << "easypaint_ru_RU" << "easypaint_zh_CN";

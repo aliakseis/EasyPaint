@@ -15,7 +15,7 @@ class ScriptModel  : public QObject
     Q_OBJECT
 
 public:
-    ScriptModel(QObject *parent);
+    ScriptModel(QObject *parent, const QString& path);
     ~ScriptModel();
 
     void setupActions(QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap);

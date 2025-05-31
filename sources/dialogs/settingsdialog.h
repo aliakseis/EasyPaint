@@ -66,6 +66,7 @@ private:
     QGroupBox* createImageSettings();
     QGroupBox* createKeyboardSettings();
     QGroupBox* createShortcutSettings();
+    QGroupBox* createScriptSettings();
     void initializeGui();
     int getLanguageIndex();
     /**
@@ -84,6 +85,9 @@ private:
     QTreeWidget *mShortcutsTree;
     QCheckBox *mIsAskCanvasSize;
     QCheckBox* mIsDarkMode;
+
+    QCheckBox* mLoadScriptCheckbox;
+    QLineEdit* mScriptPathInput;
     
 signals:
     

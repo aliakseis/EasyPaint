@@ -87,8 +87,11 @@ MainWindow::MainWindow(QStringList filePaths, QWidget *parent)
     qRegisterMetaType<InstrumentsEnum>("InstrumentsEnum");
     DataSingleton::Instance()->setIsInitialized();
 
-    mScriptModel = new ScriptModel(this);
-    mScriptModel->setupActions(mEffectsMenu, mEffectsActMap);
+    if (DataSingleton::Instance()->getIsLoadScript())
+    {
+        mScriptModel = new ScriptModel(this, DataSingleton::Instance()->getScriptPath());
+        mScriptModel->setupActions(mEffectsMenu, mEffectsActMap);
+    }
 }
 
 MainWindow::~MainWindow()

@@ -180,7 +180,7 @@ std::pair<QString, std::map<QString, DocParamInfo>> parseDocstring(const QString
 // ----------------------------------------------------------------
 // ScriptModel implementation using pybind11 for embedding Python.
 
-ScriptModel::ScriptModel(QObject* parent)
+ScriptModel::ScriptModel(QObject* parent, const QString& path)
     : QObject(parent)
 {
     // Initialize the Python interpreter if not already done.
@@ -247,7 +247,7 @@ def _get_all_functions_info():
     // (Assuming "script.py" is accessible—adjust the path as needed.)
     try {
         // Load the script from Qt's resource system
-        QFile file(":/script.py");
+        QFile file(path);
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             throw std::runtime_error("Failed to open script.py resource");
         }

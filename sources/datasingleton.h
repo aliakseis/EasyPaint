@@ -54,56 +54,61 @@ public:
      */
     static DataSingleton* Instance();
 
-    inline QColor getPrimaryColor() { return mPrimaryColor; }
-    inline void setPrimaryColor(const QColor &color) { mPrimaryColor = color; }
-    inline QColor getSecondaryColor() { return mSecondaryColor; }
-    inline void setSecondaryColor(const QColor &color) { mSecondaryColor = color; }
-    inline int getPenSize() { return mPenSize; }
-    inline void setPenSize(const int &size) { mPenSize = size; }
-    inline InstrumentsEnum getInstrument() { return mCurrentInstrument; }
-    inline void setInstrument(const InstrumentsEnum &instrument) { mCurrentInstrument = instrument; mIsResetCurve = true; }
-    inline InstrumentsEnum getPreviousInstrument() { return mPreviousInstrument; }
-    inline void setPreviousInstrument(const InstrumentsEnum &instrument) { mPreviousInstrument = instrument; }
-    inline QSize getBaseSize() { return mBaseSize; }
-    inline void setBaseSize(const QSize &baseSize) { mBaseSize = baseSize; }
-    inline bool getIsAutoSave() { return mIsAutoSave; }
-    inline void setIsAutoSave(const bool &isAutoSave) { mIsAutoSave = isAutoSave; }
-    inline int getAutoSaveInterval() { return mAutoSaveInterval; }
-    inline void setAutoSaveInterval(const int &interval) { mAutoSaveInterval = interval; }
-    inline int getHistoryDepth() { return mHistoryDepth; }
-    inline void setHistoryDepth(const int &historyDepth) { mHistoryDepth = historyDepth; }
-    inline QString getAppLanguage() { return mAppLanguage; }
-    inline void setAppLanguage(const QString &appLanguage) { mAppLanguage = appLanguage; }
-    inline bool getIsRestoreWindowSize() { return mIsRestoreWindowSize; }
-    inline void setIsRestoreWindowSize(const bool &isRestoreWindowSize) { mIsRestoreWindowSize = isRestoreWindowSize; }
-    inline bool getIsAskCanvasSize() { return mIsAskCanvasSize; }
-    inline void setIsAskCanvasSize(const bool &isAskCanvasSize) { mIsAskCanvasSize = isAskCanvasSize; }
-    inline bool getIsDarkMode() { return mIsDarkMode; }
-    inline void setIsDarkMode(const bool& isDarkMode) { mIsDarkMode = isDarkMode; }
-    inline bool getIsInitialized() { return mIsInitialized; }
-    inline void setIsInitialized(const bool &isInitialized = true) { mIsInitialized = isInitialized; }
-    inline QString getLastFilePath() { return mLastFilePath; }
-    inline void setLastFilePath(const QString &lastFilePath) { mLastFilePath = lastFilePath; }
-    inline QSize getWindowSize() { return mWindowSize; }
-    inline void setWindowSize(const QSize &winSize) { mWindowSize = winSize; }
-    inline QFont getTextFont() { return mTextFont; }
-    inline void setTextFont(const QFont textFont) { mTextFont = textFont; }
-    inline QMap<QString, QKeySequence> getFileShortcuts() { return mFileShortcuts; }
-    inline QKeySequence getFileShortcutByKey(const QString &key) { return mFileShortcuts[key]; }
-    inline void setFileShortcutByKey(const QString &key, const QKeySequence &value) { mFileShortcuts[key] = value; }
-    inline QMap<QString, QKeySequence> getEditShortcuts() { return mEditShortcuts; }
-    inline QKeySequence getEditShortcutByKey(const QString &key) { return mEditShortcuts[key]; }
-    inline void setEditShortcutByKey(const QString &key, const QKeySequence &value) { mEditShortcuts[key] = value; }
-    inline QMap<QString, QKeySequence> getInstrumentsShortcuts() { return mInstrumentsShortcuts; }
-    inline QKeySequence getInstrumentShortcutByKey(const QString &key) { return mInstrumentsShortcuts[key]; }
-    inline void setInstrumentShortcutByKey(const QString &key, const QKeySequence &value) { mInstrumentsShortcuts[key] = value; }
-    inline QMap<QString, QKeySequence> getToolsShortcuts() { return mToolsShortcuts; }
-    inline QKeySequence getToolShortcutByKey(const QString &key) { return mToolsShortcuts[key]; }
-    inline void setToolShortcutByKey(const QString &key, const QKeySequence &value) { mToolsShortcuts[key] = value; }
+    QColor getPrimaryColor() { return mPrimaryColor; }
+    void setPrimaryColor(const QColor &color) { mPrimaryColor = color; }
+    QColor getSecondaryColor() { return mSecondaryColor; }
+    void setSecondaryColor(const QColor &color) { mSecondaryColor = color; }
+    int getPenSize() { return mPenSize; }
+    void setPenSize(int size) { mPenSize = size; }
+    InstrumentsEnum getInstrument() { return mCurrentInstrument; }
+    void setInstrument(const InstrumentsEnum &instrument) { mCurrentInstrument = instrument; mIsResetCurve = true; }
+    InstrumentsEnum getPreviousInstrument() { return mPreviousInstrument; }
+    void setPreviousInstrument(const InstrumentsEnum &instrument) { mPreviousInstrument = instrument; }
+    QSize getBaseSize() { return mBaseSize; }
+    void setBaseSize(const QSize &baseSize) { mBaseSize = baseSize; }
+    bool getIsAutoSave() { return mIsAutoSave; }
+    void setIsAutoSave(bool isAutoSave) { mIsAutoSave = isAutoSave; }
+    int getAutoSaveInterval() { return mAutoSaveInterval; }
+    void setAutoSaveInterval(int interval) { mAutoSaveInterval = interval; }
+    int getHistoryDepth() { return mHistoryDepth; }
+    void setHistoryDepth(const int &historyDepth) { mHistoryDepth = historyDepth; }
+    QString getAppLanguage() { return mAppLanguage; }
+    void setAppLanguage(const QString &appLanguage) { mAppLanguage = appLanguage; }
+    bool getIsRestoreWindowSize() { return mIsRestoreWindowSize; }
+    void setIsRestoreWindowSize(bool isRestoreWindowSize) { mIsRestoreWindowSize = isRestoreWindowSize; }
+    bool getIsAskCanvasSize() { return mIsAskCanvasSize; }
+    void setIsAskCanvasSize(bool isAskCanvasSize) { mIsAskCanvasSize = isAskCanvasSize; }
+    bool getIsDarkMode() { return mIsDarkMode; }
+    void setIsDarkMode(bool isDarkMode) { mIsDarkMode = isDarkMode; }
+    bool getIsLoadScript() { return mIsLoadScript; }
+    void setIsLoadScript(bool isLoadScript) { mIsLoadScript = isLoadScript; }
+    QString getScriptPath() { return mScriptPath; }
+    void setScriptPath(const QString& scriptPath) { mScriptPath = scriptPath; }
+
+    bool getIsInitialized() { return mIsInitialized; }
+    void setIsInitialized(bool isInitialized = true) { mIsInitialized = isInitialized; }
+    QString getLastFilePath() { return mLastFilePath; }
+    void setLastFilePath(const QString &lastFilePath) { mLastFilePath = lastFilePath; }
+    QSize getWindowSize() { return mWindowSize; }
+    void setWindowSize(const QSize &winSize) { mWindowSize = winSize; }
+    QFont getTextFont() { return mTextFont; }
+    void setTextFont(const QFont& textFont) { mTextFont = textFont; }
+    QMap<QString, QKeySequence> getFileShortcuts() { return mFileShortcuts; }
+    QKeySequence getFileShortcutByKey(const QString &key) { return mFileShortcuts[key]; }
+    void setFileShortcutByKey(const QString &key, const QKeySequence &value) { mFileShortcuts[key] = value; }
+    QMap<QString, QKeySequence> getEditShortcuts() { return mEditShortcuts; }
+    QKeySequence getEditShortcutByKey(const QString &key) { return mEditShortcuts[key]; }
+    void setEditShortcutByKey(const QString &key, const QKeySequence &value) { mEditShortcuts[key] = value; }
+    QMap<QString, QKeySequence> getInstrumentsShortcuts() { return mInstrumentsShortcuts; }
+    QKeySequence getInstrumentShortcutByKey(const QString &key) { return mInstrumentsShortcuts[key]; }
+    void setInstrumentShortcutByKey(const QString &key, const QKeySequence &value) { mInstrumentsShortcuts[key] = value; }
+    QMap<QString, QKeySequence> getToolsShortcuts() { return mToolsShortcuts; }
+    QKeySequence getToolShortcutByKey(const QString &key) { return mToolsShortcuts[key]; }
+    void setToolShortcutByKey(const QString &key, const QKeySequence &value) { mToolsShortcuts[key] = value; }
 
     //Needs for correct work of Bezier curve instrument
-    inline void setResetCurve(bool b) { mIsResetCurve = b; }
-    inline bool isResetCurve() { return mIsResetCurve; }
+    void setResetCurve(bool b) { mIsResetCurve = b; }
+    bool isResetCurve() { return mIsResetCurve; }
 
     void readSetting();
     void writeSettings();
@@ -124,7 +129,11 @@ private:
     int mPenSize;
     InstrumentsEnum mCurrentInstrument, mPreviousInstrument;
     QSize mBaseSize, mWindowSize;
-    bool mIsAutoSave, mIsRestoreWindowSize, mIsAskCanvasSize, mIsDarkMode, mIsInitialized;
+    bool mIsAutoSave, mIsRestoreWindowSize, mIsAskCanvasSize, mIsDarkMode;
+    bool mIsLoadScript;
+    QString mScriptPath;
+
+    bool mIsInitialized;
     bool mIsResetCurve; /**< Needs to correct work of Bezier curve instrument */
     int mAutoSaveInterval, mHistoryDepth;
     QString mAppLanguage;
