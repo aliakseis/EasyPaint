@@ -30,11 +30,6 @@ using namespace py::literals;
 
 namespace {
 
-
-// These functions must be implemented elsewhere
-py::array qimage_to_nparray(const QImage& image);   // Converts QImage -> contiguous numpy array
-QImage nparray_to_qimage(const py::array& a);         // Converts numpy array -> QImage
-
 //------------------------------------------------------------------------------
 // Converts a QImage to a contiguous pybind11::array (NumPy array).
 // The function ensures the QImage is in Format_RGB888 (3-channel format).
@@ -134,7 +129,6 @@ py::object convertQVariantToPyObject(const QVariant& var)
     return py::cast(var.toString().toStdString());
 }
 
-
 // Helper structure for docstring parameter info.
 struct DocParamInfo {
     QString type;
@@ -177,17 +171,23 @@ std::pair<QString, std::map<QString, DocParamInfo>> parseDocstring(const QString
 
 } // namespace
 
+class ScriptModel::PythonScope
+{
+    py::scoped_interpreter interpreter;
+    py::gil_scoped_release release_gil;
+};
+
 // ----------------------------------------------------------------
 // ScriptModel implementation using pybind11 for embedding Python.
 
-ScriptModel::ScriptModel(QObject* parent, const QString& path)
-    : QObject(parent)
+ScriptModel::ScriptModel(QObject* parent)
+    : QObject(parent), mPythonScope(std::make_unique<PythonScope>())
 {
-    // Initialize the Python interpreter if not already done.
-    //if (!py::is_initialized()) {
-        py::initialize_interpreter();
-    //}
+}
 
+void ScriptModel::LoadScript(const QString& path)
+{
+    py::gil_scoped_acquire acquire;  // Ensures proper GIL acquisition
     // Get the sys module and adjust sys.path.
     py::module_ sys = py::module_::import("sys");
     py::list sysPath = sys.attr("path");
@@ -308,10 +308,6 @@ def _get_all_functions_info():
 }
 
 ScriptModel::~ScriptModel() {
-    // Finalize the interpreter (if you are sure no other code is using it).
-    //if (py::is_initialized()) {
-        py::finalize_interpreter();
-    //}
 }
 
 void ScriptModel::setupActions(QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap) {
@@ -330,6 +326,7 @@ QVariant ScriptModel::call(const QString& callable,
     const QVariantList& args,
     const QVariantMap& kwargs)
 {
+    py::gil_scoped_acquire acquire;  // Ensures proper GIL acquisition
     // Obtain the __main__ module and its globals.
     py::module_ mainModule = py::module_::import("__main__");
     py::dict globals = mainModule.attr("__dict__");

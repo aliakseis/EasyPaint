@@ -48,7 +48,7 @@
 #include <QtCore/QMap>
 #include <QSettings>
 #include <QFileInfo>
-
+#include <QtConcurrent>
 
 static QString strippedName(const QString& fullFileName)
 {
@@ -89,8 +89,15 @@ MainWindow::MainWindow(QStringList filePaths, QWidget *parent)
 
     if (DataSingleton::Instance()->getIsLoadScript())
     {
-        mScriptModel = new ScriptModel(this, DataSingleton::Instance()->getScriptPath());
-        mScriptModel->setupActions(mEffectsMenu, mEffectsActMap);
+        mScriptModel = new ScriptModel(this);
+        auto future = QtConcurrent::run([this, path = DataSingleton::Instance()->getScriptPath()] {
+            mScriptModel->LoadScript(path);
+        });
+        auto* watcher = new QFutureWatcher<void>(this);
+        connect(watcher, &QFutureWatcher<void>::finished, this, [this] {
+            mScriptModel->setupActions(mEffectsMenu, mEffectsActMap);
+        });
+        watcher->setFuture(future);
     }
 }
 
