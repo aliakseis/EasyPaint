@@ -271,89 +271,27 @@ void MainWindow::initializeMainMenu()
 
     mInstrumentsMenu = menuBar()->addMenu(tr("&Instruments"));
 
-    QAction *mCursorAction = new QAction(tr("Selection"), this);
-    mCursorAction->setCheckable(true);
-    mCursorAction->setIcon(QIcon(":/media/instruments-icons/cursor.png"));
-    connect(mCursorAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mCursorAction);
-    mInstrumentsActMap.insert(CURSOR, mCursorAction);
+    auto createAction = [this](const QString& name, const QString& iconPath, InstrumentsEnum key) {
+        QAction* action = new QAction(name, this);
+        action->setCheckable(true);
+        action->setIcon(QIcon(iconPath));
+        connect(action, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
+        mInstrumentsMenu->addAction(action);
+        mInstrumentsActMap.insert(key, action);
+        };
 
-    QAction *mEraserAction = new QAction(tr("Eraser"), this);
-    mEraserAction->setCheckable(true);
-    mEraserAction->setIcon(QIcon(":/media/instruments-icons/lastic.png"));
-    connect(mEraserAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mEraserAction);
-    mInstrumentsActMap.insert(ERASER, mEraserAction);
-
-    QAction *mColorPickerAction = new QAction(tr("Color picker"), this);
-    mColorPickerAction->setCheckable(true);
-    mColorPickerAction->setIcon(QIcon(":/media/instruments-icons/pipette.png"));
-    connect(mColorPickerAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mColorPickerAction);
-    mInstrumentsActMap.insert(COLORPICKER, mColorPickerAction);
-
-    QAction *mMagnifierAction = new QAction(tr("Magnifier"), this);
-    mMagnifierAction->setCheckable(true);
-    mMagnifierAction->setIcon(QIcon(":/media/instruments-icons/loupe.png"));
-    connect(mMagnifierAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mMagnifierAction);
-    mInstrumentsActMap.insert(MAGNIFIER, mMagnifierAction);
-
-    QAction *mPenAction = new QAction(tr("Pen"), this);
-    mPenAction->setCheckable(true);
-    mPenAction->setIcon(QIcon(":/media/instruments-icons/pencil.png"));
-    connect(mPenAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mPenAction);
-    mInstrumentsActMap.insert(PEN, mPenAction);
-
-    QAction *mLineAction = new QAction(tr("Line"), this);
-    mLineAction->setCheckable(true);
-    mLineAction->setIcon(QIcon(":/media/instruments-icons/line.png"));
-    connect(mLineAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mLineAction);
-    mInstrumentsActMap.insert(LINE, mLineAction);
-
-    QAction *mSprayAction = new QAction(tr("Spray"), this);
-    mSprayAction->setCheckable(true);
-    mSprayAction->setIcon(QIcon(":/media/instruments-icons/spray.png"));
-    connect(mSprayAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mSprayAction);
-    mInstrumentsActMap.insert(SPRAY, mSprayAction);
-
-    QAction *mFillAction = new QAction(tr("Fill"), this);
-    mFillAction->setCheckable(true);
-    mFillAction->setIcon(QIcon(":/media/instruments-icons/fill.png"));
-    connect(mFillAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mFillAction);
-    mInstrumentsActMap.insert(FILL, mFillAction);
-
-    QAction *mRectangleAction = new QAction(tr("Rectangle"), this);
-    mRectangleAction->setCheckable(true);
-    mRectangleAction->setIcon(QIcon(":/media/instruments-icons/rectangle.png"));
-    connect(mRectangleAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mRectangleAction);
-    mInstrumentsActMap.insert(RECTANGLE, mRectangleAction);
-
-    QAction *mEllipseAction = new QAction(tr("Ellipse"), this);
-    mEllipseAction->setCheckable(true);
-    mEllipseAction->setIcon(QIcon(":/media/instruments-icons/ellipse.png"));
-    connect(mEllipseAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mEllipseAction);
-    mInstrumentsActMap.insert(ELLIPSE, mEllipseAction);
-
-    QAction *curveLineAction = new QAction(tr("Curve"), this);
-    curveLineAction->setCheckable(true);
-    curveLineAction->setIcon(QIcon(":/media/instruments-icons/curve.png"));
-    connect(curveLineAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(curveLineAction);
-    mInstrumentsActMap.insert(CURVELINE, curveLineAction);
-
-    QAction *mTextAction = new QAction(tr("Text"), this);
-    mTextAction->setCheckable(true);
-    mTextAction->setIcon(QIcon(":/media/instruments-icons/text.png"));
-    connect(mTextAction, SIGNAL(triggered(bool)), this, SLOT(instumentsAct(bool)));
-    mInstrumentsMenu->addAction(mTextAction);
-    mInstrumentsActMap.insert(TEXT, mTextAction);
+    createAction(tr("Selection"), ":/media/instruments-icons/cursor.png", CURSOR);
+    createAction(tr("Eraser"), ":/media/instruments-icons/lastic.png", ERASER);
+    createAction(tr("Color picker"), ":/media/instruments-icons/pipette.png", COLORPICKER);
+    createAction(tr("Magnifier"), ":/media/instruments-icons/loupe.png", MAGNIFIER);
+    createAction(tr("Pen"), ":/media/instruments-icons/pencil.png", PEN);
+    createAction(tr("Line"), ":/media/instruments-icons/line.png", LINE);
+    createAction(tr("Spray"), ":/media/instruments-icons/spray.png", SPRAY);
+    createAction(tr("Fill"), ":/media/instruments-icons/fill.png", FILL);
+    createAction(tr("Rectangle"), ":/media/instruments-icons/rectangle.png", RECTANGLE);
+    createAction(tr("Ellipse"), ":/media/instruments-icons/ellipse.png", ELLIPSE);
+    createAction(tr("Curve"), ":/media/instruments-icons/curve.png", CURVELINE);
+    createAction(tr("Text"), ":/media/instruments-icons/text.png", TEXT);
     // TODO: Add new instrument action here
 
     mEffectsMenu = menuBar()->addMenu(tr("E&ffects"));
