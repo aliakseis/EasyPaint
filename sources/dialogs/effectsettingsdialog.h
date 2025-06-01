@@ -40,7 +40,7 @@ class EffectSettingsDialog : public QDialog
 public:
     explicit EffectSettingsDialog(const QImage &img, EffectWithSettings* effectWithSettings, QWidget *parent = 0);
     
-    inline QImage getChangedImage() { return mImage; }
+    QImage getChangedImage() { return mImage; }
 signals:
     
 public slots:
@@ -54,10 +54,14 @@ private:
     AbstractEffectSettings *mSettingsWidget;
     ImagePreview *mImagePreview;
 
+    const QImage& mSourceImage;
     QImage mImage;
+
+    bool mApplyNeeded = true;
 
 private slots:
     void applyMatrix();
+    void onParametersChanged();
 };
 
 #endif // ABSTRACTEFFECTSDIALOG_H

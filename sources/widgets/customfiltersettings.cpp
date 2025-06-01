@@ -71,6 +71,6 @@ QDoubleSpinBox* CustomFilterSettings::createSpinBox()
     QDoubleSpinBox *spinBox = new QDoubleSpinBox(this);
     spinBox->setButtonSymbols(QAbstractSpinBox::NoButtons);
     spinBox->setRange(-100.0, 100.0);
-    connect(spinBox, SIGNAL(valueChanged(double)), this, SIGNAL(matrixChanged()));
+    connect(spinBox, SIGNAL(valueChanged(double)), this, SIGNAL(parametersChanged()));
     return spinBox;
 }

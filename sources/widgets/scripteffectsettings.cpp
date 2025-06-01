@@ -18,102 +18,80 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QWi
     for (int i = 1; i < static_cast<int>(functionInfo.parameters.size()); ++i) {
         const auto& param = functionInfo.parameters[i];
         QWidget* control = nullptr;
-        // For easier comparisons, convert the annotation to lower case.
         QString annotationLower = param.annotation.toLower();
-        QString paramNameLower = param.name.toLower();
 
-        // We'll prepare a lambda for data exchange.
         std::function<void(QVariant&, bool)> dxLambda;
 
         if (annotationLower.contains("int")) {
             QSpinBox* spinBox = new QSpinBox(this);
-            spinBox->setRange(0, 100); // Adjust range as needed.
-            if (param.defaultValue.isValid())
-                spinBox->setValue(param.defaultValue.toInt());
+            spinBox->setRange(0, 100);
+            spinBox->setValue(param.defaultValue.isValid() ? param.defaultValue.toInt() : 0);
             control = spinBox;
             dxLambda = [spinBox](QVariant& var, bool save) {
-                if (save)
-                    var = spinBox->value();
-                else
-                    spinBox->setValue(var.toInt());
+                save ? var = spinBox->value() : spinBox->setValue(var.toInt());
                 };
+
+            // Connect signal to parameterless slot
+            connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ScriptEffectSettings::parametersChanged);
         }
-        // Numeric types: float/double.
         else if (annotationLower.contains("float") || annotationLower.contains("double")) {
             QDoubleSpinBox* doubleSpinBox = new QDoubleSpinBox(this);
-            doubleSpinBox->setRange(0.0, 100.0); // Adjust range as needed.
+            doubleSpinBox->setRange(0.0, 100.0);
             doubleSpinBox->setDecimals(2);
-            if (param.defaultValue.isValid())
-                doubleSpinBox->setValue(param.defaultValue.toDouble());
+            doubleSpinBox->setValue(param.defaultValue.isValid() ? param.defaultValue.toDouble() : 0.0);
             control = doubleSpinBox;
             dxLambda = [doubleSpinBox](QVariant& var, bool save) {
-                if (save)
-                    var = doubleSpinBox->value();
-                else
-                    doubleSpinBox->setValue(var.toDouble());
+                save ? var = doubleSpinBox->value() : doubleSpinBox->setValue(var.toDouble());
                 };
+
+            connect(doubleSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ScriptEffectSettings::parametersChanged);
         }
-        // Boolean type.
         else if (annotationLower.contains("bool")) {
             QCheckBox* checkBox = new QCheckBox(this);
-            if (param.defaultValue.isValid())
-                checkBox->setChecked(param.defaultValue.toBool());
+            checkBox->setChecked(param.defaultValue.isValid() ? param.defaultValue.toBool() : false);
             control = checkBox;
             dxLambda = [checkBox](QVariant& var, bool save) {
-                if (save)
-                    var = checkBox->isChecked();
-                else
-                    checkBox->setChecked(var.toBool());
+                save ? var = checkBox->isChecked() : checkBox->setChecked(var.toBool());
                 };
+
+            connect(checkBox, &QCheckBox::stateChanged, this, &ScriptEffectSettings::parametersChanged);
         }
-        // String type.
         else if (annotationLower.contains("str")) {
             QLineEdit* lineEdit = new QLineEdit(this);
-            if (param.defaultValue.isValid())
-                lineEdit->setText(param.defaultValue.toString());
+            lineEdit->setText(param.defaultValue.isValid() ? param.defaultValue.toString() : "");
             control = lineEdit;
             dxLambda = [lineEdit](QVariant& var, bool save) {
-                if (save)
-                    var = lineEdit->text();
-                else
-                    lineEdit->setText(var.toString());
+                save ? var = lineEdit->text() : lineEdit->setText(var.toString());
                 };
+
+            connect(lineEdit, &QLineEdit::textChanged, this, &ScriptEffectSettings::parametersChanged);
         }
-        // Tuple type: for generic purposes, use a QLineEdit to accept comma-separated input.
         else if (annotationLower.contains("tuple")) {
             QLineEdit* tupleEdit = new QLineEdit(this);
-            if (param.defaultValue.isValid())
-                tupleEdit->setText(param.defaultValue.toString());
+            tupleEdit->setText(param.defaultValue.isValid() ? param.defaultValue.toString() : "");
             control = tupleEdit;
             dxLambda = [tupleEdit](QVariant& var, bool save) {
-                if (save)
-                    var = tupleEdit->text(); // You could further parse the text into a QVariantList if desired.
-                else
-                    tupleEdit->setText(var.toString());
+                save ? var = tupleEdit->text() : tupleEdit->setText(var.toString());
                 };
+
+            connect(tupleEdit, &QLineEdit::textChanged, this, &ScriptEffectSettings::parametersChanged);
         }
-        // Fallback: use a QLineEdit.
         else {
             QLineEdit* lineEdit = new QLineEdit(this);
-            if (param.defaultValue.isValid())
-                lineEdit->setText(param.defaultValue.toString());
+            lineEdit->setText(param.defaultValue.isValid() ? param.defaultValue.toString() : "");
             control = lineEdit;
             dxLambda = [lineEdit](QVariant& var, bool save) {
-                if (save)
-                    var = lineEdit->text();
-                else
-                    lineEdit->setText(var.toString());
+                save ? var = lineEdit->text() : lineEdit->setText(var.toString());
                 };
+
+            connect(lineEdit, &QLineEdit::textChanged, this, &ScriptEffectSettings::parametersChanged);
         }
 
-        // Optionally set a tooltip based on parameter description.
-        if (!param.description.isEmpty())
+        if (!param.description.isEmpty()) {
             control->setToolTip(param.description);
+        }
 
-        // Add the label and control to the form layout.
         formLayout->addRow(new QLabel(param.fullName, this), control);
-
-        // Save the data exchange lambda.
         mDataExchange.push_back(dxLambda);
     }
 

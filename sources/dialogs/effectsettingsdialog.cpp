@@ -37,9 +37,12 @@
 
 EffectSettingsDialog::EffectSettingsDialog(const QImage &img, 
     EffectWithSettings* effectWithSettings, QWidget *parent) :
-    QDialog(parent), mEffectWithSettings(effectWithSettings), mImage(img)
+    QDialog(parent), mEffectWithSettings(effectWithSettings), mSourceImage(img)
 {
     mSettingsWidget = effectWithSettings->getSettingsWidget();
+    connect(mSettingsWidget, &AbstractEffectSettings::parametersChanged,
+        this, &EffectSettingsDialog::onParametersChanged);
+
     mImagePreview = new ImagePreview(&mImage, this);
     mImagePreview->setMinimumSize(320, 320);
 
@@ -71,7 +74,16 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage &img,
     setLayout(vLayout);
 }
 
+void EffectSettingsDialog::onParametersChanged()
+{
+    mApplyNeeded = true;
+}
+
 void EffectSettingsDialog::applyMatrix()
 {
-    mEffectWithSettings->convertImage(mImage, mSettingsWidget->getEffectSettings());
+    if (mApplyNeeded)
+    {
+        mEffectWithSettings->convertImage(mSourceImage, mImage, mSettingsWidget->getEffectSettings());
+        mApplyNeeded = false;
+    }
 }
