@@ -29,10 +29,13 @@
 #include <QDialog>
 #include <QPushButton>
 
+#include <QWheelEvent>
+#include <QGraphicsView>
+
 
 class EffectWithSettings;
 class AbstractEffectSettings;
-class ImagePreview;
+
 
 class EffectSettingsDialog : public QDialog
 {
@@ -45,6 +48,33 @@ signals:
     
 public slots:
 
+protected:
+    void updatePreview(const QImage& image);
+    void wheelEvent(QWheelEvent* event) override {
+        const double scaleFactor = 1.15;  // Adjust zoom speed
+        if (event->angleDelta().y() > 0) {
+            zoomFactor *= scaleFactor;
+        }
+        else {
+            zoomFactor /= scaleFactor;
+        }
+        mPreviewView->setTransform(QTransform().scale(zoomFactor, zoomFactor));
+    }
+
+    void mousePressEvent(QMouseEvent* event) override {
+        if (event->button() == Qt::MiddleButton) {
+            mPreviewView->setDragMode(QGraphicsView::ScrollHandDrag);
+        }
+        QDialog::mousePressEvent(event);
+    }
+
+    void mouseReleaseEvent(QMouseEvent* event) override {
+        if (event->button() == Qt::MiddleButton) {
+            mPreviewView->setDragMode(QGraphicsView::NoDrag);
+        }
+        QDialog::mouseReleaseEvent(event);
+    }
+
 private:
     QPushButton *mOkButton;
     QPushButton *mCancelButton;
@@ -52,7 +82,11 @@ private:
 
     EffectWithSettings* mEffectWithSettings;
     AbstractEffectSettings *mSettingsWidget;
-    ImagePreview *mImagePreview;
+
+    QGraphicsView* mPreviewView;
+    QGraphicsScene* mPreviewScene;
+    //QGraphicsPixmapItem* mPreviewPixmapItem;
+    double zoomFactor = 1.;
 
     const QImage& mSourceImage;
     QImage mImage;
