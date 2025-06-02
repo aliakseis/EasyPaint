@@ -202,6 +202,7 @@ private:
     QString mOpenFilter; /**< Supported open formats filter. */
     QString mSaveFilter; /**< Supported save formats filter. */
     bool mIsEdited, mIsPaint, mIsResize, mRightButtonPressed;
+    bool mIsSavedBeforeResize = false;
     QPixmap *mPixmap;
     QCursor *mCurrentCursor;
     qreal mZoomFactor;

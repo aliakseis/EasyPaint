@@ -429,6 +429,7 @@ void ImageArea::mousePressEvent(QMouseEvent *event)
         pos.y() < mImage->rect().bottom() + 6)
     {
         mIsResize = true;
+        mIsSavedBeforeResize = false;
         setCursor(Qt::SizeFDiagCursor);
     }
     else if(DataSingleton::Instance()->getInstrument() != NONE_INSTRUMENT)
@@ -448,9 +449,14 @@ void ImageArea::mouseMoveEvent(QMouseEvent *event)
         DataSingleton::Instance()->getInstrument());
     if(mIsResize)
     {
-         doResizeCanvas(this, pos.x(), pos.y(), false, false);
-         update();
-         emit sendNewImageSize(mImage->size());
+        if (!mIsSavedBeforeResize)
+        {
+            pushUndoCommand(new UndoCommand(getImage(), *this));
+            mIsSavedBeforeResize = true;
+        }
+        doResizeCanvas(this, pos.x(), pos.y(), false, false);
+        update();
+        emit sendNewImageSize(mImage->size());
     }
     else if(pos.x() < mImage->rect().right() + 6 &&
         pos.x() > mImage->rect().right() &&
@@ -483,6 +489,7 @@ void ImageArea::mouseReleaseEvent(QMouseEvent *event)
     {
         fixSize();
         mIsResize = false;
+        mIsSavedBeforeResize = false;
         restoreCursor();
     }
     else if(DataSingleton::Instance()->getInstrument() != NONE_INSTRUMENT)
