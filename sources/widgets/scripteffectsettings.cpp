@@ -35,16 +35,26 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QWi
             connect(spinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &ScriptEffectSettings::parametersChanged);
         }
         else if (annotationLower.contains("float") || annotationLower.contains("double")) {
-            QDoubleSpinBox* doubleSpinBox = new QDoubleSpinBox(this);
-            //doubleSpinBox->setRange(0.0, 100.0);
-            doubleSpinBox->setDecimals(2);
-            doubleSpinBox->setValue(param.defaultValue.isValid() ? param.defaultValue.toDouble() : 0.0);
-            control = doubleSpinBox;
-            dxLambda = [doubleSpinBox](QVariant& var, bool save) {
-                save ? var = doubleSpinBox->value() : doubleSpinBox->setValue(var.toDouble());
+            QLineEdit* floatInput = new QLineEdit(this);
+
+            // Apply a validator for basic float/double validation (no range restrictions)
+            QDoubleValidator* validator = new QDoubleValidator(this);
+            validator->setNotation(QDoubleValidator::StandardNotation); // Allow standard notation
+            floatInput->setValidator(validator);
+
+            if (param.defaultValue.isValid())
+                floatInput->setText(QString::number(param.defaultValue.toDouble(), 'f', 6)); // Format consistently
+
+            control = floatInput;
+
+            dxLambda = [floatInput](QVariant& var, bool save) {
+                if (save)
+                    var = floatInput->text().toDouble();
+                else
+                    floatInput->setText(QString::number(var.toDouble(), 'f', 6));  // Keep formatting uniform
                 };
 
-            connect(doubleSpinBox, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &ScriptEffectSettings::parametersChanged);
+            connect(floatInput, &QLineEdit::textChanged, this, &ScriptEffectSettings::parametersChanged);
         }
         else if (annotationLower.contains("bool")) {
             QCheckBox* checkBox = new QCheckBox(this);
