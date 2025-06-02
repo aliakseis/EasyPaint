@@ -126,6 +126,9 @@ public:
      */
     bool setZoomFactor(qreal factor);
     inline qreal getZoomFactor() { return mZoomFactor; }
+
+    void fixSize(bool cleanUp = false);
+
     inline QUndoStack* getUndoStack() { return mUndoStack; }
     inline void setIsPaint(bool isPaint) { mIsPaint = isPaint; }
     inline bool isPaint() { return mIsPaint; }

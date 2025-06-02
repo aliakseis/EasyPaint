@@ -119,8 +119,7 @@ void doResizeCanvas(ImageArea *mPImageArea, int width, int height, bool flag, bo
     mPImageArea->setImage(*tempImage);
     if (resizeWindow)
     {
-        mPImageArea->resize(mPImageArea->getImage()->rect().right() * mPImageArea->getZoomFactor() + 6,
-            mPImageArea->getImage()->rect().bottom() * mPImageArea->getZoomFactor() + 6);
+        mPImageArea->fixSize();
     }
     mPImageArea->setEdited(true);
     mPImageArea->clearSelection();
@@ -178,8 +177,7 @@ ImageArea::ImageArea(const bool &isOpen, const QString &filePath, QWidget *paren
         painter->fillRect(0, 0, width, height, Qt::white);
         painter->end();
 
-        resize(mImage->rect().right() * mZoomFactor + 6,
-               mImage->rect().bottom() * mZoomFactor + 6);
+        fixSize();
         mFilePath = QString(""); // empty name indicate that user has accepted tab creation
     }
 
@@ -251,8 +249,7 @@ void ImageArea::open(const QString &filePath)
         *mImage = mImage->convertToFormat(QImage::Format_ARGB32_Premultiplied);
         mFilePath = filePath;
         DataSingleton::Instance()->setLastFilePath(filePath);
-        resize(mImage->rect().right() + 6,
-               mImage->rect().bottom() + 6);
+        fixSize();
         QApplication::restoreOverrideCursor();
     }
     else
@@ -362,12 +359,9 @@ void ImageArea::resizeImage()
     if (resizeDialog.exec() == QDialog::Accepted)
     {
         setImage(doResizeImage(*getImage(), resizeDialog.getNewSize())); //mPImageArea->getImage()->scaled(resizeDialog.getNewSize()));
-        resize(getImage()->rect().right() * mZoomFactor + 6, getImage()->rect().bottom() * mZoomFactor + 6);
+        fixSize(true);
         setEdited(true);
-        clearSelection();
     }
-
-    emit sendNewImageSize(mImage->size());
 }
 
 void ImageArea::resizeCanvas()
@@ -487,10 +481,9 @@ void ImageArea::mouseReleaseEvent(QMouseEvent *event)
 {
     if(mIsResize)
     {
-        resize(mImage->rect().right() * mZoomFactor + 6,
-            mImage->rect().bottom() * mZoomFactor + 6);
+        fixSize();
         mIsResize = false;
-       restoreCursor();
+        restoreCursor();
     }
     else if(DataSingleton::Instance()->getInstrument() != NONE_INSTRUMENT)
     {
@@ -593,11 +586,19 @@ bool ImageArea::setZoomFactor(qreal factor)
         mZoomFactor = zoomFactor;
     }
 
-    resize(mImage->width() * mZoomFactor + 6, mImage->height() * mZoomFactor + 6);
-    emit sendNewImageSize(mImage->size());
-    clearSelection();
+    fixSize(true);
 
     return true;
+}
+
+void ImageArea::fixSize(bool cleanUp /*= false*/)
+{
+    resize(mImage->width() * mZoomFactor + 6, mImage->height() * mZoomFactor + 6);
+    if (cleanUp)
+    {
+        emit sendNewImageSize(mImage->size());
+        clearSelection();
+    }
 }
 
 void ImageArea::drawCursor()

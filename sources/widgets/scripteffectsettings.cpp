@@ -24,7 +24,7 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QWi
 
         if (annotationLower.contains("int")) {
             QSpinBox* spinBox = new QSpinBox(this);
-            spinBox->setRange(0, 100);
+            spinBox->setRange(-100000, 100000);
             spinBox->setValue(param.defaultValue.isValid() ? param.defaultValue.toInt() : 0);
             control = spinBox;
             dxLambda = [spinBox](QVariant& var, bool save) {
@@ -36,7 +36,7 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QWi
         }
         else if (annotationLower.contains("float") || annotationLower.contains("double")) {
             QDoubleSpinBox* doubleSpinBox = new QDoubleSpinBox(this);
-            doubleSpinBox->setRange(0.0, 100.0);
+            //doubleSpinBox->setRange(0.0, 100.0);
             doubleSpinBox->setDecimals(2);
             doubleSpinBox->setValue(param.defaultValue.isValid() ? param.defaultValue.toDouble() : 0.0);
             control = doubleSpinBox;

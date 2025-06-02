@@ -36,6 +36,7 @@ void UndoCommand::undo()
     mImageArea.clearSelection();
     mCurrImage = *(mImageArea.getImage());
     mImageArea.setImage(mPrevImage);
+    mImageArea.fixSize(true);
     mImageArea.update();
     mImageArea.saveImageChanges();
 }
@@ -43,6 +44,7 @@ void UndoCommand::undo()
 void UndoCommand::redo()
 {
     mImageArea.setImage(mCurrImage);
+    mImageArea.fixSize(true);
     mImageArea.update();
     mImageArea.saveImageChanges();
 }

@@ -100,3 +100,16 @@ def enhance_contrast(image: np.ndarray, clip_limit: float = 2.0, tile_grid_width
     enhanced_image = cv2.cvtColor(enhanced_lab, cv2.COLOR_LAB2BGR)
 
     return enhanced_image
+
+def resize_image(image: np.ndarray, width: int = 320, height: int = 320) -> np.ndarray:
+    """Resizes an image to the specified width and height.
+
+    Args:
+        image (np.ndarray): Input image as a NumPy array.
+        width (int): Target width in pixels.
+        height (int): Target height in pixels.
+
+    Returns:
+        np.ndarray: Resized image.
+    """
+    return cv2.resize(image, (width, height), interpolation=cv2.INTER_LINEAR)

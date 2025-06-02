@@ -43,6 +43,7 @@ void EffectWithSettings::applyEffect(ImageArea &imageArea)
         makeUndoCommand(imageArea);
 
         imageArea.setImage(dlg.getChangedImage());
+        imageArea.fixSize(true);
         imageArea.setEdited(true);
         imageArea.update();
     }

@@ -10,6 +10,7 @@ void ScriptEffect::applyEffect(ImageArea& imageArea)
     args << *imageArea.getImage();
     QVariant result = mScriptModel->call(mFunctionInfo.name, args);
     imageArea.setImage(result.value<QImage>());
+    imageArea.fixSize(true);
     imageArea.setEdited(true);
     imageArea.update();
 }
