@@ -31,15 +31,17 @@ BinarizationEffect::BinarizationEffect(QObject *parent) :
 {
 }
 
-void BinarizationEffect::applyEffect(ImageArea &imageArea)
+ImageArea* BinarizationEffect::applyEffect(ImageArea* imageArea)
 {
     makeUndoCommand(imageArea);
 
     // TODO: add dialog for setting parameters
-    makeBinarization(imageArea, 200, 100);
+    makeBinarization(*imageArea, 200, 100);
 
-    imageArea.setEdited(true);
-    imageArea.update();
+    imageArea->setEdited(true);
+    imageArea->update();
+
+    return imageArea;
 }
 
 void BinarizationEffect::makeBinarization(ImageArea &imageArea, int coeff1, int coeff2)

@@ -41,7 +41,7 @@ class NegativeEffect : public AbstractEffect
 public:
     explicit NegativeEffect(QObject *parent = 0);
 
-    void applyEffect(ImageArea &imageArea);
+    ImageArea* applyEffect(ImageArea* imageArea) override;
 
 };
 

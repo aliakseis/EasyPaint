@@ -33,15 +33,17 @@ GammaEffect::GammaEffect(QObject *parent) :
 {
 }
 
-void GammaEffect::applyEffect(ImageArea &imageArea)
+ImageArea* GammaEffect::applyEffect(ImageArea* imageArea)
 {
     makeUndoCommand(imageArea);
 
     // TODO: add dialog for setting parameters
-    makeGamma(imageArea, 2);
+    makeGamma(*imageArea, 2);
 
-    imageArea.setEdited(true);
-    imageArea.update();
+    imageArea->setEdited(true);
+    imageArea->update();
+
+    return imageArea;
 }
 
 void GammaEffect::makeGamma(ImageArea &imageArea, float modificator)

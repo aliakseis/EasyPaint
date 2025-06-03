@@ -44,10 +44,10 @@ class EffectWithSettings : public AbstractEffect
 public:
     explicit EffectWithSettings(QObject *parent = 0);
 
-    virtual void applyEffect(ImageArea &imageArea);
+    ImageArea* applyEffect(ImageArea* imageArea) override;
     virtual AbstractEffectSettings* getSettingsWidget() = 0;
 
-    virtual void convertImage(const QImage& source, QImage& image, const QVariantList& matrix) = 0;
+    virtual void convertImage(const QImage* source, QImage& image, const QVariantList& matrix) = 0;
 };
 
 #endif // CONVOLUTIONMATRIXEFFECT_H

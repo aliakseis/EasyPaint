@@ -28,15 +28,15 @@ static QRgb convolutePixel(const QImage& image, int x, int y, const QList<QVaria
 }
 
 
-void CustomEffect::convertImage(const QImage& source, QImage& mImage, const QVariantList& matrix)
+void CustomEffect::convertImage(const QImage* source, QImage& mImage, const QVariantList& matrix)
 {
-    QImage copy(source);
+    QImage copy(*source);
 
     for (int i = 2; i < copy.height() - 2; ++i)
     {
         for (int j = 2; j < copy.width() - 2; ++j)
         {
-            copy.setPixel(j, i, convolutePixel(source, j, i, matrix));
+            copy.setPixel(j, i, convolutePixel(*source, j, i, matrix));
         }
     }
 

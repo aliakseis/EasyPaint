@@ -31,12 +31,14 @@ NegativeEffect::NegativeEffect(QObject *parent) :
 {
 }
 
-void NegativeEffect::applyEffect(ImageArea &imageArea)
+ImageArea* NegativeEffect::applyEffect(ImageArea* imageArea)
 {
-    imageArea.clearSelection();
+    imageArea->clearSelection();
     makeUndoCommand(imageArea);
 
-    imageArea.getImage()->invertPixels(QImage::InvertRgb);
-    imageArea.setEdited(true);
-    imageArea.update();
+    imageArea->getImage()->invertPixels(QImage::InvertRgb);
+    imageArea->setEdited(true);
+    imageArea->update();
+
+    return imageArea;
 }

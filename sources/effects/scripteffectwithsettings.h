@@ -18,5 +18,5 @@ private:
 
     // Inherited via EffectWithSettings
     AbstractEffectSettings* getSettingsWidget() override;
-    void convertImage(const QImage& source, QImage& image, const QVariantList& matrix) override;
+    void convertImage(const QImage* source, QImage& image, const QVariantList& matrix) override;
 };

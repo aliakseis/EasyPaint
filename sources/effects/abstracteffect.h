@@ -44,7 +44,7 @@ public:
     explicit AbstractEffect(QObject *parent = 0);
     virtual ~AbstractEffect(){}
 
-    virtual void applyEffect(ImageArea &imageArea) = 0;
+    virtual ImageArea* applyEffect(ImageArea* imageArea) = 0;
     
 protected:
     /**
@@ -53,8 +53,8 @@ protected:
      * Base realisation simply save all image to UndoStack
      * @param imageArea corresponse to image, which is edited
      */
-    virtual void makeUndoCommand(ImageArea &imageArea);
-
+    virtual void makeUndoCommand(ImageArea* imageArea);
+    static ImageArea* initializeNewTab();
 };
 
 #endif // ABSTRACTEFFECT_H

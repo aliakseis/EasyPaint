@@ -56,6 +56,14 @@ public:
     MainWindow(QStringList filePaths, QWidget *parent = 0);
     ~MainWindow();
 
+    /**
+     * @brief Initialize new tab for tab bar with new ImageArea and connect all needed slots.
+     *
+     * @param isOpen Flag which shows opens a new image or from file.
+     * @param filePath File path
+     */
+    ImageArea* initializeNewTab(bool openFile = false, bool askCanvasSize = false, const QString& filePath = {});
+
 protected:
     void closeEvent(QCloseEvent *event);
 
@@ -65,13 +73,6 @@ private:
     void initializeToolBar();
     void initializePaletteBar();
     void initializeTabWidget();
-    /**
-     * @brief Initialize new tab for tab bar with new ImageArea and connect all needed slots.
-     *
-     * @param isOpen Flag which shows opens a new image or from file.
-     * @param filePath File path
-     */
-    ImageArea* initializeNewTab(bool openFile = false, bool askCanvasSize = false, const QString& filePath = {});
     /**
      * @brief Get current ImageArea from current tab.
      *

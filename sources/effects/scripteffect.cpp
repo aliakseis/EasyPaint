@@ -4,13 +4,27 @@
 
 #include "../ScriptModel.h"
 
-void ScriptEffect::applyEffect(ImageArea& imageArea)
+ImageArea* ScriptEffect::applyEffect(ImageArea* imageArea)
 {
+    makeUndoCommand(imageArea);
+
     QVariantList args;
-    args << *imageArea.getImage();
+    if (imageArea)
+    {
+        args << *(imageArea->getImage());
+    }
     QVariant result = mScriptModel->call(mFunctionInfo.name, args);
-    imageArea.setImage(result.value<QImage>());
-    imageArea.fixSize(true);
-    imageArea.setEdited(true);
-    imageArea.update();
+    if (imageArea)
+    {
+        imageArea->setEdited(true);
+    }
+    else
+    {
+        imageArea = initializeNewTab();
+    }
+    imageArea->setImage(result.value<QImage>());
+    imageArea->fixSize(true);
+    imageArea->update();
+
+    return imageArea;
 }

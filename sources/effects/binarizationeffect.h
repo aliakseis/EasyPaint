@@ -40,7 +40,7 @@ class BinarizationEffect : public AbstractEffect
 public:
     explicit BinarizationEffect(QObject *parent = 0);
     
-    void applyEffect(ImageArea &imageArea);
+    ImageArea* applyEffect(ImageArea* imageArea) override;
 
 private:
     void makeBinarization(ImageArea &imageArea, int coeff1, int coeff2);

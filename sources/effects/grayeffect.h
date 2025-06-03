@@ -40,7 +40,7 @@ class GrayEffect : public AbstractEffect
 public:
     explicit GrayEffect(QObject *parent = 0);
     
-    void applyEffect(ImageArea &imageArea);
+    ImageArea* applyEffect(ImageArea* imageArea) override;
 
 };
 

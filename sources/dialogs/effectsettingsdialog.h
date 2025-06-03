@@ -41,7 +41,7 @@ class EffectSettingsDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit EffectSettingsDialog(const QImage &img, EffectWithSettings* effectWithSettings, QWidget *parent = 0);
+    explicit EffectSettingsDialog(const QImage* img, EffectWithSettings* effectWithSettings, QWidget *parent = 0);
     
     QImage getChangedImage() { return mImage; }
 signals:
@@ -88,7 +88,7 @@ private:
     //QGraphicsPixmapItem* mPreviewPixmapItem;
     double zoomFactor = 1.;
 
-    const QImage& mSourceImage;
+    const QImage* mSourceImage;
     QImage mImage;
 
     bool mApplyNeeded = true;

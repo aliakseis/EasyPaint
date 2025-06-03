@@ -42,7 +42,7 @@
 
 #include <QTimer>
 
-EffectSettingsDialog::EffectSettingsDialog(const QImage &img, 
+EffectSettingsDialog::EffectSettingsDialog(const QImage* img, 
     EffectWithSettings* effectWithSettings, QWidget *parent) :
     QDialog(parent), mEffectWithSettings(effectWithSettings), mSourceImage(img)
 {
@@ -94,9 +94,12 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage &img,
     setLayout(vLayout);
 
     //Call updatePreview asynchronously after the UI is fully initialized
-    QTimer::singleShot(0, this, [this]() {
-        updatePreview(mSourceImage);
+    if (mSourceImage)
+    {
+        QTimer::singleShot(0, this, [this]() {
+            updatePreview(*mSourceImage);
         });
+    }
 }
 
 void EffectSettingsDialog::updatePreview(const QImage& image) {

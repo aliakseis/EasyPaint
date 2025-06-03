@@ -34,17 +34,27 @@ EffectWithSettings::EffectWithSettings(QObject *parent) :
 {
 }
 
-void EffectWithSettings::applyEffect(ImageArea &imageArea)
+ImageArea* EffectWithSettings::applyEffect(ImageArea* imageArea)
 {
-    EffectSettingsDialog dlg(*imageArea.getImage(), this);
+    EffectSettingsDialog dlg(imageArea? imageArea->getImage() : nullptr, this);
 
     if(dlg.exec())
     {
         makeUndoCommand(imageArea);
 
-        imageArea.setImage(dlg.getChangedImage());
-        imageArea.fixSize(true);
-        imageArea.setEdited(true);
-        imageArea.update();
+        if (imageArea)
+        {
+            imageArea->setEdited(true);
+        }
+        else
+        {
+            imageArea = initializeNewTab();
+        }
+
+        imageArea->setImage(dlg.getChangedImage());
+        imageArea->fixSize(true);
+        imageArea->update();
     }
+
+    return imageArea;
 }

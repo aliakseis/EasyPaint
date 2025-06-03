@@ -40,8 +40,8 @@ class GammaEffect : public AbstractEffect
 public:
     explicit GammaEffect(QObject *parent = 0);
     
-    void applyEffect(ImageArea &imageArea);
-    
+    ImageArea* applyEffect(ImageArea* imageArea) override;
+
 private:
     void makeGamma(ImageArea &imageArea, float modificator);
 };

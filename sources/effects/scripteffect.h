@@ -16,5 +16,5 @@ private:
     FunctionInfo mFunctionInfo;
 
     // Inherited via AbstractEffect
-    void applyEffect(ImageArea& imageArea) override;
+    ImageArea* applyEffect(ImageArea* imageArea) override;
 };

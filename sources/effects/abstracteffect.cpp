@@ -26,13 +26,27 @@
 #include "abstracteffect.h"
 #include "../undocommand.h"
 #include "../imagearea.h"
+#include "../mainwindow.h"
+
+#include <QApplication>
 
 AbstractEffect::AbstractEffect(QObject *parent) :
     QObject(parent)
 {
 }
 
-void AbstractEffect::makeUndoCommand(ImageArea &imageArea)
+void AbstractEffect::makeUndoCommand(ImageArea* imageArea)
 {
-    imageArea.pushUndoCommand(new UndoCommand(imageArea.getImage(), imageArea));
+    if (imageArea)
+        imageArea->pushUndoCommand(new UndoCommand(imageArea->getImage(), *imageArea));
+}
+
+ImageArea* AbstractEffect::initializeNewTab()
+{
+    for (QWidget* widget : QApplication::topLevelWidgets()) {
+        if (auto* mainWindow = qobject_cast<MainWindow*>(widget)) {
+            return mainWindow->initializeNewTab();
+        }
+    }
+    return nullptr;
 }

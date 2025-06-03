@@ -389,7 +389,7 @@ void ImageArea::rotateImage(bool flag)
 void ImageArea::applyEffect(int effect)
 {
     mEffectHandler = DataSingleton::Instance()->mEffectsHandlers.at(effect);
-    mEffectHandler->applyEffect(*this);
+    mEffectHandler->applyEffect(this);
 }
 
 void ImageArea::copyImage()
