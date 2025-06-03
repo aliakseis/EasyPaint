@@ -52,7 +52,7 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage &img,
 
     QScreen* screen = QApplication::primaryScreen();
     QRect screenGeometry = screen->availableGeometry();  // Gets the usable screen area
-    auto previewSize = qMax(qMin(screenGeometry.width(), screenGeometry.height()) * 2 / 3, 320);
+    auto previewSize = qMax(qMin(screenGeometry.width(), screenGeometry.height()) * 5 / 8, 320);
 
     // Create GraphicsView for image preview
     mPreviewView = new QGraphicsView(this);
