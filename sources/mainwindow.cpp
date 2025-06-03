@@ -81,11 +81,10 @@ MainWindow::MainWindow(QStringList filePaths, QWidget *parent)
     {
         for(int i(0); i < filePaths.size(); i++)
         {
-            initializeNewTab(true, filePaths.at(i));
+            initializeNewTab(true, false, filePaths.at(i));
         }
     }
     qRegisterMetaType<InstrumentsEnum>("InstrumentsEnum");
-    DataSingleton::Instance()->setIsInitialized();
 
     if (DataSingleton::Instance()->getIsLoadScript())
     {
@@ -118,52 +117,49 @@ void MainWindow::initializeTabWidget()
     setCentralWidget(mTabWidget);
 }
 
-void MainWindow::initializeNewTab(const bool &isOpen, const QString &filePath)
+ImageArea* MainWindow::initializeNewTab(bool openFile, bool askCanvasSize, const QString &filePath)
 {
     ImageArea *imageArea;
     QString fileName(tr("Untitled Image"));
-    if(isOpen && filePath.isEmpty())
+    if(openFile)
     {
-        imageArea = new ImageArea(isOpen, "", this);
-        fileName = imageArea->getFileName();
-    }
-    else if(isOpen && !filePath.isEmpty())
-    {
-        imageArea = new ImageArea(isOpen, filePath, this);
+        imageArea = new ImageArea(openFile, false, filePath, this);
         fileName = imageArea->getFileName();
     }
     else
     {
-        imageArea = new ImageArea(false, "", this);
+        imageArea = new ImageArea(false, askCanvasSize, {}, this);
     }
-    if (!imageArea->getFileName().isNull())
-    {
-        QScrollArea *scrollArea = new QScrollArea();
-        scrollArea->setAttribute(Qt::WA_DeleteOnClose);
-        scrollArea->setBackgroundRole(QPalette::Dark);
-        scrollArea->setWidget(imageArea);
 
-        mTabWidget->addTab(scrollArea, fileName);
-        mTabWidget->setCurrentIndex(mTabWidget->count()-1);
-
-        mUndoStackGroup->addStack(imageArea->getUndoStack());
-        connect(imageArea, SIGNAL(sendPrimaryColorView()), mToolbar, SLOT(setPrimaryColorView()));
-        connect(imageArea, SIGNAL(sendSecondaryColorView()), mToolbar, SLOT(setSecondaryColorView()));
-        connect(imageArea, SIGNAL(sendRestorePreviousInstrument()), this, SLOT(restorePreviousInstrument()));
-        connect(imageArea, SIGNAL(sendSetInstrument(InstrumentsEnum)), this, SLOT(setInstrument(InstrumentsEnum)));
-        connect(imageArea, SIGNAL(sendNewImageSize(QSize)), this, SLOT(setNewSizeToSizeLabel(QSize)));
-        connect(imageArea, SIGNAL(sendCursorPos(QPoint)), this, SLOT(setNewPosToPosLabel(QPoint)));
-        connect(imageArea, SIGNAL(sendColor(QColor)), this, SLOT(setCurrentPipetteColor(QColor)));
-        connect(imageArea, SIGNAL(sendEnableCopyCutActions(bool)), this, SLOT(enableCopyCutActions(bool)));
-        connect(imageArea, SIGNAL(sendEnableSelectionInstrument(bool)), this, SLOT(instumentsAct(bool)));
-
-        setWindowTitle(QString("%1 - EasyPaint").arg(fileName));
-        setCurrentFile(imageArea->getFilePath());
-    }
-    else
+    if (imageArea->getFileName().isNull())
     {
         delete imageArea;
+        return nullptr;
     }
+
+    QScrollArea *scrollArea = new QScrollArea();
+    scrollArea->setAttribute(Qt::WA_DeleteOnClose);
+    scrollArea->setBackgroundRole(QPalette::Dark);
+    scrollArea->setWidget(imageArea);
+
+    mTabWidget->addTab(scrollArea, fileName);
+    mTabWidget->setCurrentIndex(mTabWidget->count()-1);
+
+    mUndoStackGroup->addStack(imageArea->getUndoStack());
+    connect(imageArea, SIGNAL(sendPrimaryColorView()), mToolbar, SLOT(setPrimaryColorView()));
+    connect(imageArea, SIGNAL(sendSecondaryColorView()), mToolbar, SLOT(setSecondaryColorView()));
+    connect(imageArea, SIGNAL(sendRestorePreviousInstrument()), this, SLOT(restorePreviousInstrument()));
+    connect(imageArea, SIGNAL(sendSetInstrument(InstrumentsEnum)), this, SLOT(setInstrument(InstrumentsEnum)));
+    connect(imageArea, SIGNAL(sendNewImageSize(QSize)), this, SLOT(setNewSizeToSizeLabel(QSize)));
+    connect(imageArea, SIGNAL(sendCursorPos(QPoint)), this, SLOT(setNewPosToPosLabel(QPoint)));
+    connect(imageArea, SIGNAL(sendColor(QColor)), this, SLOT(setCurrentPipetteColor(QColor)));
+    connect(imageArea, SIGNAL(sendEnableCopyCutActions(bool)), this, SLOT(enableCopyCutActions(bool)));
+    connect(imageArea, SIGNAL(sendEnableSelectionInstrument(bool)), this, SLOT(instumentsAct(bool)));
+
+    setWindowTitle(QString("%1 - EasyPaint").arg(fileName));
+    setCurrentFile(imageArea->getFilePath());
+    
+    return imageArea;
 }
 
 void MainWindow::initializeMainMenu()
@@ -487,7 +483,7 @@ void MainWindow::clearStatusBarColor()
 
 void MainWindow::newAct()
 {
-    initializeNewTab();
+    initializeNewTab(false, DataSingleton::Instance()->getIsAskCanvasSize());
 }
 
 void MainWindow::openAct()
@@ -875,5 +871,5 @@ void MainWindow::updateRecentFileActions()
 void MainWindow::openRecentFile()
 {
     if (auto action = qobject_cast<QAction*>(sender()))
-        initializeNewTab(true, action->data().toString());
+        initializeNewTab(true, false, action->data().toString());
 }

@@ -49,7 +49,6 @@ DataSingleton::DataSingleton()
     mTextFont = QFont("Times", 12);
     mCurrentInstrument = NONE_INSTRUMENT;
     mPreviousInstrument = NONE_INSTRUMENT;
-    mIsInitialized = false;
     readSetting();
     readState();
 

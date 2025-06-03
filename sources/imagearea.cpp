@@ -127,7 +127,7 @@ void doResizeCanvas(ImageArea *mPImageArea, int width, int height, bool flag, bo
 
 }
 
-ImageArea::ImageArea(const bool &isOpen, const QString &filePath, QWidget *parent) :
+ImageArea::ImageArea(bool openFile, bool askCanvasSize, const QString &filePath, QWidget *parent) :
     QWidget(parent), mIsEdited(false), mIsPaint(false), mIsResize(false)
 {
     setMouseTracking(true);
@@ -141,21 +141,18 @@ ImageArea::ImageArea(const bool &isOpen, const QString &filePath, QWidget *paren
     mUndoStack = new QUndoStack(this);
     mUndoStack->setUndoLimit(DataSingleton::Instance()->getHistoryDepth());
 
-    if(isOpen && filePath.isEmpty())
+    if(openFile)
     {
-        open();
-    }
-    else if(isOpen && !filePath.isEmpty())
-    {
-        open(filePath);
+        if (filePath.isEmpty())
+            open();
+        else
+            open(filePath);
     }
     else
     {
-        int width, height;
-        width = DataSingleton::Instance()->getBaseSize().width();
-        height = DataSingleton::Instance()->getBaseSize().height();
-        if (DataSingleton::Instance()->getIsInitialized() &&
-            DataSingleton::Instance()->getIsAskCanvasSize())
+        int width = DataSingleton::Instance()->getBaseSize().width();
+        int height = DataSingleton::Instance()->getBaseSize().height();
+        if (askCanvasSize)
         {
             QClipboard *globalClipboard = QApplication::clipboard();
             QImage mClipboardImage = globalClipboard->image();

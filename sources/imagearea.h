@@ -55,7 +55,7 @@ public:
      * @param filePath Image file path to open.
      * @param parent Pointer for parent.
      */
-    explicit ImageArea(const bool &isOpen, const QString &filePath, QWidget *parent);
+    explicit ImageArea(bool openFile, bool askCanvasSize, const QString &filePath, QWidget *parent);
     ~ImageArea();
 
     /**

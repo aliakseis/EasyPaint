@@ -85,8 +85,6 @@ public:
     QString getScriptPath() { return mScriptPath; }
     void setScriptPath(const QString& scriptPath) { mScriptPath = scriptPath; }
 
-    bool getIsInitialized() { return mIsInitialized; }
-    void setIsInitialized(bool isInitialized = true) { mIsInitialized = isInitialized; }
     QString getLastFilePath() { return mLastFilePath; }
     void setLastFilePath(const QString &lastFilePath) { mLastFilePath = lastFilePath; }
     QSize getWindowSize() { return mWindowSize; }
@@ -133,7 +131,6 @@ private:
     bool mIsLoadScript;
     QString mScriptPath;
 
-    bool mIsInitialized;
     bool mIsResetCurve; /**< Needs to correct work of Bezier curve instrument */
     int mAutoSaveInterval, mHistoryDepth;
     QString mAppLanguage;

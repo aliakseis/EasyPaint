@@ -71,7 +71,7 @@ private:
      * @param isOpen Flag which shows opens a new image or from file.
      * @param filePath File path
      */
-    void initializeNewTab(const bool &isOpen = false, const QString &filePath = "");
+    ImageArea* initializeNewTab(bool openFile = false, bool askCanvasSize = false, const QString& filePath = {});
     /**
      * @brief Get current ImageArea from current tab.
      *
