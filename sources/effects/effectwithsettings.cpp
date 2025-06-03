@@ -42,17 +42,14 @@ ImageArea* EffectWithSettings::applyEffect(ImageArea* imageArea)
     {
         makeUndoCommand(imageArea);
 
-        if (imageArea)
-        {
-            imageArea->setEdited(true);
-        }
-        else
+        if (!imageArea)
         {
             imageArea = initializeNewTab();
         }
 
         imageArea->setImage(dlg.getChangedImage());
         imageArea->fixSize(true);
+        imageArea->setEdited(true);
         imageArea->update();
     }
 
