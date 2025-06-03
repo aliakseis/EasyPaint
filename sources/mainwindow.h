@@ -101,7 +101,7 @@ private:
     QTabWidget *mTabWidget;
     ToolBar *mToolbar;
     PaletteBar *mPaletteBar;
-    QLabel *mSizeLabel, *mPosLabel, *mColorPreviewLabel, *mColorRGBLabel;
+    QLabel *mStatusLabel, *mSizeLabel, *mPosLabel, *mColorPreviewLabel, *mColorRGBLabel;
 
     QMap<InstrumentsEnum, QAction*> mInstrumentsActMap;
     QMap<int, QAction*> mEffectsActMap;

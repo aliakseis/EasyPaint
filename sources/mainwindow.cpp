@@ -88,6 +88,7 @@ MainWindow::MainWindow(QStringList filePaths, QWidget *parent)
 
     if (DataSingleton::Instance()->getIsLoadScript())
     {
+        mStatusLabel->setText(tr("Loading script..."));
         mScriptModel = new ScriptModel(this);
         auto future = QtConcurrent::run([this, path = DataSingleton::Instance()->getScriptPath()] {
             mScriptModel->LoadScript(path);
@@ -95,6 +96,7 @@ MainWindow::MainWindow(QStringList filePaths, QWidget *parent)
         auto* watcher = new QFutureWatcher<void>(this);
         connect(watcher, &QFutureWatcher<void>::finished, this, [this] {
             mScriptModel->setupActions(mFileMenu, mEffectsMenu, mEffectsActMap);
+            mStatusLabel->setText(tr("Ready"));
         });
         watcher->setFuture(future);
     }
@@ -388,11 +390,15 @@ void MainWindow::initializeStatusBar()
     mStatusBar = new QStatusBar();
     setStatusBar(mStatusBar);
 
+    mStatusLabel = new QLabel();
     mSizeLabel = new QLabel();
     mPosLabel = new QLabel();
     mColorPreviewLabel = new QLabel();
     mColorRGBLabel = new QLabel();
 
+    mStatusLabel->setText(tr("Ready"));
+
+    mStatusBar->addPermanentWidget(mStatusLabel);
     mStatusBar->addPermanentWidget(mSizeLabel, -1);
     mStatusBar->addPermanentWidget(mPosLabel, 1);
     mStatusBar->addPermanentWidget(mColorPreviewLabel);
