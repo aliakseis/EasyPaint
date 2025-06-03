@@ -108,7 +108,7 @@ private:
     QAction *mSaveAction, *mSaveAsAction, *mCloseAction, *separatorAct, *mPrintAction,
             *mUndoAction, *mRedoAction, *mCopyAction, *mCutAction,
             *mNewAction, *mOpenAction, *mExitAction, *mPasteAction, *mZoomInAction, *mZoomOutAction;
-    QMenu *mInstrumentsMenu, *mEffectsMenu, *mToolsMenu;
+    QMenu *mFileMenu, *mInstrumentsMenu, *mEffectsMenu, *mToolsMenu;
     QUndoGroup *mUndoStackGroup;
     bool mPrevInstrumentSetted; /**< Used for magnifier */
 

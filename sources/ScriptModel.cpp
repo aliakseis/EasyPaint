@@ -2,6 +2,8 @@
 #include "ScriptModel.h"
 #include "datasingleton.h"
 
+#include "effects/scripteffect.h"
+#include "effects/scripteffectwithsettings.h"
 
 #include <QFileInfo>
 #include <QDir>
@@ -105,6 +107,10 @@ py::object convertQVariantToPyObject(const QVariant& var)
         return py::cast(var.toBool());
     if (var.type() == QMetaType::QString)
         return py::cast(var.toString().toStdString());
+    if (var.type() == QVariant::PointF) {
+        QPointF point = var.toPointF();
+        return py::cast(std::complex<double>(point.x(), point.y()));  // Convert to Python complex
+    }
 
     // Handle lists.
     if (var.canConvert<QVariantList>()) {
@@ -310,15 +316,28 @@ def _get_all_functions_info():
 ScriptModel::~ScriptModel() {
 }
 
-void ScriptModel::setupActions(QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap) {
+void ScriptModel::setupActions(QMenu* fileMenu, QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap) {
     const auto parent = this->parent();
-    // Use DataSingleton to register each function.
+    const auto firstAction = fileMenu->actions().isEmpty() ? nullptr : fileMenu->actions().first();
     for (const auto& funcInfo : mFunctionInfos) {
-        int type = DataSingleton::Instance()->addScriptActionHandler(this, funcInfo);
         QAction* effectAction = new QAction(funcInfo.fullName, parent);
-        QObject::connect(effectAction, SIGNAL(triggered()), parent, SLOT(effectsAct()));
-        effectsMenu->addAction(effectAction);
-        effectsActMap.insert(type, effectAction);
+        if (funcInfo.isCreatingFunction())
+        {
+            auto effect = funcInfo.parameters.empty()
+                ? static_cast<AbstractEffect*>(new ScriptEffect(this, funcInfo))
+                : new ScriptEffectWithSettings(this, funcInfo);
+
+            QObject::connect(effectAction, &QAction::triggered, [effect] { effect->applyEffect(nullptr); });
+            fileMenu->insertAction(firstAction, effectAction);  // Insert at the start
+        }
+        else
+        {
+            // Use DataSingleton to register each function.
+            const int type = DataSingleton::Instance()->addScriptActionHandler(this, funcInfo);
+            QObject::connect(effectAction, SIGNAL(triggered()), parent, SLOT(effectsAct()));
+            effectsMenu->addAction(effectAction);
+            effectsActMap.insert(type, effectAction);
+        }
     }
 }
 

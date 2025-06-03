@@ -113,3 +113,74 @@ def resize_image(image: np.ndarray, width: int = 320, height: int = 320) -> np.n
         np.ndarray: Resized image.
     """
     return cv2.resize(image, (width, height), interpolation=cv2.INTER_LINEAR)
+
+def generate_mandelbrot(width: int = 800, height: int = 800, max_iter: int = 100) -> np.ndarray:
+    """Generates a Mandelbrot fractal image.
+
+    Args:
+        width (int): Width of the output image.
+        height (int): Height of the output image.
+        max_iter (int): Maximum iterations to determine divergence.
+
+    Returns:
+        np.ndarray: Grayscale Mandelbrot fractal.
+    """
+    x_min, x_max, y_min, y_max = -2.0, 1.0, -1.5, 1.5
+    x, y = np.linspace(x_min, x_max, width), np.linspace(y_min, y_max, height)
+    X, Y = np.meshgrid(x, y)
+    C = X + 1j * Y
+    Z = np.zeros_like(C, dtype=np.complex128)
+
+    mandelbrot = np.zeros(C.shape, dtype=np.uint8)
+
+    for i in range(max_iter):
+        mask = np.abs(Z) < 2
+        Z[mask] = Z[mask]**2 + C[mask]
+        mandelbrot[mask] = (i * 255) // max_iter
+    
+    return cv2.applyColorMap(mandelbrot, cv2.COLORMAP_INFERNO)
+
+def generate_julia(width: int = 800, height: int = 800, max_iter: int = 100, c: complex = -0.7 + 0.27015j) -> np.ndarray:
+    """Generates a Julia fractal image.
+
+    Args:
+        width (int): Width of the output image.
+        height (int): Height of the output image.
+        max_iter (int): Maximum iterations to determine divergence.
+        c (complex): Complex constant for Julia set transformation.
+
+    Returns:
+        np.ndarray: Grayscale Julia fractal.
+    """
+    x_min, x_max, y_min, y_max = -1.5, 1.5, -1.5, 1.5
+    x, y = np.linspace(x_min, x_max, width), np.linspace(y_min, y_max, height)
+    X, Y = np.meshgrid(x, y)
+    Z = X + 1j * Y
+
+    julia = np.zeros(Z.shape, dtype=np.uint8)
+
+    for i in range(max_iter):
+        mask = np.abs(Z) < 2
+        Z[mask] = Z[mask]**2 + c
+        julia[mask] = (i * 255) // max_iter
+    
+    return cv2.applyColorMap(julia, cv2.COLORMAP_MAGMA)
+
+def generate_plasma(width: int = 800, height: int = 800) -> np.ndarray:
+    """Generates a plasma-like color texture.
+
+    Args:
+        width (int): Width of the output image.
+        height (int): Height of the output image.
+
+    Returns:
+        np.ndarray: Colorized plasma effect.
+    """
+    x = np.linspace(-3, 3, width)
+    y = np.linspace(-3, 3, height)
+    X, Y = np.meshgrid(x, y)
+    Z = np.sin(X * 3) + np.cos(Y * 3)
+
+    plasma = cv2.normalize(Z, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+    return cv2.applyColorMap(plasma, cv2.COLORMAP_TWILIGHT)
+

@@ -15,7 +15,7 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QWi
     QFormLayout* formLayout = new QFormLayout(this);
 
     // Iterate over each parameter from the function info (starting at index 1 as before).
-    for (int i = 1; i < static_cast<int>(functionInfo.parameters.size()); ++i) {
+    for (int i = functionInfo.isCreatingFunction()? 0 : 1; i < static_cast<int>(functionInfo.parameters.size()); ++i) {
         const auto& param = functionInfo.parameters[i];
         QWidget* control = nullptr;
         QString annotationLower = param.annotation.toLower();
@@ -85,6 +85,42 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QWi
                 };
 
             connect(tupleEdit, &QLineEdit::textChanged, this, &ScriptEffectSettings::parametersChanged);
+        }
+        else if (annotationLower.contains("complex")) {
+            QLineEdit* complexInput = new QLineEdit(this);
+
+            // Regex validator to ensure proper complex number formatting
+            QRegularExpression complexRegex(R"(^[-+]?\d+(\.\d+)?([-+]\d+(\.\d+)?[ij])?$)");
+            QRegularExpressionValidator* validator = new QRegularExpressionValidator(complexRegex, this);
+            complexInput->setValidator(validator);
+
+            // Set initial value if available
+            if (param.defaultValue.isValid()) {
+                complexInput->setText(param.defaultValue.toString().remove('(').remove(')'));
+            }
+
+            control = complexInput;
+
+            // Data exchange lambda for complex values
+            dxLambda = [complexInput](QVariant& var, bool save) {
+                if (save) {
+                    QString text = complexInput->text();
+                    QRegularExpression complexRegex(R"(^([-+]?\d+(\.\d+)?)([-+]\d+(\.\d+)?)[ij]?$)");
+                    QRegularExpressionMatch match = complexRegex.match(text);
+
+                    double real = match.hasMatch() ? match.captured(1).toDouble() : 0.0;
+                    double imag = match.hasMatch() ? match.captured(3).toDouble() : 0.0;
+
+                    var = QVariant(QPointF(real, imag));  // Store as QPointF
+                }
+                else {
+                    QPointF c = var.toPointF();
+                    complexInput->setText(QString::number(c.x(), 'f', 6) + "+" + QString::number(c.y(), 'f', 6) + "i");
+                }
+                };
+
+            // Signal-slot connection for updates
+            connect(complexInput, &QLineEdit::textChanged, this, &ScriptEffectSettings::parametersChanged);
         }
         else {
             QLineEdit* lineEdit = new QLineEdit(this);

@@ -21,7 +21,7 @@ public:
 
     void LoadScript(const QString& path);
 
-    void setupActions(QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap);
+    void setupActions(QMenu* fileMenu, QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap);
 
     QVariant call(const QString& callable, const QVariantList& args = QVariantList(), const QVariantMap& kwargs = QVariantMap());
 

@@ -9,7 +9,7 @@ struct ParameterInfo {
     QString kind; // POSITIONAL_OR_KEYWORD etc.
     QString description;
     QVariant defaultValue;
-    QString annotation; // for example <class 'float'>
+    QString annotation; // for example <class 'float'>,<class 'numpy.ndarray'>
 };
 
 struct FunctionInfo {
@@ -18,4 +18,9 @@ struct FunctionInfo {
     QString signature;
     QString doc;
     std::vector<ParameterInfo> parameters;
+
+    bool isCreatingFunction() const
+    {
+        return parameters.empty() || parameters[0].annotation != "<class 'numpy.ndarray'>";
+    }
 };

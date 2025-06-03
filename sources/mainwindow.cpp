@@ -94,7 +94,7 @@ MainWindow::MainWindow(QStringList filePaths, QWidget *parent)
         });
         auto* watcher = new QFutureWatcher<void>(this);
         connect(watcher, &QFutureWatcher<void>::finished, this, [this] {
-            mScriptModel->setupActions(mEffectsMenu, mEffectsActMap);
+            mScriptModel->setupActions(mFileMenu, mEffectsMenu, mEffectsActMap);
         });
         watcher->setFuture(future);
     }
@@ -164,38 +164,37 @@ ImageArea* MainWindow::initializeNewTab(bool openFile, bool askCanvasSize, const
 
 void MainWindow::initializeMainMenu()
 {
-    QMenu *fileMenu = menuBar()->addMenu(tr("&File"));
+    mFileMenu = menuBar()->addMenu(tr("&File"));
 
     mNewAction = new QAction(tr("&New"), this);
     mNewAction->setIcon(QIcon::fromTheme("document-new", QIcon(":/media/actions-icons/document-new.png")));
     mNewAction->setIconVisibleInMenu(true);
     connect(mNewAction, SIGNAL(triggered()), this, SLOT(newAct()));
-    fileMenu->addAction(mNewAction);
+    mFileMenu->addAction(mNewAction);
 
     mOpenAction = new QAction(tr("&Open"), this);
     mOpenAction->setIcon(QIcon::fromTheme("document-open", QIcon(":/media/actions-icons/document-open.png")));
     mOpenAction->setIconVisibleInMenu(true);
     connect(mOpenAction, SIGNAL(triggered()), this, SLOT(openAct()));
-    fileMenu->addAction(mOpenAction);
+    mFileMenu->addAction(mOpenAction);
 
     mSaveAction = new QAction(tr("&Save"), this);
     mSaveAction->setIcon(QIcon::fromTheme("document-save", QIcon(":/media/actions-icons/document-save.png")));
     mSaveAction->setIconVisibleInMenu(true);
     connect(mSaveAction, SIGNAL(triggered()), this, SLOT(saveAct()));
-    fileMenu->addAction(mSaveAction);
+    mFileMenu->addAction(mSaveAction);
 
     mSaveAsAction = new QAction(tr("Save as..."), this);
     mSaveAsAction->setIcon(QIcon::fromTheme("document-save-as", QIcon(":/media/actions-icons/document-save-as.png")));
     mSaveAsAction->setIconVisibleInMenu(true);
     connect(mSaveAsAction, SIGNAL(triggered()), this, SLOT(saveAsAct()));
-    fileMenu->addAction(mSaveAsAction);
+    mFileMenu->addAction(mSaveAsAction);
 
     mCloseAction = new QAction(tr("&Close"), this);
     mCloseAction->setIcon(QIcon::fromTheme("window-close", QIcon(":/media/actions-icons/window-close.png")));
     mCloseAction->setIconVisibleInMenu(true);
     connect(mCloseAction, SIGNAL(triggered()), this, SLOT(closeTabAct()));
-    fileMenu->addAction(mCloseAction);
-
+    mFileMenu->addAction(mCloseAction);
 
     for (int i = 0; i < MaxRecentFiles; ++i) {
         recentFileActs[i] = new QAction(this);
@@ -204,28 +203,27 @@ void MainWindow::initializeMainMenu()
             this, SLOT(openRecentFile()));
     }
 
-    separatorAct = fileMenu->addSeparator();
+    separatorAct = mFileMenu->addSeparator();
     for (int i = 0; i < MaxRecentFiles; ++i)
-        fileMenu->addAction(recentFileActs[i]);
+        mFileMenu->addAction(recentFileActs[i]);
 
     updateRecentFileActions();
 
-
-    fileMenu->addSeparator();
+    mFileMenu->addSeparator();
 
     mPrintAction = new QAction(tr("&Print"), this);
     mPrintAction->setIcon(QIcon::fromTheme("document-print", QIcon(":/media/actions-icons/document-print.png")));
     mPrintAction->setIconVisibleInMenu(true);
     connect(mPrintAction, SIGNAL(triggered()), this, SLOT(printAct()));
-    fileMenu->addAction(mPrintAction);
+    mFileMenu->addAction(mPrintAction);
 
-    fileMenu->addSeparator();
+    mFileMenu->addSeparator();
 
     mExitAction = new QAction(tr("&Exit"), this);
     mExitAction->setIcon(QIcon::fromTheme("application-exit", QIcon(":/media/actions-icons/application-exit.png")));
     mExitAction->setIconVisibleInMenu(true);
     connect(mExitAction, SIGNAL(triggered()), SLOT(close()));
-    fileMenu->addAction(mExitAction);
+    mFileMenu->addAction(mExitAction);
 
     QMenu *editMenu = menuBar()->addMenu(tr("&Edit"));
 
