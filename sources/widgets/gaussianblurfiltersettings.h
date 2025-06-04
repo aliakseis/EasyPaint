@@ -37,7 +37,7 @@ public:
     explicit GaussianBlurFilterSettings(QWidget *parent = 0);
     
 protected:
-    QList<QVariant> getEffectSettings() override;
+    QVariantList getEffectSettings() override;
 
 private:
     QSlider *mIntensitySlider;

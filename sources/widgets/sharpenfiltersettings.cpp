@@ -49,9 +49,9 @@ SharpenFilterSettings::SharpenFilterSettings(QWidget *parent) :
     setLayout(vLayout);
 }
 
-QList<QVariant> SharpenFilterSettings::getEffectSettings()
+QVariantList SharpenFilterSettings::getEffectSettings()
 {
-    QList<QVariant> matrix;
+    QVariantList matrix;
     int intensity = mIntensitySlider->value();
 
     matrix << 0            << -(intensity)        << 0

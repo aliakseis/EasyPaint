@@ -6,11 +6,11 @@
 class ScriptEffectSettings : public AbstractEffectSettings
 {
 public:
-    ScriptEffectSettings(const FunctionInfo& functionInfo, QWidget* parent = 0);
+    ScriptEffectSettings(const FunctionInfo& functionInfo, QVariantList& effectSettings, QWidget* parent = 0);
 
 private:
     // Inherited via AbstractEffectSettings
-    QList<QVariant> getEffectSettings() override;
+    QVariantList getEffectSettings() override;
 
     std::vector<std::function<void(QVariant&, bool)>> mDataExchange;
 };

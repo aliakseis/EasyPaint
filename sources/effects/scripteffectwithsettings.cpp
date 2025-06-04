@@ -4,10 +4,14 @@
 
 #include "../ScriptModel.h"
 
+#include <QSettings>
+
+const char PREFIX[] = "/ScriptEffectSettings/";
 
 AbstractEffectSettings* ScriptEffectWithSettings::getSettingsWidget()
 {
-    return new ScriptEffectSettings(mFunctionInfo);
+    auto effectSettings = QSettings().value(PREFIX + mFunctionInfo.name).toList();
+    return new ScriptEffectSettings(mFunctionInfo, effectSettings);
 }
 
 void ScriptEffectWithSettings::convertImage(const QImage* source, QImage& image, const QVariantList& matrix)
@@ -20,4 +24,6 @@ void ScriptEffectWithSettings::convertImage(const QImage* source, QImage& image,
     args << matrix;
     QVariant result = mScriptModel->call(mFunctionInfo.name, args);
     image = result.value<QImage>();
+
+    QSettings().setValue(PREFIX + mFunctionInfo.name, matrix);
 }

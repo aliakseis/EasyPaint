@@ -37,7 +37,7 @@ class CustomFilterSettings : public AbstractEffectSettings
 public:
     explicit CustomFilterSettings(QWidget *parent = 0);
     
-    QList<QVariant> getEffectSettings() override;
+    QVariantList getEffectSettings() override;
 
 private:
     QDoubleSpinBox *mSpinBox_11;

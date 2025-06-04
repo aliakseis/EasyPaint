@@ -8,7 +8,7 @@
 #include <QLineEdit>
 #include <QSpacerItem>
 
-ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QWidget* parent /*= 0*/)
+ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QVariantList& effectSettings, QWidget* parent /*= 0*/)
     : AbstractEffectSettings(parent)
 {
     // Create a form layout to pair parameter label with control.
@@ -144,11 +144,17 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QWi
     // Add a spacer to push controls to the top.
     formLayout->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
     setLayout(formLayout);
+
+    if (mDataExchange.size() == effectSettings.size())
+        for (std::pair it{ mDataExchange.begin(), effectSettings.begin() }, itEnd{ mDataExchange.end(), effectSettings.end() }; it != itEnd; ++it.first, ++it.second)
+        {
+            (*it.first)(*it.second, false);
+        }
 }
 
-QList<QVariant> ScriptEffectSettings::getEffectSettings()
+QVariantList ScriptEffectSettings::getEffectSettings()
 {
-    QList<QVariant> settings;
+    QVariantList settings;
 
     // Iterate through the stored data exchange functions and extract values.
     for (auto& exchangeFunc : mDataExchange)

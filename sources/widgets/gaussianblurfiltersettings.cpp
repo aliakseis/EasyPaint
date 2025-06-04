@@ -49,9 +49,9 @@ GaussianBlurFilterSettings::GaussianBlurFilterSettings(QWidget *parent) :
     setLayout(vLayout);
 }
 
-QList<QVariant> GaussianBlurFilterSettings::getEffectSettings()
+QVariantList GaussianBlurFilterSettings::getEffectSettings()
 {
-    QList<QVariant> matrix;
+    QVariantList matrix;
     int intensity = mIntensitySlider->value();
 
     matrix << 1 * intensity << 2 * intensity << 1 * intensity
