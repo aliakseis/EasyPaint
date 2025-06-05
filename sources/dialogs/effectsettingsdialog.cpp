@@ -127,7 +127,7 @@ public:
 
 EffectSettingsDialog::EffectSettingsDialog(const QImage* img, 
     EffectWithSettings* effectWithSettings, QWidget *parent) :
-    QDialog(parent), mEffectWithSettings(effectWithSettings), mSourceImage(img)
+    QDialog(parent? parent : GetMainWindow()), mEffectWithSettings(effectWithSettings), mSourceImage(img)
 {
     mSettingsWidget = effectWithSettings->getSettingsWidget();
     connect(mSettingsWidget, &AbstractEffectSettings::parametersChanged,
