@@ -31,7 +31,10 @@ public:
 
     QVariant call(const QString& callable, const QVariantList& args = QVariantList(), const QVariantMap& kwargs = QVariantMap());
 
-    void interrupt() { mInterrupt = true; }
+    void interrupt() { 
+        InterruptState expected = InterruptState::Unset;
+        mInterruptState.compare_exchange_strong(expected, InterruptState::Set, std::memory_order_acq_rel);
+    }
 
 signals:
     void sendImage(const QImage& img);
@@ -43,5 +46,7 @@ private:
     class PythonScope;
     std::unique_ptr<PythonScope> mPythonScope;
     std::vector<FunctionInfo> mFunctionInfos;
-    std::atomic_bool mInterrupt = false;
+
+    enum class InterruptState { OutOfScope, Unset, Set };
+    std::atomic<InterruptState> mInterruptState{ InterruptState::OutOfScope };
 };

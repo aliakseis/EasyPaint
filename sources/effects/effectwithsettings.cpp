@@ -42,12 +42,14 @@ ImageArea* EffectWithSettings::applyEffect(ImageArea* imageArea)
     {
         makeUndoCommand(imageArea);
 
+        const auto image = dlg.getChangedImage();
+
         if (!imageArea)
         {
             imageArea = initializeNewTab();
         }
 
-        imageArea->setImage(dlg.getChangedImage());
+        imageArea->setImage(image);
         imageArea->fixSize(true);
         imageArea->setEdited(true);
         imageArea->update();

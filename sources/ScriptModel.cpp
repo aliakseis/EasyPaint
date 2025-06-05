@@ -15,9 +15,6 @@
 #include <QAction>
 #include <QMenu>
 
-#ifdef Q_OS_WIN
-#include <windows.h>
-#endif
 
 #undef slots
 
@@ -25,6 +22,10 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 
 namespace py = pybind11;
@@ -345,7 +346,7 @@ def _get_all_functions_info():
 }
 
 ScriptModel::~ScriptModel() {
-    mInterrupt = true;
+    mInterruptState = InterruptState::Set;
 }
 
 void ScriptModel::setupActions(QMenu* fileMenu, QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap) {
@@ -377,7 +378,16 @@ QVariant ScriptModel::call(const QString& callable,
     const QVariantList& args,
     const QVariantMap& kwargs)
 {
-    mInterrupt = false;
+    while (true) {
+        InterruptState current = mInterruptState.load(std::memory_order_acquire);
+
+        if (current == InterruptState::OutOfScope) {
+            break;  // Exit when OutOfScope is reached
+        }
+
+        mInterruptState.wait(current);  // Wait until state changes
+    }
+    mInterruptState.store(InterruptState::Unset, std::memory_order_release);
 
     py::gil_scoped_acquire acquire;  // Ensures proper GIL acquisition
     // Obtain the __main__ module and its globals.
@@ -444,5 +454,7 @@ void ScriptModel::send_image(const pybind11::array& src)
 bool ScriptModel::check_interrupt()
 {
     qDebug() << "In check_interrupt.";
-    return mInterrupt;
+    const bool result = (mInterruptState.load(std::memory_order_acquire) == InterruptState::Set);
+    mInterruptState.store(InterruptState::OutOfScope, std::memory_order_release);
+    return result;
 }

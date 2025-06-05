@@ -28,7 +28,8 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QVa
             spinBox->setValue(param.defaultValue.isValid() ? param.defaultValue.toInt() : 0);
             control = spinBox;
             dxLambda = [spinBox](QVariant& var, bool save) {
-                save ? var = spinBox->value() : spinBox->setValue(var.toInt());
+                if (save) var = spinBox->value();
+                else spinBox->setValue(var.toInt());
                 };
 
             // Connect signal to parameterless slot
@@ -61,7 +62,8 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QVa
             checkBox->setChecked(param.defaultValue.isValid() ? param.defaultValue.toBool() : false);
             control = checkBox;
             dxLambda = [checkBox](QVariant& var, bool save) {
-                save ? var = checkBox->isChecked() : checkBox->setChecked(var.toBool());
+                if (save) var = checkBox->isChecked();
+                else checkBox->setChecked(var.toBool());
                 };
 
             connect(checkBox, &QCheckBox::stateChanged, this, &ScriptEffectSettings::parametersChanged);
@@ -71,7 +73,8 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QVa
             lineEdit->setText(param.defaultValue.isValid() ? param.defaultValue.toString() : "");
             control = lineEdit;
             dxLambda = [lineEdit](QVariant& var, bool save) {
-                save ? var = lineEdit->text() : lineEdit->setText(var.toString());
+                if (save) var = lineEdit->text();
+                else lineEdit->setText(var.toString());
                 };
 
             connect(lineEdit, &QLineEdit::textChanged, this, &ScriptEffectSettings::parametersChanged);
@@ -81,7 +84,8 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QVa
             tupleEdit->setText(param.defaultValue.isValid() ? param.defaultValue.toString() : "");
             control = tupleEdit;
             dxLambda = [tupleEdit](QVariant& var, bool save) {
-                save ? var = tupleEdit->text() : tupleEdit->setText(var.toString());
+                if (save) var = tupleEdit->text();
+                else tupleEdit->setText(var.toString());
                 };
 
             connect(tupleEdit, &QLineEdit::textChanged, this, &ScriptEffectSettings::parametersChanged);
@@ -127,7 +131,8 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QVa
             lineEdit->setText(param.defaultValue.isValid() ? param.defaultValue.toString() : "");
             control = lineEdit;
             dxLambda = [lineEdit](QVariant& var, bool save) {
-                save ? var = lineEdit->text() : lineEdit->setText(var.toString());
+                if (save) var = lineEdit->text();
+                else lineEdit->setText(var.toString());
                 };
 
             connect(lineEdit, &QLineEdit::textChanged, this, &ScriptEffectSettings::parametersChanged);
