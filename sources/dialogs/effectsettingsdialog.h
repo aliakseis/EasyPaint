@@ -42,8 +42,9 @@ class EffectSettingsDialog : public QDialog
     Q_OBJECT
 public:
     explicit EffectSettingsDialog(const QImage* img, EffectWithSettings* effectWithSettings, QWidget *parent = 0);
+    ~EffectSettingsDialog();
     
-    QImage getChangedImage() { return mImage; }
+    QImage getChangedImage();
 signals:
     
 public slots:
@@ -93,6 +94,9 @@ private:
     QImage mImage;
 
     bool mApplyNeeded = true;
+
+    class FutureContext;
+    std::unique_ptr<FutureContext> mFutureContext;
 
 private slots:
     void applyMatrix();

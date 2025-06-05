@@ -345,6 +345,7 @@ def _get_all_functions_info():
 }
 
 ScriptModel::~ScriptModel() {
+    mInterrupt = true;
 }
 
 void ScriptModel::setupActions(QMenu* fileMenu, QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap) {
@@ -376,6 +377,8 @@ QVariant ScriptModel::call(const QString& callable,
     const QVariantList& args,
     const QVariantMap& kwargs)
 {
+    mInterrupt = false;
+
     py::gil_scoped_acquire acquire;  // Ensures proper GIL acquisition
     // Obtain the __main__ module and its globals.
     py::module_ mainModule = py::module_::import("__main__");
@@ -441,5 +444,5 @@ void ScriptModel::send_image(const pybind11::array& src)
 bool ScriptModel::check_interrupt()
 {
     qDebug() << "In check_interrupt.";
-    return false;
+    return mInterrupt;
 }

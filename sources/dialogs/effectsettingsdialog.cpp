@@ -42,6 +42,89 @@
 
 #include <QTimer>
 
+#include <QEventLoop>
+#include <QFuture>
+#include <QtConcurrent>
+
+#include <QLabel>
+
+#include <QMainWindow>
+
+static QMainWindow* GetMainWindow()
+{
+    for (QWidget* widget : QApplication::topLevelWidgets()) {
+        if (auto* w = qobject_cast<QMainWindow*>(widget)) {
+            return w;
+        }
+    }
+    return nullptr;
+}
+
+class EffectSettingsDialog::FutureContext
+{
+    QFuture<QImage> mFuture;
+    QFutureWatcher<QImage> watcher;
+    QMainWindow* mainWindow;
+
+public:
+    FutureContext(QFuture<QImage>&& future, EffectSettingsDialog* dlg) : mFuture(std::move(future)), mainWindow(GetMainWindow())
+    {
+        watcher.setFuture(mFuture);
+        QObject::connect(&watcher, &QFutureWatcher<QImage>::finished, dlg, [this, dlg]() {
+            dlg->updatePreview(watcher.result());
+            dlg->mApplyButton->setEnabled(dlg->mApplyNeeded);
+            dlg->mInterruptButton->setEnabled(false);
+            });
+    }
+
+    const bool isFinished() { return mFuture.isFinished(); }
+
+    QImage getResult(bool disableUI)
+    {
+        if (mFuture.isFinished())
+            return mFuture.result();
+
+        QEventLoop loop;  // Message loop to keep UI responsive
+
+        QObject::connect(&watcher, &QFutureWatcher<QImage>::finished, [&loop]() {
+            loop.quit();
+            });
+
+        if (disableUI && mainWindow)
+        {
+            mainWindow->setEnabled(false);  // Disable UI
+
+            QScopedPointer<QLabel> spinner(new QLabel(mainWindow));
+            const QPixmap pixmap(":/media/logo/easypaint_64.png");
+            spinner->setPixmap(pixmap);
+            spinner->setAlignment(Qt::AlignCenter);
+            spinner->setGeometry(mainWindow->width() / 2 - 64, mainWindow->height() / 2 - 64, 128, 128);
+            spinner->show();  // Explicitly show spinner before loop starts
+            QTimer timer;
+            QObject::connect(&timer, &QTimer::timeout, [&]() {
+                static int angle = 0;
+                angle = (angle + 10) % 360;
+                QTransform transform;
+                transform.rotate(angle);
+                spinner->setPixmap(pixmap.transformed(transform));
+                });
+
+            timer.start(50);
+            loop.exec();  // Start message loop
+
+            timer.stop();
+            spinner->hide();
+            mainWindow->setEnabled(true);
+        }
+        else
+        {
+            loop.exec();
+        }
+
+        return watcher.result();
+    }
+};
+
 EffectSettingsDialog::EffectSettingsDialog(const QImage* img, 
     EffectWithSettings* effectWithSettings, QWidget *parent) :
     QDialog(parent), mEffectWithSettings(effectWithSettings), mSourceImage(img)
@@ -74,6 +157,7 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage* img,
     connect(mApplyButton, SIGNAL(clicked()), this, SLOT(applyMatrix()));
     mInterruptButton = new QPushButton(tr("Interrupt"), this);
     connect(mInterruptButton, SIGNAL(clicked()), this, SLOT(onInterrupt()));
+    mInterruptButton->setEnabled(false);
     //connect(mApplyButton, &QAbstractButton::clicked, [this] { updatePreview(mImage); });
 
     QHBoxLayout *hLayout_1 = new QHBoxLayout();
@@ -86,6 +170,7 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage* img,
     hLayout_2->addWidget(mOkButton);
     hLayout_2->addWidget(mCancelButton);
     hLayout_2->addWidget(mApplyButton);
+    hLayout_2->addWidget(mInterruptButton);
 
     QVBoxLayout *vLayout = new QVBoxLayout();
 
@@ -103,7 +188,10 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage* img,
     }
 }
 
+EffectSettingsDialog::~EffectSettingsDialog() = default;
+
 void EffectSettingsDialog::updatePreview(const QImage& image) {
+    mImage = image;
     mPreviewScene->clear();
     auto mPreviewPixmapItem = mPreviewScene->addPixmap(QPixmap::fromImage(image));
     //mPreviewScene->setSceneRect(mPreviewPixmapItem->boundingRect());
@@ -113,19 +201,41 @@ void EffectSettingsDialog::updatePreview(const QImage& image) {
 
 void EffectSettingsDialog::onParametersChanged()
 {
+    mApplyButton->setEnabled(true);
     mApplyNeeded = true;
 }
 
 void EffectSettingsDialog::onInterrupt()
 {
+    if (mFutureContext && mFutureContext->isFinished())
+        return;
     mEffectWithSettings->interrupt();
+    mFutureContext.reset();
+    mApplyNeeded = true;
 }
 
 void EffectSettingsDialog::applyMatrix()
 {
     if (mApplyNeeded)
     {
-        mEffectWithSettings->convertImage(mSourceImage, mImage, mSettingsWidget->getEffectSettings());
+        mEffectWithSettings->interrupt();
+        mFutureContext = std::make_unique<FutureContext>(QtConcurrent::run([this]() {
+            QImage result;
+            mEffectWithSettings->convertImage(mSourceImage, result, mSettingsWidget->getEffectSettings());
+            return result;
+            }), this);
         mApplyNeeded = false;
+        mApplyButton->setEnabled(false);
+        mInterruptButton->setEnabled(true);
     }
+}
+
+QImage  EffectSettingsDialog::getChangedImage() 
+{
+    if (mFutureContext)
+    {
+        mImage = mFutureContext->getResult(true);
+        mFutureContext.reset();
+    }
+    return mImage; 
 }

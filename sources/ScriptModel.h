@@ -31,7 +31,7 @@ public:
 
     QVariant call(const QString& callable, const QVariantList& args = QVariantList(), const QVariantMap& kwargs = QVariantMap());
 
-    class PythonScope;
+    void interrupt() { mInterrupt = true; }
 
 signals:
     void sendImage(const QImage& img);
@@ -40,6 +40,8 @@ private:
     void send_image(const pybind11::array& image);
     bool check_interrupt();
 
+    class PythonScope;
     std::unique_ptr<PythonScope> mPythonScope;
     std::vector<FunctionInfo> mFunctionInfos;
+    std::atomic_bool mInterrupt = false;
 };

@@ -5,9 +5,6 @@
 #include "../ScriptModel.h"
 
 #include <QSettings>
-//#include <QEventLoop>
-//#include <QFuture>
-//#include <QtConcurrent>
 
 const char PREFIX[] = "/ScriptEffectSettings/";
 
@@ -55,4 +52,9 @@ void ScriptEffectWithSettings::convertImage(const QImage* source, QImage& image,
     */
 
     QSettings().setValue(PREFIX + mFunctionInfo.name, matrix);
+}
+
+void ScriptEffectWithSettings::interrupt()
+{
+    mScriptModel->interrupt();
 }
