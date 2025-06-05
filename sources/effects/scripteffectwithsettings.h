@@ -8,9 +8,7 @@ class ScriptModel;
 class ScriptEffectWithSettings : public EffectWithSettings
 {
 public:
-    ScriptEffectWithSettings(ScriptModel* scriptModel, const FunctionInfo& functionInfo, QObject* parent = 0)
-        : EffectWithSettings(parent), mScriptModel(scriptModel), mFunctionInfo(functionInfo) {
-    }
+    ScriptEffectWithSettings(ScriptModel* scriptModel, const FunctionInfo& functionInfo, QObject* parent = 0);
 
 private:
     ScriptModel* mScriptModel;

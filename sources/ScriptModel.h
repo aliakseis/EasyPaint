@@ -11,6 +11,12 @@
 class QMenu;
 class QAction;
 
+namespace pybind11 {
+
+class array;
+
+}
+
 class ScriptModel  : public QObject
 {
     Q_OBJECT
@@ -27,7 +33,13 @@ public:
 
     class PythonScope;
 
+signals:
+    void sendImage(const QImage& img);
+
 private:
+    void send_image(const pybind11::array& image);
+    bool check_interrupt();
+
     std::unique_ptr<PythonScope> mPythonScope;
     std::vector<FunctionInfo> mFunctionInfos;
 };

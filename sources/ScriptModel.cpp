@@ -68,9 +68,6 @@ QImage nparray_to_qimage(const py::array& a) {
     if (info.ndim != 3 || info.shape[2] != 3) {
         throw std::invalid_argument("nparray_to_qimage: Expected shape (height, width, 3)");
     }
-    if (info.format != py::format_descriptor<uchar>::format()) {
-        throw std::invalid_argument("nparray_to_qimage: Expected dtype=uint8");
-    }
 
     int height = static_cast<int>(info.shape[0]);
     int width = static_cast<int>(info.shape[1]);
@@ -79,11 +76,41 @@ QImage nparray_to_qimage(const py::array& a) {
     // Create an empty QImage with Format_RGB888.
     QImage image(width, height, QImage::Format_RGB888);
 
-    // Copy row-by-row.
-    const uchar* src = static_cast<const uchar*>(info.ptr);
-    for (int i = 0; i < height; i++) {
-        uchar* dest = image.scanLine(i);
-        std::memcpy(dest, src + i * (width * channels), width * channels);
+    if (info.format == py::format_descriptor<uchar>::format()) {
+
+        // Copy row-by-row.
+        const uchar* src = static_cast<const uchar*>(info.ptr);
+        for (int i = 0; i < height; i++) {
+            uchar* dest = image.scanLine(i);
+            std::memcpy(dest, src + i * (width * channels), width * channels);
+        }
+    }
+    else if (info.format == py::format_descriptor<float>::format()) 
+    {
+        // Convert floating-point values to uint8 (scale [0,1] -> [0,255])
+        /*
+        const float* src = static_cast<const float*>(info.ptr);
+        for (int i = 0; i < height; i++) {
+            uchar* dest = image.scanLine(i);
+            for (int j = 0; j < width * channels; j++) {
+                dest[j] = static_cast<uchar>(std::round(src[i * (width * channels) + j] * 255.0f));
+            }
+        }
+        */
+        const float* src = static_cast<const float*>(info.ptr);
+        for (int i = 0; i < height; i++) {
+            uchar* dest = image.scanLine(i);
+            for (int j = 0; j < width; j++) 
+                for (int k = 0; k < channels; ++k)
+                {
+                    dest[j * channels + k] = 
+                        static_cast<uchar>(std::round(src[k * (width * height) + i * width + j] * 255.0f));
+                }
+        }
+    }
+    else
+    {
+        throw std::invalid_argument("nparray_to_qimage: Expected dtype=uint8");
     }
 
     return image;
@@ -216,6 +243,10 @@ void ScriptModel::LoadScript(const QString& path)
     // Get the __main__ module.
     py::module_ mainModule = py::module_::import("__main__");
     py::dict globals = mainModule.attr("__dict__");
+
+    // Inject functions into Python globals
+    globals["_send_image"] = py::cpp_function([this](const py::array& image) { send_image(image); });
+    globals["_check_interrupt"] = py::cpp_function([this]() { return check_interrupt(); });
 
     // Load helper functions via exec.
     py::exec(R"(
@@ -397,4 +428,18 @@ QVariant ScriptModel::call(const QString& callable,
     // For other types, convert the result to a string.
     std::string resStr = py::str(result);
     return QVariant(QString::fromStdString(resStr));
+}
+
+void ScriptModel::send_image(const pybind11::array& src)
+{
+    qDebug() << "In send_image.";
+    auto img = nparray_to_qimage(src);
+    qDebug() << img;
+    emit sendImage(img);
+}
+
+bool ScriptModel::check_interrupt()
+{
+    qDebug() << "In check_interrupt.";
+    return false;
 }

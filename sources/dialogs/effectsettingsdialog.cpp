@@ -72,8 +72,9 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage* img,
     connect(mCancelButton, SIGNAL(clicked()), this, SLOT(reject()));
     mApplyButton = new QPushButton(tr("Apply"), this);
     connect(mApplyButton, SIGNAL(clicked()), this, SLOT(applyMatrix()));
-    connect(mApplyButton, &QAbstractButton::clicked, 
-        [this] { updatePreview(mImage); });
+    mInterruptButton = new QPushButton(tr("Interrupt"), this);
+    connect(mInterruptButton, SIGNAL(clicked()), this, SLOT(onInterrupt()));
+    //connect(mApplyButton, &QAbstractButton::clicked, [this] { updatePreview(mImage); });
 
     QHBoxLayout *hLayout_1 = new QHBoxLayout();
 
@@ -113,6 +114,11 @@ void EffectSettingsDialog::updatePreview(const QImage& image) {
 void EffectSettingsDialog::onParametersChanged()
 {
     mApplyNeeded = true;
+}
+
+void EffectSettingsDialog::onInterrupt()
+{
+    mEffectWithSettings->interrupt();
 }
 
 void EffectSettingsDialog::applyMatrix()

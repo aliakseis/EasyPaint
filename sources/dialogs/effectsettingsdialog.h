@@ -47,9 +47,9 @@ public:
 signals:
     
 public slots:
+    void updatePreview(const QImage& image);
 
 protected:
-    void updatePreview(const QImage& image);
     void wheelEvent(QWheelEvent* event) override {
         const double scaleFactor = 1.15;  // Adjust zoom speed
         if (event->angleDelta().y() > 0) {
@@ -79,6 +79,7 @@ private:
     QPushButton *mOkButton;
     QPushButton *mCancelButton;
     QPushButton *mApplyButton;
+    QPushButton* mInterruptButton;
 
     EffectWithSettings* mEffectWithSettings;
     AbstractEffectSettings *mSettingsWidget;
@@ -96,6 +97,7 @@ private:
 private slots:
     void applyMatrix();
     void onParametersChanged();
+    void onInterrupt();
 };
 
 #endif // ABSTRACTEFFECTSDIALOG_H

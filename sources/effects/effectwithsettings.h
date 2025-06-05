@@ -48,6 +48,9 @@ public:
     virtual AbstractEffectSettings* getSettingsWidget() = 0;
 
     virtual void convertImage(const QImage* source, QImage& image, const QVariantList& matrix) = 0;
+    virtual void interrupt() {}
+signals:
+    void sendImage(const QImage& img);
 };
 
 #endif // CONVOLUTIONMATRIXEFFECT_H
