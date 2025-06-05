@@ -60,6 +60,19 @@ static QMainWindow* GetMainWindow()
     return nullptr;
 }
 
+bool isDummyImage(const QImage& image) {
+    const QColor refColor = image.pixelColor(0, 0);
+    for (int y = 0; y < image.height(); ++y) {
+        for (int x = 0; x < image.width(); ++x) {
+            QColor color = image.pixelColor(x, y);
+            if (color != refColor) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
 class EffectSettingsDialog::FutureContext
 {
     QFuture<QImage> mFuture;
@@ -191,12 +204,15 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage* img,
 EffectSettingsDialog::~EffectSettingsDialog() = default;
 
 void EffectSettingsDialog::updatePreview(const QImage& image) {
-    mImage = image;
-    mPreviewScene->clear();
-    auto mPreviewPixmapItem = mPreviewScene->addPixmap(QPixmap::fromImage(image));
-    //mPreviewScene->setSceneRect(mPreviewPixmapItem->boundingRect());
-    mPreviewView->fitInView(mPreviewPixmapItem, Qt::KeepAspectRatio);
-    zoomFactor = mPreviewView->transform().m11();  // Extract current scale from transformation
+    if (!isDummyImage(image))
+    {
+        mImage = image;
+        mPreviewScene->clear();
+        auto mPreviewPixmapItem = mPreviewScene->addPixmap(QPixmap::fromImage(image));
+        //mPreviewScene->setSceneRect(mPreviewPixmapItem->boundingRect());
+        mPreviewView->fitInView(mPreviewPixmapItem, Qt::KeepAspectRatio);
+        zoomFactor = mPreviewView->transform().m11();  // Extract current scale from transformation
+    }
 }
 
 void EffectSettingsDialog::onParametersChanged()
@@ -234,7 +250,9 @@ QImage  EffectSettingsDialog::getChangedImage()
 {
     if (mFutureContext)
     {
-        mImage = mFutureContext->getResult(true);
+        const auto image = mFutureContext->getResult(true);
+        if (!isDummyImage(image))
+            mImage = image;
         mFutureContext.reset();
     }
     return mImage; 
