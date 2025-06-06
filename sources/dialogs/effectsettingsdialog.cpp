@@ -165,6 +165,7 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage* img,
     connect(mOkButton, SIGNAL(clicked()), this, SLOT(applyMatrix()));
     connect(mOkButton, SIGNAL(clicked()), this, SLOT(accept()));
     mCancelButton = new QPushButton(tr("Cancel"), this);
+    connect(mCancelButton, SIGNAL(clicked()), this, SLOT(onInterrupt()));
     connect(mCancelButton, SIGNAL(clicked()), this, SLOT(reject()));
     mApplyButton = new QPushButton(tr("Apply"), this);
     connect(mApplyButton, SIGNAL(clicked()), this, SLOT(applyMatrix()));
