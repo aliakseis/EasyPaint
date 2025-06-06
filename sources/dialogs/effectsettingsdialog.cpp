@@ -223,6 +223,7 @@ void EffectSettingsDialog::onParametersChanged()
 
 void EffectSettingsDialog::onInterrupt()
 {
+    mInterruptButton->setEnabled(false);
     if (mFutureContext && mFutureContext->isFinished())
         return;
     mEffectWithSettings->interrupt();

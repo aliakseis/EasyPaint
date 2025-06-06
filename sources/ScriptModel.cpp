@@ -2,6 +2,8 @@
 #include "ScriptModel.h"
 #include "datasingleton.h"
 
+#include "makeguard.h" 
+
 #include "effects/scripteffect.h"
 #include "effects/scripteffectwithsettings.h"
 
@@ -389,6 +391,8 @@ QVariant ScriptModel::call(const QString& callable,
     }
     mInterruptState.store(InterruptState::Unset, std::memory_order_release);
 
+    auto stateGuard = MakeGuard(&mInterruptState, [](auto state) { state->store(InterruptState::OutOfScope, std::memory_order_release); });
+
     py::gil_scoped_acquire acquire;  // Ensures proper GIL acquisition
     // Obtain the __main__ module and its globals.
     py::module_ mainModule = py::module_::import("__main__");
@@ -454,7 +458,8 @@ void ScriptModel::send_image(const pybind11::array& src)
 bool ScriptModel::check_interrupt()
 {
     qDebug() << "In check_interrupt.";
-    const bool result = (mInterruptState.load(std::memory_order_acquire) == InterruptState::Set);
-    mInterruptState.store(InterruptState::OutOfScope, std::memory_order_release);
+    InterruptState expected = InterruptState::Set;
+    // Atomically check and update the value
+    const bool result = mInterruptState.compare_exchange_strong(expected, InterruptState::OutOfScope, std::memory_order_acq_rel);
     return result;
 }
