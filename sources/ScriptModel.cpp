@@ -60,6 +60,11 @@ py::array qimage_to_nparray(const QImage& inImage) {
     return arr;
 }
 
+uint8_t clip_uint8(long a) {
+    const uint8_t noOverflowCandidate = static_cast<uint8_t>(a);
+    return (noOverflowCandidate == a) ? noOverflowCandidate : ((noOverflowCandidate < a) ? UINT8_MAX : 0);
+}
+
 //------------------------------------------------------------------------------
 // Converts a NumPy array (pybind11::array) back into a QImage.
 // The array must be contiguous and have shape (height, width, 3), dtype uint8.
@@ -107,7 +112,7 @@ QImage nparray_to_qimage(const py::array& a) {
                 for (int k = 0; k < channels; ++k)
                 {
                     dest[j * channels + k] = 
-                        static_cast<uchar>(std::round(src[k * (width * height) + i * width + j] * 255.0f));
+                        clip_uint8(std::lround(src[k * (width * height) + i * width + j] * 255.0f));
                 }
         }
     }
