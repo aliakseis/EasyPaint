@@ -49,6 +49,8 @@ signals:
     
 public slots:
     void updatePreview(const QImage& image);
+    void accept() override;
+    void reject() override;
 
 protected:
     void wheelEvent(QWheelEvent* event) override {
@@ -97,6 +99,8 @@ private:
 
     class FutureContext;
     std::unique_ptr<FutureContext> mFutureContext;
+
+    bool mAccepted = false;
 
 private slots:
     void applyMatrix();

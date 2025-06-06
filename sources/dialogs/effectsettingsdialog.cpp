@@ -49,6 +49,7 @@
 #include <QLabel>
 
 #include <QMainWindow>
+#include <QMessageBox>
 
 static QMainWindow* GetMainWindow()
 {
@@ -162,17 +163,14 @@ EffectSettingsDialog::EffectSettingsDialog(const QImage* img,
     mPreviewView->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);  // Zoom where the cursor is
 
     mOkButton = new QPushButton(tr("Ok"), this);
-    connect(mOkButton, SIGNAL(clicked()), this, SLOT(applyMatrix()));
     connect(mOkButton, SIGNAL(clicked()), this, SLOT(accept()));
     mCancelButton = new QPushButton(tr("Cancel"), this);
-    connect(mCancelButton, SIGNAL(clicked()), this, SLOT(onInterrupt()));
     connect(mCancelButton, SIGNAL(clicked()), this, SLOT(reject()));
     mApplyButton = new QPushButton(tr("Apply"), this);
     connect(mApplyButton, SIGNAL(clicked()), this, SLOT(applyMatrix()));
     mInterruptButton = new QPushButton(tr("Interrupt"), this);
     connect(mInterruptButton, SIGNAL(clicked()), this, SLOT(onInterrupt()));
     mInterruptButton->setEnabled(false);
-    //connect(mApplyButton, &QAbstractButton::clicked, [this] { updatePreview(mImage); });
 
     QHBoxLayout *hLayout_1 = new QHBoxLayout();
 
@@ -208,11 +206,14 @@ void EffectSettingsDialog::updatePreview(const QImage& image) {
     if (!isDummyImage(image))
     {
         mImage = image;
-        mPreviewScene->clear();
-        auto mPreviewPixmapItem = mPreviewScene->addPixmap(QPixmap::fromImage(image));
-        //mPreviewScene->setSceneRect(mPreviewPixmapItem->boundingRect());
-        mPreviewView->fitInView(mPreviewPixmapItem, Qt::KeepAspectRatio);
-        zoomFactor = mPreviewView->transform().m11();  // Extract current scale from transformation
+        if (!mAccepted)
+        {
+            mPreviewScene->clear();
+            auto mPreviewPixmapItem = mPreviewScene->addPixmap(QPixmap::fromImage(image));
+            //mPreviewScene->setSceneRect(mPreviewPixmapItem->boundingRect());
+            mPreviewView->fitInView(mPreviewPixmapItem, Qt::KeepAspectRatio);
+            zoomFactor = mPreviewView->transform().m11();  // Extract current scale from transformation
+        }
     }
 }
 
@@ -225,10 +226,13 @@ void EffectSettingsDialog::onParametersChanged()
 void EffectSettingsDialog::onInterrupt()
 {
     mInterruptButton->setEnabled(false);
-    if (mFutureContext && mFutureContext->isFinished())
-        return;
-    mEffectWithSettings->interrupt();
+    if (mFutureContext) {
+        if (mFutureContext->isFinished())
+            return;
+        mEffectWithSettings->interrupt();
+    }
     mFutureContext.reset();
+    mApplyButton->setEnabled(true);
     mApplyNeeded = true;
 }
 
@@ -236,7 +240,9 @@ void EffectSettingsDialog::applyMatrix()
 {
     if (mApplyNeeded)
     {
-        mEffectWithSettings->interrupt();
+        if (mFutureContext && !mFutureContext->isFinished()) {
+            mEffectWithSettings->interrupt();
+        }
         mFutureContext = std::make_unique<FutureContext>(QtConcurrent::run([this]() {
             QImage result;
             mEffectWithSettings->convertImage(mSourceImage, result, mSettingsWidget->getEffectSettings());
@@ -258,4 +264,43 @@ QImage  EffectSettingsDialog::getChangedImage()
         mFutureContext.reset();
     }
     return mImage; 
+}
+
+void EffectSettingsDialog::accept()
+{
+    if (mApplyNeeded && !!mFutureContext)
+    {
+        QMessageBox msgBox;
+        msgBox.setWindowTitle(tr("Simulation Parameters Changed"));
+        msgBox.setText(tr("The simulation parameters have changed. What would you like to do?"));
+        msgBox.setIcon(QMessageBox::Question);
+
+        // Add three buttons for clear choices
+        QPushButton* startNewBtn = msgBox.addButton(tr("Start New Simulation"), QMessageBox::AcceptRole);
+        QPushButton* continueBtn = msgBox.addButton(tr("Continue with Last Data"), QMessageBox::RejectRole);
+        QPushButton* stayBtn = msgBox.addButton(tr("Stay on This Screen"), QMessageBox::DestructiveRole);
+
+        msgBox.exec();  // Show the dialog and wait for user choice
+
+        // Handle user selection
+        if (msgBox.clickedButton() == startNewBtn) {
+            applyMatrix();
+        }
+        else if (msgBox.clickedButton() == continueBtn) {
+            mApplyNeeded = false;
+        }
+        else {
+            // Stay on the screen (no action needed)
+            return;
+        }
+    }
+    QDialog::accept();
+
+    mAccepted = true;
+}
+
+void EffectSettingsDialog::reject()
+{
+    onInterrupt();
+    QDialog::reject();
 }

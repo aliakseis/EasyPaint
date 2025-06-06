@@ -1,5 +1,5 @@
 import torch
-from diffusers import StableDiffusionPipeline
+from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 import numpy as np
 
 
@@ -11,19 +11,26 @@ pipe = StableDiffusionPipeline.from_pretrained(
     torch_dtype=torch.float16
 ).to(device)
 
+# Replace the default scheduler with a DPM scheduler.
+# This creates a DPMSolverMultistepScheduler instance with the same config as the pipeline's current scheduler.
+pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+
+# Optional: Enable attention slicing (helps with memory usage) without quality loss.
+pipe.enable_attention_slicing()
+# Optional: For large image generation, you can also try VAE slicing.
+pipe.enable_vae_slicing()
+
 # Callback function to monitor generation
 def _callback(iter, i, t, extra_step_kwargs):
 
     # https://huggingface.co/docs/diffusers/using-diffusers/callback
     if _check_interrupt():
-        pipeline._interrupt = True
+        raise RuntimeError("Interrupt detected! Stopping generation.")
 
     latents = extra_step_kwargs.get("latents")
     with torch.no_grad():
-        #latents = (latents / 0.18215).to(torch.float16)  # Ensure correct dtype
-        #image = pipe.vae.decode(latents).sample.to(torch.float16)  # Decode safely
-        #latents = 1 / 0.18215 * latents
-        latents = 1 / 0.13025 * latents
+        latents = 1 / 0.18215 * latents
+        #latents = 1 / 0.13025 * latents
 
         image = pipe.vae.decode(latents).sample
         
