@@ -34,6 +34,7 @@ def _callback(iteration, step, timestep, extra_step_kwargs):
         if hasattr(image_tensor, "is_sparse") and image_tensor.is_sparse:
             image_tensor = image_tensor.to_dense()
         with torch.no_grad():
+            image_tensor = image_tensor / 0.18215
             decoded = pipe.vae.decode(image_tensor)
             # Access the tensor inside the DecoderOutput object via .sample,
             # then scale from [-1, 1] to [0, 1]
@@ -48,8 +49,8 @@ def _callback(iteration, step, timestep, extra_step_kwargs):
         image_tensor = image_tensor.unsqueeze(0)
 
     # Option: Only process every n-th step (e.g., every 5 steps)
-    if step % 5 != 0:
-        return extra_step_kwargs
+    #if step % 5 != 0:
+    #    return extra_step_kwargs
 
     with torch.no_grad():
         # Convert tensor shape from [batch, channels, height, width] to [batch, height, width, channels]
