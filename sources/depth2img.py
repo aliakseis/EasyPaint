@@ -19,32 +19,42 @@ pipe.enable_attention_slicing()
 
 # Callback function to monitor generation
 def _callback(iteration, step, timestep, extra_step_kwargs):
-    # Check for interrupt signal (your custom function)
+    # Interrupt check
     if _check_interrupt():
         raise RuntimeError("Interrupt detected! Stopping generation.")
 
-    # Retrieve the latent tensor (by default, it’s passed as "latents")
-    latents = extra_step_kwargs.get("latents")
-    if latents is None:
-        return extra_step_kwargs  # Nothing to decode, return unchanged
+    # Try to get the image tensor; if not available, try the latents
+    image_tensor = extra_step_kwargs.get("image")
+    if image_tensor is None:
+        image_tensor = extra_step_kwargs.get("latents")
+        if image_tensor is None:
+            return extra_step_kwargs  # Nothing to process
 
-    # To avoid too much overhead, you could selectively decode at some intervals
-    if step % 5 != 0:  # For example, decode only every 5 steps
+        # If working with latents, decode them into an image
+        if image_tensor.is_sparse:
+            image_tensor = image_tensor.to_dense()
+        with torch.no_grad():
+            decoded = pipe.vae.decode(image_tensor)
+            # The VAE typically outputs values in [-1, 1]; scale them to [0, 1]
+            image_tensor = (decoded + 1) / 2
+
+    else:
+        # If the provided image tensor is sparse, convert to dense
+        if image_tensor.is_sparse:
+            image_tensor = image_tensor.to_dense()
+
+    # Ensure that image_tensor has 4 dimensions (batch, channels, height, width)
+    if image_tensor.dim() == 3:
+        image_tensor = image_tensor.unsqueeze(0)
+
+    # Optionally, decode only every few steps to avoid performance overhead
+    if step % 5 != 0:
         return extra_step_kwargs
 
+    # Post-process the tensor into a NumPy image
     with torch.no_grad():
-        # Decode latents to get an intermediate image
-        decoded = pipe.vae.decode(latents)
-        # Assume your batch is the first dimension; take the last image in the batch
-        image_tensor = decoded[-1]
-
-        # Post-process the tensor:
-        # Typical VAE outputs lie in range [-1, 1]. Normalize to [0, 1] then convert to uint8.
-        image_tensor = (image_tensor + 1) / 2  # Scale from [-1,1] to [0,1]
-        image_np = image_tensor.clamp(0, 1).cpu().permute(1, 2, 0).numpy() * 255
-        image_np = image_np.astype(np.uint8)
-
-        _send_image(image_np)  # Your function to send or display the preview
+        processed_image = image_tensor.cpu().permute(0, 2, 3, 1).float().numpy()
+        _send_image(processed_image[-1])  # Send the latest preview image
 
     return extra_step_kwargs
 
