@@ -23,36 +23,36 @@ def _callback(iteration, step, timestep, extra_step_kwargs):
     if _check_interrupt():
         raise RuntimeError("Interrupt detected! Stopping generation.")
 
-    # Try to get the image tensor; if not available, try the latents
+    # Try to get the tensor; if not, try "latents"
     image_tensor = extra_step_kwargs.get("image")
     if image_tensor is None:
         image_tensor = extra_step_kwargs.get("latents")
         if image_tensor is None:
             return extra_step_kwargs  # Nothing to process
 
-        # If working with latents, decode them into an image
-        if image_tensor.is_sparse:
+        # Convert to dense if sparse
+        if hasattr(image_tensor, "is_sparse") and image_tensor.is_sparse:
             image_tensor = image_tensor.to_dense()
         with torch.no_grad():
             decoded = pipe.vae.decode(image_tensor)
-            # The VAE typically outputs values in [-1, 1]; scale them to [0, 1]
-            image_tensor = (decoded + 1) / 2
-
+            # Access the tensor inside the DecoderOutput object via .sample,
+            # then scale from [-1, 1] to [0, 1]
+            image_tensor = (decoded.sample + 1) / 2
     else:
-        # If the provided image tensor is sparse, convert to dense
-        if image_tensor.is_sparse:
+        # If the provided image_tensor is sparse, convert to dense
+        if hasattr(image_tensor, "is_sparse") and image_tensor.is_sparse:
             image_tensor = image_tensor.to_dense()
 
-    # Ensure that image_tensor has 4 dimensions (batch, channels, height, width)
+    # Ensure image_tensor has a batch dimension (dimensions: [batch, channels, height, width])
     if image_tensor.dim() == 3:
         image_tensor = image_tensor.unsqueeze(0)
 
-    # Optionally, decode only every few steps to avoid performance overhead
+    # Option: Only process every n-th step (e.g., every 5 steps)
     if step % 5 != 0:
         return extra_step_kwargs
 
-    # Post-process the tensor into a NumPy image
     with torch.no_grad():
+        # Convert tensor shape from [batch, channels, height, width] to [batch, height, width, channels]
         processed_image = image_tensor.cpu().permute(0, 2, 3, 1).float().numpy()
         _send_image(processed_image[-1])  # Send the latest preview image
 
