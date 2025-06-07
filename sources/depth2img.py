@@ -19,20 +19,34 @@ pipe.enable_attention_slicing()
 
 # Callback function to monitor generation
 def _callback(iteration, step, timestep, extra_step_kwargs):
-    """Interrupts generation if needed & sends intermediate images."""
+    # Check for interrupt signal (your custom function)
     if _check_interrupt():
         raise RuntimeError("Interrupt detected! Stopping generation.")
 
-    image_tensor = extra_step_kwargs.get("image")
-    if image_tensor is None:
-        return extra_step_kwargs  # No image available, return unchanged
+    # Retrieve the latent tensor (by default, it’s passed as "latents")
+    latents = extra_step_kwargs.get("latents")
+    if latents is None:
+        return extra_step_kwargs  # Nothing to decode, return unchanged
+
+    # To avoid too much overhead, you could selectively decode at some intervals
+    if step % 5 != 0:  # For example, decode only every 5 steps
+        return extra_step_kwargs
 
     with torch.no_grad():
-        processed_image = image_tensor.cpu().permute(0, 2, 3, 1).float().numpy()
-        _send_image(processed_image[-1])  # Send preview during processing
+        # Decode latents to get an intermediate image
+        decoded = pipe.vae.decode(latents)
+        # Assume your batch is the first dimension; take the last image in the batch
+        image_tensor = decoded[-1]
+
+        # Post-process the tensor:
+        # Typical VAE outputs lie in range [-1, 1]. Normalize to [0, 1] then convert to uint8.
+        image_tensor = (image_tensor + 1) / 2  # Scale from [-1,1] to [0,1]
+        image_np = image_tensor.clamp(0, 1).cpu().permute(1, 2, 0).numpy() * 255
+        image_np = image_np.astype(np.uint8)
+
+        _send_image(image_np)  # Your function to send or display the preview
 
     return extra_step_kwargs
-
 
 # Core function to run Depth2Img
 def generate_depth_image(image: np.ndarray, prompt: str, negative_prompt: str = "", strength: float = 0.15, seed: int = 21) -> np.ndarray:
@@ -58,6 +72,7 @@ def generate_depth_image(image: np.ndarray, prompt: str, negative_prompt: str = 
         strength=strength,
         generator=generator,
         callback_on_step_end=_callback,  # Integrate callback
+        callback_on_step_end_tensor_inputs=["latents"],  # Ensure latents are passed
     )
 
     return np.array(outcome.images[0])
