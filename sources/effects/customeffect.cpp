@@ -28,7 +28,7 @@ static QRgb convolutePixel(const QImage& image, int x, int y, const QList<QVaria
 }
 
 
-void CustomEffect::convertImage(const QImage* source, QImage& mImage, const QVariantList& matrix)
+void CustomEffect::convertImage(const QImage* source, QImage& mImage, const QVariantList& matrix, std::weak_ptr<EffectRunCallback> /*callback*/)
 {
     QImage copy(*source);
 

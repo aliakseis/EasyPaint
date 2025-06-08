@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 3.5)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 
 # set project's name
 set (PROJECT easypaint)
@@ -17,6 +17,7 @@ set (HEADERS
     sources/easypaintenums.h
     sources/imagearea.h
     sources/datasingleton.h
+    sources/effects/effectruncallback.h
     sources/effects/abstracteffect.h
     sources/effects/negativeeffect.h
     sources/effects/grayeffect.h

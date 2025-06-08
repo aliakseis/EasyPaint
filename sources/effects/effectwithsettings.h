@@ -27,6 +27,7 @@
 #ifndef CONVOLUTIONMATRIXEFFECT_H
 #define CONVOLUTIONMATRIXEFFECT_H
 
+#include "effectruncallback.h"
 #include "abstracteffect.h"
 #include "../widgets/abstracteffectsettings.h"
 
@@ -47,10 +48,7 @@ public:
     ImageArea* applyEffect(ImageArea* imageArea) override;
     virtual AbstractEffectSettings* getSettingsWidget() = 0;
 
-    virtual void convertImage(const QImage* source, QImage& image, const QVariantList& matrix) = 0;
-    virtual void interrupt() {}
-signals:
-    void sendImage(const QImage& img);
+    virtual void convertImage(const QImage* source, QImage& image, const QVariantList& matrix, std::weak_ptr<EffectRunCallback> callback = {}) = 0;
 };
 
 #endif // CONVOLUTIONMATRIXEFFECT_H

@@ -83,9 +83,21 @@ class EffectSettingsDialog::FutureContext
     QFutureWatcher<QImage> watcher;
     QMainWindow* mainWindow;
 
+    std::shared_ptr<EffectRunCallback> mEffectRunCallback;
+
 public:
-    FutureContext(QFuture<QImage>&& future, EffectSettingsDialog* dlg) : mFuture(std::move(future)), mainWindow(GetMainWindow())
+    FutureContext(EffectSettingsDialog* dlg) : mainWindow(GetMainWindow()),
+        mEffectRunCallback(new EffectRunCallback(), std::mem_fn(&QObject::deleteLater))
     {
+        QObject::connect(mEffectRunCallback.get(), &EffectRunCallback::sendImage, dlg, &EffectSettingsDialog::updatePreview);
+
+        mFuture = QtConcurrent::run([this, dlg]() {
+            QImage result;
+            dlg->mEffectWithSettings->convertImage(dlg->mSourceImage, result, dlg->mSettingsWidget->getEffectSettings(),
+                mEffectRunCallback);
+            return result;
+            }),
+
         watcher.setFuture(mFuture);
         QObject::connect(&watcher, &QFutureWatcher<QImage>::finished, dlg, [this, dlg]() {
             dlg->updatePreview(watcher.result());
@@ -94,7 +106,7 @@ public:
             });
     }
 
-    const bool isFinished() { return mFuture.isFinished(); }
+    bool isFinished() const{ return mFuture.isFinished(); }
 
     QImage getResult(bool disableUI)
     {
@@ -140,6 +152,8 @@ public:
 
         return watcher.result();
     }
+
+    void interrupt() { mEffectRunCallback->interrupt(); }
 };
 
 EffectSettingsDialog::EffectSettingsDialog(const QImage* img, 
@@ -232,7 +246,7 @@ void EffectSettingsDialog::onInterrupt()
     if (mFutureContext) {
         if (mFutureContext->isFinished())
             return;
-        mEffectWithSettings->interrupt();
+        mFutureContext->interrupt();
     }
     mFutureContext.reset();
     mApplyButton->setEnabled(true);
@@ -244,13 +258,9 @@ void EffectSettingsDialog::applyMatrix()
     if (mApplyNeeded)
     {
         if (mFutureContext && !mFutureContext->isFinished()) {
-            mEffectWithSettings->interrupt();
+            mFutureContext->interrupt();
         }
-        mFutureContext = std::make_unique<FutureContext>(QtConcurrent::run([this]() {
-            QImage result;
-            mEffectWithSettings->convertImage(mSourceImage, result, mSettingsWidget->getEffectSettings());
-            return result;
-            }), this);
+        mFutureContext = std::make_unique<FutureContext>(this);
         mApplyNeeded = false;
         mApplyButton->setEnabled(false);
         mInterruptButton->setEnabled(true);

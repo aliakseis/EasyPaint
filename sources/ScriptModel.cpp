@@ -353,7 +353,8 @@ def _get_all_functions_info():
 }
 
 ScriptModel::~ScriptModel() {
-    mInterruptState = InterruptState::Set;
+    mIsShuttingDown = true;
+    std::unique_lock<std::mutex> lock(mCallMutex);
 }
 
 void ScriptModel::setupActions(QMenu* fileMenu, QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap) {
@@ -383,20 +384,16 @@ void ScriptModel::setupActions(QMenu* fileMenu, QMenu* effectsMenu, QMap<int, QA
 
 QVariant ScriptModel::call(const QString& callable,
     const QVariantList& args,
+    std::weak_ptr<EffectRunCallback> callback,
     const QVariantMap& kwargs)
 {
-    while (true) {
-        InterruptState current = mInterruptState.load(std::memory_order_acquire);
+    qDebug() << "Entering ScriptModel::call.";
 
-        if (current == InterruptState::OutOfScope) {
-            break;  // Exit when OutOfScope is reached
-        }
+    auto stateGuard = MakeGuard(this, [](ScriptModel* pThis) {
+        qDebug() << "Leaving ScriptModel::call.";
+        });
 
-        mInterruptState.wait(current);  // Wait until state changes
-    }
-    mInterruptState.store(InterruptState::Unset, std::memory_order_release);
-
-    auto stateGuard = MakeGuard(&mInterruptState, [](auto state) { state->store(InterruptState::OutOfScope, std::memory_order_release); });
+    std::unique_lock<std::mutex> lock(mCallMutex);
 
     py::gil_scoped_acquire acquire;  // Ensures proper GIL acquisition
     // Obtain the __main__ module and its globals.
@@ -427,6 +424,7 @@ QVariant ScriptModel::call(const QString& callable,
     // Call the Python function.
     py::object result;
     try {
+        mCallback = callback;
         result = pyFunc(*pyArgs, **pyKwargs);
     }
     catch (const std::exception& e) {
@@ -452,19 +450,30 @@ QVariant ScriptModel::call(const QString& callable,
     return QVariant(QString::fromStdString(resStr));
 }
 
-void ScriptModel::send_image(const pybind11::array& src)
+bool ScriptModel::send_image(const pybind11::array& src)
 {
-    qDebug() << "In send_image.";
-    auto img = nparray_to_qimage(src);
-    qDebug() << img;
-    emit sendImage(img);
+    qDebug() << "In send_image().";
+    if (auto obj = mCallback.lock())
+    {
+        if (obj->isInterrupted())
+            return false;
+        auto img = nparray_to_qimage(src);
+        qDebug() << img;
+        emit obj->sendImage(img);
+        return true;
+    }
+    return false;
 }
 
 bool ScriptModel::check_interrupt()
 {
-    qDebug() << "In check_interrupt.";
-    InterruptState expected = InterruptState::Set;
-    // Atomically check and update the value
-    const bool result = mInterruptState.compare_exchange_strong(expected, InterruptState::OutOfScope, std::memory_order_acq_rel);
-    return result;
+    if (mIsShuttingDown)
+        return true;
+
+    if (auto obj = mCallback.lock())
+    {
+        return obj->isInterrupted();
+    }
+
+    return true;
 }
