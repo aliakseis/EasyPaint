@@ -393,6 +393,12 @@ QVariant ScriptModel::call(const QString& callable,
         qDebug() << "Leaving ScriptModel::call.";
         });
 
+    if (auto obj = mCallback.lock())
+    {
+        if (obj->isInterrupted())
+            return {};
+    }
+
     std::unique_lock<std::mutex> lock(mCallMutex);
 
     py::gil_scoped_acquire acquire;  // Ensures proper GIL acquisition
