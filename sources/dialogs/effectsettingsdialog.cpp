@@ -62,6 +62,9 @@ static QMainWindow* GetMainWindow()
 }
 
 bool isDummyImage(const QImage& image) {
+    if (image.isNull())
+        return true;
+
     const QColor refColor = image.pixelColor(0, 0);
     for (int y = 0; y < image.height(); ++y) {
         for (int x = 0; x < image.width(); ++x) {
