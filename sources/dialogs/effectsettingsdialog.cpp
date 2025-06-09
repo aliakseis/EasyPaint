@@ -85,6 +85,8 @@ class EffectSettingsDialog::FutureContext
 
     std::shared_ptr<EffectRunCallback> mEffectRunCallback;
 
+    QMetaObject::Connection mImageConnection;
+
 public:
     FutureContext(EffectSettingsDialog* dlg) : mainWindow(GetMainWindow()),
         mEffectRunCallback(new EffectRunCallback(), std::mem_fn(&QObject::deleteLater))
@@ -99,11 +101,16 @@ public:
             }),
 
         watcher.setFuture(mFuture);
-        QObject::connect(&watcher, &QFutureWatcher<QImage>::finished, dlg, [this, dlg]() {
+        mImageConnection = QObject::connect(&watcher, &QFutureWatcher<QImage>::finished, dlg, [this, dlg]() {
             dlg->updatePreview(watcher.result());
             dlg->mApplyButton->setEnabled(dlg->mApplyNeeded);
             dlg->mInterruptButton->setEnabled(false);
             });
+    }
+
+    FutureContext::~FutureContext()
+    {
+        QObject::disconnect(mImageConnection);
     }
 
     bool isFinished() const{ return mFuture.isFinished(); }

@@ -458,13 +458,13 @@ QVariant ScriptModel::call(const QString& callable,
 
 bool ScriptModel::send_image(const pybind11::array& src)
 {
-    qDebug() << "In send_image().";
+    //qDebug() << "In send_image().";
     if (auto obj = mCallback.lock())
     {
         if (obj->isInterrupted())
             return false;
         auto img = nparray_to_qimage(src);
-        qDebug() << img;
+        //qDebug() << img;
         emit obj->sendImage(img);
         return true;
     }
