@@ -13,7 +13,7 @@ pipe = StableDiffusionPipeline.from_pretrained(
 
 # Replace the default scheduler with a DPM scheduler.
 # This creates a DPMSolverMultistepScheduler instance with the same config as the pipeline's current scheduler.
-pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
+pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
 
 # Optional: Enable attention slicing (helps with memory usage) without quality loss.
 pipe.enable_attention_slicing()
