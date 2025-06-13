@@ -196,8 +196,7 @@ private:
      */
     void makeFormatsFilters();
 
-    QImage *mImage,  /**< Main image. */
-           mImageCopy; /**< Copy of main image, need for events. */ // ?????????????
+    QImage* mImage;  /**< Main image. */
     QString mFilePath; /**< Path where located image. */
     QString mOpenFilter; /**< Supported open formats filter. */
     QString mSaveFilter; /**< Supported save formats filter. */
