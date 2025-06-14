@@ -170,7 +170,7 @@ ImageArea::ImageArea(bool openFile, bool askCanvasSize, const QString &filePath,
             doResizeCanvas(this, width, height, false, false);
             mIsEdited = false;
         }
-        QPainter *painter = new QPainter(mImage);
+        QPainter *painter = new QPainter(&mImage);
         painter->fillRect(0, 0, width, height, Qt::white);
         painter->end();
 
@@ -211,7 +211,7 @@ ImageArea::~ImageArea()
 
 void ImageArea::initializeImage()
 {
-    mImage = new QImage(DataSingleton::Instance()->getBaseSize(),
+    mImage = QImage(DataSingleton::Instance()->getBaseSize(),
                         QImage::Format_ARGB32_Premultiplied);
 }
 
@@ -241,9 +241,9 @@ void ImageArea::open()
 void ImageArea::open(const QString &filePath)
 {
     QApplication::setOverrideCursor(Qt::WaitCursor);
-    if(mImage->load(filePath))
+    if(mImage.load(filePath))
     {
-        *mImage = mImage->convertToFormat(QImage::Format_ARGB32_Premultiplied);
+        mImage = mImage.convertToFormat(QImage::Format_ARGB32_Premultiplied);
         mFilePath = filePath;
         DataSingleton::Instance()->setLastFilePath(filePath);
         fixSize();
@@ -264,7 +264,7 @@ bool ImageArea::save()
         return saveAs();
     }
     clearSelection();
-    if (!mImage->save(mFilePath))
+    if (mImage.save(mFilePath))
     {
         QMessageBox::warning(this, tr("Error saving file"), tr("Can't save file \"%1\".").arg(mFilePath));
         return false;
@@ -309,7 +309,7 @@ bool ImageArea::saveAs()
             filePath += '.' + extension;
         }
 
-        if(mImage->save(filePath, extension.toLatin1().data()))
+        if(mImage.save(filePath, extension.toLatin1().data()))
         {
             mFilePath = filePath;
             mIsEdited = false;
@@ -328,7 +328,7 @@ void ImageArea::autoSave()
 {
     if(mIsEdited && !mFilePath.isEmpty() && DataSingleton::Instance()->getIsAutoSave())
     {
-        if(mImage->save(mFilePath)) {
+        if(mImage.save(mFilePath)) {
             mIsEdited = false;
         }
     }
@@ -342,11 +342,11 @@ void ImageArea::print()
     {
         QPainter painter(printer);
         QRect rect = painter.viewport();
-        QSize size = mImage->size();
+        QSize size = mImage.size();
         size.scale(rect.size(), Qt::KeepAspectRatio);
         painter.setViewport(rect.x(), rect.y(), size.width(), size.height());
-        painter.setWindow(mImage->rect());
-        painter.drawImage(0, 0, *mImage);
+        painter.setWindow(mImage.rect());
+        painter.drawImage(0, 0, mImage);
     }
 }
 
@@ -363,14 +363,14 @@ void ImageArea::resizeImage()
 
 void ImageArea::resizeCanvas()
 {
-    doResizeCanvas(this, mImage->width(), mImage->height(), true, true);
-    emit sendNewImageSize(mImage->size());
+    doResizeCanvas(this, mImage.width(), mImage.height(), true, true);
+    emit sendNewImageSize(mImage.size());
 }
 
 void ImageArea::resizeCanvas(int width, int height)
 {
     doResizeCanvas(this, width, height, false, true);
-    emit sendNewImageSize(mImage->size());
+    emit sendNewImageSize(mImage.size());
 }
 
 void ImageArea::rotateImage(bool flag)
@@ -383,7 +383,7 @@ void ImageArea::rotateImage(bool flag)
     setEdited(true);
     clearSelection();
 
-    emit sendNewImageSize(mImage->size());
+    emit sendNewImageSize(mImage.size());
 }
 
 void ImageArea::applyEffect(int effect)
@@ -420,10 +420,10 @@ void ImageArea::mousePressEvent(QMouseEvent *event)
     const auto pos = event->pos() / getZoomFactor();
 
     if(event->button() == Qt::LeftButton &&
-        pos.x() < mImage->rect().right() + 6 &&
-        pos.x() > mImage->rect().right() &&
-        pos.y() > mImage->rect().bottom() &&
-        pos.y() < mImage->rect().bottom() + 6)
+        pos.x() < mImage.rect().right() + 6 &&
+        pos.x() > mImage.rect().right() &&
+        pos.y() > mImage.rect().bottom() &&
+        pos.y() < mImage.rect().bottom() + 6)
     {
         mIsResize = true;
         mIsSavedBeforeResize = false;
@@ -453,12 +453,12 @@ void ImageArea::mouseMoveEvent(QMouseEvent *event)
         }
         doResizeCanvas(this, pos.x(), pos.y(), false, false);
         update();
-        emit sendNewImageSize(mImage->size());
+        emit sendNewImageSize(mImage.size());
     }
-    else if(pos.x() < mImage->rect().right() + 6 &&
-        pos.x() > mImage->rect().right() &&
-        pos.y() > mImage->rect().bottom() &&
-        pos.y() < mImage->rect().bottom() + 6)
+    else if(pos.x() < mImage.rect().right() + 6 &&
+        pos.x() > mImage.rect().right() &&
+        pos.y() > mImage.rect().bottom() &&
+        pos.y() < mImage.rect().bottom() + 6)
     {
         setCursor(Qt::SizeFDiagCursor);
         if (qobject_cast<AbstractSelection*>(mInstrumentHandler))
@@ -468,8 +468,8 @@ void ImageArea::mouseMoveEvent(QMouseEvent *event)
     {
         restoreCursor();
     }
-    if(pos.x() < mImage->width() &&
-        pos.y() < mImage->height())
+    if(pos.x() < mImage.width() &&
+        pos.y() < mImage.height())
     {
         emit sendCursorPos(pos);
     }
@@ -501,7 +501,7 @@ void ImageArea::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
 
-    if (mImage->isNull())
+    if (mImage.isNull())
     {
         painter.setBrush(QBrush(QPixmap(":media/textures/transparent.jpg")));
         painter.drawRect(rect());
@@ -510,13 +510,13 @@ void ImageArea::paintEvent(QPaintEvent *event)
     {
         painter.save();
         painter.scale(mZoomFactor, mZoomFactor);
-        painter.drawImage(QPoint(0, 0), *mImage);
+        painter.drawImage(QPoint(0, 0), mImage);
         painter.restore();
     }
 
     painter.setPen(Qt::NoPen);
     painter.setBrush(QBrush(Qt::black));
-    auto start = mImage->rect().size() * mZoomFactor;
+    auto start = mImage.rect().size() * mZoomFactor;
     painter.drawRect(QRect(start.width(), start.height(), 6, 6));
 }
 
@@ -597,10 +597,10 @@ bool ImageArea::setZoomFactor(qreal factor)
 
 void ImageArea::fixSize(bool cleanUp /*= false*/)
 {
-    resize(mImage->width() * mZoomFactor + 6, mImage->height() * mZoomFactor + 6);
+    resize(mImage.width() * mZoomFactor + 6, mImage.height() * mZoomFactor + 6);
     if (cleanUp)
     {
-        emit sendNewImageSize(mImage->size());
+        emit sendNewImageSize(mImage.size());
         clearSelection();
     }
 }

@@ -95,8 +95,8 @@ public:
     inline QString getFilePath() { return mFilePath; }
     inline QString getFileName() { return (mFilePath.isEmpty() ? mFilePath :
                                            mFilePath.split('/').last()); }
-    inline QImage* getImage() { return mImage; }
-    inline void setImage(const QImage &image) { *mImage = image; }
+    inline QImage* getImage() { return &mImage; }
+    inline void setImage(const QImage &image) { mImage = image; }
     /**
      * @brief Set flag which shows that image edited.
      *
@@ -196,7 +196,7 @@ private:
      */
     void makeFormatsFilters();
 
-    QImage* mImage;  /**< Main image. */
+    QImage mImage;  /**< Main image. */
     QString mFilePath; /**< Path where located image. */
     QString mOpenFilter; /**< Supported open formats filter. */
     QString mSaveFilter; /**< Supported save formats filter. */
