@@ -48,7 +48,7 @@ void AbstractSelection::mousePressEvent(QMouseEvent *event, ImageArea &imageArea
     mIsMouseMoved = false;
     if (mIsSelectionExists)
     {
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         paint(imageArea);
         if (mButton == Qt::RightButton)
         {
@@ -102,7 +102,7 @@ void AbstractSelection::mousePressEvent(QMouseEvent *event, ImageArea &imageArea
     {
         mBottomRightPoint = mTopLeftPoint = pos / imageArea.getZoomFactor();
         mHeight =  mWidth = 0;
-        mImageCopy = *imageArea.getImage();
+        stash(imageArea);
         startSelection(imageArea);
         mIsPaint = true;
     }
@@ -120,7 +120,7 @@ void AbstractSelection::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
             mBottomRightPoint = pos + mMoveDiffPoint;
             mTopLeftPoint = pos + mMoveDiffPoint -
                                   QPoint(mWidth - 1, mHeight - 1);
-            imageArea.setImage(mImageCopy);
+            applyStash(imageArea);
             move(imageArea);
             drawBorder(imageArea);
             mIsPaint = false;
@@ -130,7 +130,7 @@ void AbstractSelection::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
             mBottomRightPoint = pos;
             mHeight = fabs(mTopLeftPoint.y() - mBottomRightPoint.y()) + 1;
             mWidth = fabs(mTopLeftPoint.x() - mBottomRightPoint.x()) + 1;
-            imageArea.setImage(mImageCopy);
+            applyStash(imageArea);
             resize(imageArea);
             drawBorder(imageArea);
             mIsPaint = false;
@@ -141,7 +141,7 @@ void AbstractSelection::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
         mBottomRightPoint = pos;
         mHeight = fabs(mTopLeftPoint.y() - mBottomRightPoint.y()) + 1;
         mWidth = fabs(mTopLeftPoint.x() - mBottomRightPoint.x()) + 1;
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         drawBorder(imageArea);
         select(imageArea);
     }
@@ -165,7 +165,7 @@ void AbstractSelection::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageAr
         }
         else if (mIsSelectionMoving)
         {
-            imageArea.setImage(mImageCopy);
+            applyStash(imageArea);
             completeMoving(imageArea);
             paint(imageArea);
             drawBorder(imageArea);
@@ -174,7 +174,7 @@ void AbstractSelection::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageAr
         }
         else if (mIsSelectionResizing)
         {
-            imageArea.setImage(mImageCopy);
+            applyStash(imageArea);
             paint(imageArea);
             completeResizing(imageArea);
             paint(imageArea);
@@ -187,10 +187,10 @@ void AbstractSelection::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageAr
     {
         if (event->button() == Qt::LeftButton)
         {
-            imageArea.setImage(mImageCopy);
+            applyStash(imageArea);
             if (mTopLeftPoint != mBottomRightPoint)
             {
-                imageArea.setImage(mImageCopy);
+                applyStash(imageArea);
                 paint(imageArea);
                 completeSelection(imageArea);
                 paint(imageArea);
@@ -224,9 +224,9 @@ void AbstractSelection::clearSelection(ImageArea &imageArea)
 {
     if (mIsSelectionExists)
     {
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         paint(imageArea);
-        mImageCopy = *imageArea.getImage();
+        stash(imageArea);
         mIsSelectionExists = mIsSelectionMoving = mIsSelectionResizing
                 = mIsPaint = mIsImageSelected = false;
         imageArea.update(); 

@@ -41,7 +41,7 @@ void RectangleInstrument::mousePressEvent(QMouseEvent *event, ImageArea &imageAr
     {
         mStartPoint = mEndPoint = event->pos() / imageArea.getZoomFactor();
         imageArea.setIsPaint(true);
-        mImageCopy = *imageArea.getImage();
+        stash(imageArea);
         makeUndoCommand(imageArea);
     }
 }
@@ -51,7 +51,7 @@ void RectangleInstrument::mouseMoveEvent(QMouseEvent *event, ImageArea &imageAre
     if(imageArea.isPaint())
     {
         mEndPoint = event->pos() / imageArea.getZoomFactor();
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->buttons() & Qt::LeftButton)
         {
             paint(imageArea, false);
@@ -67,7 +67,7 @@ void RectangleInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &image
 {
     if(imageArea.isPaint())
     {
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->button() == Qt::LeftButton)
         {
             paint(imageArea, false);

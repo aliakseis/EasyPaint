@@ -41,7 +41,7 @@ void SelectionInstrument::copyImage(ImageArea &imageArea)
 {
     if (mIsSelectionExists)
     {
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         QClipboard *globalClipboard = QApplication::clipboard();
         QImage copyImage;
         if(mIsImageSelected)
@@ -63,13 +63,13 @@ void SelectionInstrument::cutImage(ImageArea &imageArea)
         copyImage(imageArea);
         if(mIsSelectionExists)
         {
-            imageArea.setImage(mImageCopy);
+            applyStash(imageArea);
             paint(imageArea);
         }
         makeUndoCommand(imageArea);
         if (/*mSelectedImage != mPasteImage || !*/mIsImageSelected)
         {
-            imageArea.setImage(mImageCopy);
+            applyStash(imageArea);
         }
         else
         {
@@ -77,7 +77,7 @@ void SelectionInstrument::cutImage(ImageArea &imageArea)
         }
         mTopLeftPoint = QPoint(0, 0);
         mBottomRightPoint = QPoint(0, 0);
-        mImageCopy = *imageArea.getImage();
+        stash(imageArea);
         imageArea.update();
         mIsSelectionExists = false;
         imageArea.restoreCursor();
@@ -90,9 +90,9 @@ void SelectionInstrument::pasteImage(ImageArea &imageArea)
     QClipboard *globalClipboard = QApplication::clipboard();
     if(mIsSelectionExists)
     {
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         paint(imageArea);
-        mImageCopy = *imageArea.getImage();
+        stash(imageArea);
     }
     makeUndoCommand(imageArea);
     auto pasteImage = globalClipboard->image();
@@ -101,7 +101,7 @@ void SelectionInstrument::pasteImage(ImageArea &imageArea)
         imageArea.resizeCanvas(qMax(pasteImage.width(), imageArea.getImage()->width()),
             qMax(pasteImage.height(), imageArea.getImage()->height()));
         mSelectedImage = pasteImage;
-        mImageCopy = *imageArea.getImage();
+        stash(imageArea);
         mTopLeftPoint = QPoint(0, 0);
         mBottomRightPoint = QPoint(pasteImage.width(), pasteImage.height()) - QPoint(1, 1);
         mHeight = pasteImage.height();
@@ -116,7 +116,7 @@ void SelectionInstrument::pasteImage(ImageArea &imageArea)
 
 void SelectionInstrument::startAdjusting(ImageArea &imageArea)
 {
-    mImageCopy = *imageArea.getImage();
+    stash(imageArea);
     mIsImageSelected = false;
 }
 
@@ -193,7 +193,7 @@ void SelectionInstrument::clearSelectionBackground(ImageArea &imageArea)
         blankPainter.setBackgroundMode(Qt::OpaqueMode);
         blankPainter.drawRect(QRect(mTopLeftPoint, mBottomRightPoint - QPoint(1, 1)));
         blankPainter.end();
-        mImageCopy = *imageArea.getImage();
+        stash(imageArea);
     }
 }
 

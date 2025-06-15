@@ -244,6 +244,7 @@ void ImageArea::open(const QString &filePath)
     if(mImage.load(filePath))
     {
         mImage = mImage.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+        mMarkup = QImage(mImage.size(), QImage::Format_Mono);
         mFilePath = filePath;
         DataSingleton::Instance()->setLastFilePath(filePath);
         fixSize();

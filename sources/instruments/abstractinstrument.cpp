@@ -36,3 +36,13 @@ void AbstractInstrument::makeUndoCommand(ImageArea &imageArea)
 {
     imageArea.pushUndoCommand(new UndoCommand(imageArea.getImage(), imageArea));
 }
+
+void AbstractInstrument::stash(ImageArea& imageArea)
+{
+    mImageCopy = *imageArea.getImage();
+}
+
+void AbstractInstrument::applyStash(ImageArea& imageArea)
+{
+    imageArea.setImage(mImageCopy);
+}

@@ -41,7 +41,7 @@ TextInstrument::TextInstrument(QObject *parent) :
 void TextInstrument::updateText(ImageArea *imageArea, QString textString)
 {
     mText = textString;
-    imageArea->setImage(mImageCopy);
+    applyStash(*imageArea);
     if (!mIsEdited)
     {
         makeUndoCommand(*imageArea);

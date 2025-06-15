@@ -42,7 +42,7 @@ void LineInstrument::mousePressEvent(QMouseEvent *event, ImageArea &imageArea)
     {
         mStartPoint = mEndPoint = event->pos() / imageArea.getZoomFactor();
         imageArea.setIsPaint(true);
-        mImageCopy = *imageArea.getImage();
+        stash(imageArea);
         makeUndoCommand(imageArea);
     }
 }
@@ -52,7 +52,7 @@ void LineInstrument::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
     if(imageArea.isPaint())
     {
         mEndPoint = event->pos() / imageArea.getZoomFactor();
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->buttons() & Qt::LeftButton)
         {
             paint(imageArea, false);
@@ -68,7 +68,7 @@ void LineInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageArea)
 {
     if(imageArea.isPaint())
     {
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->button() == Qt::LeftButton)
         {
             paint(imageArea, false);

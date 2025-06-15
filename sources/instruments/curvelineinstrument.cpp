@@ -51,7 +51,7 @@ void CurveLineInstrument::mousePressEvent(QMouseEvent *event, ImageArea &imageAr
         {
         //draw linear Bezier curve
         case 0:
-            mImageCopy = *imageArea.getImage();
+            stash(imageArea);
             mStartPoint = mEndPoint = mFirstControlPoint = mSecondControlPoint = event->pos() / imageArea.getZoomFactor();
             ++mPointsCount;
             break;
@@ -91,7 +91,7 @@ void CurveLineInstrument::mouseMoveEvent(QMouseEvent *event, ImageArea &imageAre
             break;
         }
 
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->buttons() & Qt::LeftButton)
             paint(imageArea, false);
         else if(event->buttons() & Qt::RightButton)
@@ -103,7 +103,7 @@ void CurveLineInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &image
 {
     if(imageArea.isPaint())
     {
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->button() == Qt::LeftButton)
             paint(imageArea, false);
         else if(event->button() == Qt::RightButton)

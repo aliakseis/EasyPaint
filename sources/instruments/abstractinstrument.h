@@ -54,7 +54,6 @@ signals:
     
 protected:
     QPoint mStartPoint, mEndPoint; /**< Point for events. */
-    QImage mImageCopy; /**< Image for storing copy of current image on imageArea, needed for some instruments. */
 
     virtual void paint(ImageArea &imageArea, bool isSecondaryColor = false, bool additionalFlag = false) = 0;
 
@@ -65,7 +64,13 @@ protected:
      * @param imageArea corresponse to image, which is edited
      */
     virtual void makeUndoCommand(ImageArea &imageArea);
-    
+
+
+    void stash(ImageArea& imageArea);
+    void applyStash(ImageArea& imageArea);
+
+private:
+    QImage mImageCopy; /**< Image for storing copy of current image on imageArea, needed for some instruments. */
 };
 
 #endif // ABSTRACTINSTRUMENT_H
