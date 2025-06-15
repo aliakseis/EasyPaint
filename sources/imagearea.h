@@ -92,23 +92,25 @@ public:
      */
     void rotateImage(bool flag);
 
-    inline QString getFilePath() { return mFilePath; }
-    inline QString getFileName() { return (mFilePath.isEmpty() ? mFilePath :
-                                           mFilePath.split('/').last()); }
-    inline QImage* getImage() { return &mImage; }
-    inline void setImage(const QImage &image) { mImage = image; }
+    QString getFilePath() { return mFilePath; }
+    QString getFileName() { return (mFilePath.isEmpty() ? mFilePath :
+                                    mFilePath.split('/').last()); }
+    QImage* getImage() { return &mImage; }
+    void setImage(const QImage &image) { mImage = image; }
+    QImage* getMarkup() { return &mMarkup; }
+    void setMarkup(const QImage& image) { mMarkup = image; }
     /**
      * @brief Set flag which shows that image edited.
      *
      * @param flag Boolean flag.
      */
-    inline void setEdited(bool flag) { mIsEdited = flag; }
+    void setEdited(bool flag) { mIsEdited = flag; }
     /**
      * @brief Get flag which shows that image edited.
      *
      * @return bool Flag.
      */
-    inline bool getEdited() { return mIsEdited; }
+    bool getEdited() { return mIsEdited; }
     /**
      * @brief applyEffect Apply effect for image.
      * @param effect Name of affect for apply.

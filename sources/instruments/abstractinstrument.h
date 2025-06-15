@@ -71,6 +71,7 @@ protected:
 
 private:
     QImage mImageCopy; /**< Image for storing copy of current image on imageArea, needed for some instruments. */
+    QImage mMarkupCopy;
 };
 
 #endif // ABSTRACTINSTRUMENT_H
