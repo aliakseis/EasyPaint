@@ -95,7 +95,7 @@ public:
 
         mFuture = QtConcurrent::run([this, dlg]() {
             QImage result;
-            dlg->mEffectWithSettings->convertImage(dlg->mSourceImage, result, dlg->mSettingsWidget->getEffectSettings(),
+            dlg->mEffectWithSettings->convertImage(dlg->mSourceImage, dlg->mMarkupImage, result, dlg->mSettingsWidget->getEffectSettings(),
                 mEffectRunCallback);
             return result;
             }),
@@ -163,9 +163,10 @@ public:
     void interrupt() { mEffectRunCallback->interrupt(); }
 };
 
-EffectSettingsDialog::EffectSettingsDialog(const QImage* img, 
+EffectSettingsDialog::EffectSettingsDialog(const QImage* img, const QImage* markup,
     EffectWithSettings* effectWithSettings, QWidget *parent) :
-    QDialog(parent? parent : GetMainWindow()), mEffectWithSettings(effectWithSettings), mSourceImage(img)
+    QDialog(parent? parent : GetMainWindow()), mEffectWithSettings(effectWithSettings), 
+        mSourceImage(img), mMarkupImage(markup)
 {
     mSettingsWidget = effectWithSettings->getSettingsWidget();
     connect(mSettingsWidget, &AbstractEffectSettings::parametersChanged,

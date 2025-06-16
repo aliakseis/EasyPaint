@@ -48,7 +48,7 @@ public:
     ImageArea* applyEffect(ImageArea* imageArea) override;
     virtual AbstractEffectSettings* getSettingsWidget() = 0;
 
-    virtual void convertImage(const QImage* source, QImage& image, const QVariantList& matrix, std::weak_ptr<EffectRunCallback> callback = {}) = 0;
+    virtual void convertImage(const QImage* source, const QImage* markup, QImage& image, const QVariantList& matrix, std::weak_ptr<EffectRunCallback> callback = {}) = 0;
 };
 
 #endif // CONVOLUTIONMATRIXEFFECT_H

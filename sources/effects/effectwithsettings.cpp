@@ -36,7 +36,9 @@ EffectWithSettings::EffectWithSettings(QObject *parent) :
 
 ImageArea* EffectWithSettings::applyEffect(ImageArea* imageArea)
 {
-    EffectSettingsDialog dlg(imageArea? imageArea->getImage() : nullptr, this);
+    EffectSettingsDialog dlg(imageArea? imageArea->getImage() : nullptr,
+        imageArea ? imageArea->getMarkup() : nullptr,
+        this);
     if(dlg.exec())
     {
         makeUndoCommand(imageArea);

@@ -18,7 +18,7 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QVa
     QLocale cLocale = QLocale::c();
 
     // Iterate over each parameter (starting at index 1 if not creating a function).
-    for (int i = functionInfo.isCreatingFunction() ? 0 : 1; i < static_cast<int>(functionInfo.parameters.size()); ++i) {
+    for (int i = functionInfo.isCreatingFunction() ? 0 : (1 + functionInfo.usesMarkup()); i < static_cast<int>(functionInfo.parameters.size()); ++i) {
         const auto& param = functionInfo.parameters[i];
         QWidget* control = nullptr;
         QString annotationLower = param.annotation.toLower();
