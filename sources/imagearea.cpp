@@ -764,3 +764,8 @@ void ImageArea::pushUndoCommand(UndoCommand *command)
     if(command != 0)
         mUndoStack->push(command);
 }
+
+bool ImageArea::isMarkupMode()
+{
+    return DataSingleton::Instance()->isMarkupMode();
+}

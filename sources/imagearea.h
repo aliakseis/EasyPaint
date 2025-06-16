@@ -134,7 +134,7 @@ public:
     QUndoStack* getUndoStack() { return mUndoStack; }
     void setIsPaint(bool isPaint) { mIsPaint = isPaint; }
     bool isPaint() { return mIsPaint; }
-    bool isMarkupMode() { return true; }
+    bool isMarkupMode();
 
     void emitPrimaryColorView() { emit sendPrimaryColorView(); }
     void emitSecondaryColorView() { emit sendSecondaryColorView(); }
