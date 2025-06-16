@@ -82,8 +82,10 @@ void EllipseInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageAr
 
 void EllipseInstrument::paint(ImageArea &imageArea, bool isSecondaryColor, bool)
 {
-    QPainter painter(imageArea.getImage());
-    painter.setPen(QPen(DataSingleton::Instance()->getPrimaryColor(),
+    const bool isMarkup = imageArea.isMarkupMode() && !isSecondaryColor;
+
+    QPainter painter(isMarkup? imageArea.getMarkup() : imageArea.getImage());
+    painter.setPen(QPen(isMarkup ? Qt::black : DataSingleton::Instance()->getPrimaryColor(),
                         DataSingleton::Instance()->getPenSize(), // * imageArea.getZoomFactor(),
                         Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     if(isSecondaryColor)
