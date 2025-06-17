@@ -60,20 +60,33 @@ def _make_callback(context):
 
 def _preprocess_mask(mask_image: np.ndarray) -> np.ndarray:
     """
-    Negates the binary mask and fills contours to ensure solid masked regions.
+    Preprocesses a binary mask image by reflecting borders equal to the image size,
+    ensuring edge-touching contours are correctly handled. The mask is negated and 
+    closed contours are filled.
 
     Args:
         mask_image (np.ndarray): The input mask as a NumPy array (RGB).
 
     Returns:
-        np.ndarray: The processed mask as a NumPy array (RGB).
+        np.ndarray: The processed and filled mask as a NumPy array (RGB).
     """
     gray = cv2.cvtColor(mask_image, cv2.COLOR_RGB2GRAY)
     _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+
+    # Invert the mask
     inverted = cv2.bitwise_not(binary)
-    contours, _ = cv2.findContours(inverted, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    filled = np.zeros_like(inverted)
-    cv2.drawContours(filled, contours, -1, 255, thickness=cv2.FILLED)
+
+    h, w = inverted.shape
+    padded = cv2.copyMakeBorder(inverted, h, h, w, w, borderType=cv2.BORDER_REFLECT)
+
+    # Find and fill contours
+    contours, _ = cv2.findContours(padded, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    filled_padded = np.zeros_like(padded)
+    cv2.drawContours(filled_padded, contours, -1, 255, thickness=cv2.FILLED)
+
+    # Crop back to original size
+    filled = filled_padded[h:h + h, w:w + w]
+
     return cv2.cvtColor(filled, cv2.COLOR_GRAY2RGB)
 
 # ------------------------------------------------------------------------------
@@ -104,8 +117,8 @@ def predict(input_image: np.ndarray,
 
     processed_mask = _preprocess_mask(mask_image)
 
-    img = Image.fromarray(input_image.astype('uint8'), 'RGB').resize((512, 512))
-    mask = Image.fromarray(processed_mask.astype('uint8'), 'RGB').resize((512, 512))
+    img = Image.fromarray(input_image.astype('uint8'), 'RGB').resize((1024, 1024))
+    mask = Image.fromarray(processed_mask.astype('uint8'), 'RGB').resize((1024, 1024))
 
     generator = torch.Generator(device=device).manual_seed(seed)
 
