@@ -121,31 +121,41 @@ def predict(input_image: np.ndarray,
             mask_image: np.ndarray,
             prompt: str,
             negative_prompt: str = "",
-            seed: int = 21) -> np.ndarray:
+            seed: int = 21,
+            num_inference_steps: int = 50,
+            guidance_scale: float = 7.5) -> np.ndarray:
     """
-    Inpaints an image using Stable Diffusion Inpainting Pipeline and returns it
-    in the original resolution.
+    Inpaints masked regions of an input image using a Stable Diffusion inpainting pipeline.
 
-    Parameters:
-        input_image (np.ndarray): The source image as a NumPy array; must be RGB.
-        mask_image (np.ndarray): The mask image as a NumPy array; must be RGB.
-        prompt (str): The text prompt guiding the inpainting operation.
-        negative_prompt (str, optional): Text prompt to suppress unwanted features.
+    The function:
+      - Preserves the original image's aspect ratio by resizing it proportionally to a 
+        target area while ensuring dimensions are divisible by 8.
+      - Preprocesses the input mask for robust contour handling.
+      - Reconstructs the masked area based on a user-provided prompt and optional 
+        negative prompt.
+      - Rescales the final image back to the original dimensions.
+
+    Args:
+        input_image (np.ndarray): Input RGB image as a NumPy array.
+        mask_image (np.ndarray): Corresponding RGB mask where white = masked region.
+        prompt (str): Positive text prompt guiding image inpainting.
+        negative_prompt (str, optional): Prompt describing what to avoid generating.
         seed (int, optional): Random seed for reproducibility.
+        num_inference_steps (int, optional): Number of diffusion steps (higher = higher quality).
+        guidance_scale (float, optional): Classifier-free guidance strength 
+                                          (higher = more prompt adherence).
 
     Returns:
-        np.ndarray: The inpainted image resized to original image dimensions.
+        np.ndarray: Inpainted image as a NumPy array in the original image's resolution.
     """
-    # Store original image dimensions
     original_size = (input_image.shape[1], input_image.shape[0])
+    resize_dims = _get_proportional_resize_dims(*original_size)
     context = InpaintContext(original_size)
 
     processed_mask = _preprocess_mask(mask_image)
 
-    resize_dims = _get_proportional_resize_dims(*original_size)    # (width, height)
-
-    img = Image.fromarray(input_image.astype('uint8'), 'RGB').resize(resize_dims)
-    mask = Image.fromarray(processed_mask.astype('uint8'), 'RGB').resize(resize_dims)
+    img = Image.fromarray(input_image.astype('uint8'), 'RGB').resize(resize_dims, Image.LANCZOS)
+    mask = Image.fromarray(processed_mask.astype('uint8'), 'RGB').resize(resize_dims, Image.LANCZOS)
 
     generator = torch.Generator(device=device).manual_seed(seed)
 
@@ -155,6 +165,8 @@ def predict(input_image: np.ndarray,
         mask_image=mask,
         negative_prompt=negative_prompt,
         generator=generator,
+        num_inference_steps=num_inference_steps,
+        guidance_scale=guidance_scale,
         callback_on_step_end=_make_callback(context),
         callback_on_step_end_tensor_inputs=["latents"],
     )
