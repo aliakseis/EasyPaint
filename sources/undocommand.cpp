@@ -29,6 +29,7 @@ UndoCommand::UndoCommand(ImageArea &imgArea, QUndoCommand *parent)
     : QUndoCommand(parent), mPrevImage(*imgArea.getImage()), mPrevMarkup(*imgArea.getMarkup()), mImageArea(imgArea)
 {
     mCurrImage = mPrevImage;
+    mCurrMarkup = mPrevMarkup;
 }
 
 void UndoCommand::undo()
