@@ -1,4 +1,5 @@
 import torch
+import cv2
 import numpy as np
 from PIL import Image
 from diffusers import StableDiffusionInpaintPipeline
@@ -19,21 +20,6 @@ pipe.enable_sequential_cpu_offload()
 pipe.enable_xformers_memory_efficient_attention()
 pipe.enable_attention_slicing()
 
-# ------------------------------------------------------------------------------
-# Dummy helper functions.
-# ------------------------------------------------------------------------------
-def _check_interrupt():
-    """
-    Dummy interrupt check. Replace this with your own interrupt logic if needed.
-    """
-    return False
-
-def _send_image(image_np):
-    """
-    Dummy sender function for intermediate results.
-    Here we simply print that an update is available.
-    """
-    print("Intermediate image preview updated.")
 
 # ------------------------------------------------------------------------------
 # Callback function to monitor generation.
@@ -81,11 +67,23 @@ def _callback(iteration, step, timestep, extra_step_kwargs):
     return extra_step_kwargs
 
 
-def dummy(input_image: np.ndarray,
-            mask_image: np.ndarray,
-            seed: int = 21) -> np.ndarray:
-    return mask_image
+def _preprocess_mask(mask_image: np.ndarray) -> np.ndarray:
+    """
+    Negates the binary mask and fills contours to ensure solid masked regions.
 
+    Args:
+        mask_image (np.ndarray): The input mask as a NumPy array (RGB).
+
+    Returns:
+        np.ndarray: The processed mask as a NumPy array (RGB).
+    """
+    gray = cv2.cvtColor(mask_image, cv2.COLOR_RGB2GRAY)
+    _, binary = cv2.threshold(gray, 127, 255, cv2.THRESH_BINARY)
+    inverted = cv2.bitwise_not(binary)
+    contours, _ = cv2.findContours(inverted, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    filled = np.zeros_like(inverted)
+    cv2.drawContours(filled, contours, -1, 255, thickness=cv2.FILLED)
+    return cv2.cvtColor(filled, cv2.COLOR_GRAY2RGB)
 
 # ------------------------------------------------------------------------------
 # Core function to perform inpainting.
@@ -96,37 +94,43 @@ def predict(input_image: np.ndarray,
             negative_prompt: str = "",
             seed: int = 21) -> np.ndarray:
     """
-    Inpaints an image using Stable Diffusion Inpainting Pipeline.
-    
+    Inpaints an image using Stable Diffusion Inpainting Pipeline and returns it
+    in the original resolution.
+
     Parameters:
         input_image (np.ndarray): The source image as a NumPy array; must be RGB.
         mask_image (np.ndarray): The mask image as a NumPy array; must be RGB.
         prompt (str): The text prompt guiding the inpainting operation.
         negative_prompt (str, optional): Text prompt to suppress unwanted features.
         seed (int, optional): Random seed for reproducibility.
-    
+
     Returns:
-        np.ndarray: The resulting inpainted image as a NumPy array.
+        np.ndarray: The inpainted image resized to original image dimensions.
     """
-    # Convert the source image to a PIL Image in RGB format and resize to 512x512.
+    # Store original image dimensions
+    original_size = (input_image.shape[1], input_image.shape[0])  # (width, height)
+
+    # Preprocess the mask: negate and fill contours
+    processed_mask = _preprocess_mask(mask_image)
+
+    # Convert input and mask to PIL and resize to 512x512
     img = Image.fromarray(input_image.astype('uint8'), 'RGB').resize((512, 512))
-    
-    # Convert the mask image to a PIL Image in RGB format and resize to 512x512.
-    mask = Image.fromarray(mask_image.astype('uint8'), 'RGB').resize((512, 512))
-    
-    # Create a torch Generator on the selected device with the specified seed.
+    mask = Image.fromarray(processed_mask.astype('uint8'), 'RGB').resize((512, 512))
+
+    # Create torch generator with seed
     generator = torch.Generator(device=device).manual_seed(seed)
-    
-    # Run the inpainting pipeline.
+
+    # Run the inpainting pipeline
     outcome = pipe(
         prompt=prompt,
         image=img,
         mask_image=mask,
         negative_prompt=negative_prompt,
         generator=generator,
-        callback_on_step_end=_callback,                   # Monitor generation progress.
-        callback_on_step_end_tensor_inputs=["latents"],     # Ensure latents are passed to the callback.
+        callback_on_step_end=_callback,
+        callback_on_step_end_tensor_inputs=["latents"],
     )
-    
-    # Return the first output image from the generated batch as a NumPy array.
-    return np.array(outcome.images[0])
+
+    # Resize result to original size and return as NumPy array
+    result = outcome.images[0].resize(original_size, resample=Image.LANCZOS)
+    return np.array(result)
