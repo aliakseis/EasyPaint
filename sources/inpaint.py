@@ -24,6 +24,31 @@ class InpaintContext:
     def __init__(self, original_size):
         self.original_size = original_size
 
+def _get_proportional_resize_dims(original_width, original_height, target_area=1024*512, divisor=8):
+    """
+    Computes new dimensions that preserve aspect ratio and approximate the target area.
+    Rounds dimensions to be divisible by `divisor` (default: 8).
+
+    Args:
+        original_width (int): Width of the original image.
+        original_height (int): Height of the original image.
+        target_area (int): Target pixel area (default 1024x1024 = 1M).
+        divisor (int): Ensures dimensions are divisible by this value.
+
+    Returns:
+        (int, int): New width and height.
+    """
+    aspect_ratio = original_width / original_height
+    new_height = int((target_area / aspect_ratio) ** 0.5)
+    new_width = int(aspect_ratio * new_height)
+
+    # Round to nearest multiple of `divisor`
+    new_width = max(divisor, round(new_width / divisor) * divisor)
+    new_height = max(divisor, round(new_height / divisor) * divisor)
+
+    return new_width, new_height
+
+
 # ------------------------------------------------------------------------------
 # Callback function to monitor generation.
 # ------------------------------------------------------------------------------
@@ -117,8 +142,10 @@ def predict(input_image: np.ndarray,
 
     processed_mask = _preprocess_mask(mask_image)
 
-    img = Image.fromarray(input_image.astype('uint8'), 'RGB').resize((1024, 1024))
-    mask = Image.fromarray(processed_mask.astype('uint8'), 'RGB').resize((1024, 1024))
+    resize_dims = _get_proportional_resize_dims(*original_size)    # (width, height)
+
+    img = Image.fromarray(input_image.astype('uint8'), 'RGB').resize(resize_dims)
+    mask = Image.fromarray(processed_mask.astype('uint8'), 'RGB').resize(resize_dims)
 
     generator = torch.Generator(device=device).manual_seed(seed)
 
