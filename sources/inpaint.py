@@ -20,51 +20,42 @@ pipe.enable_sequential_cpu_offload()
 pipe.enable_xformers_memory_efficient_attention()
 pipe.enable_attention_slicing()
 
+class InpaintContext:
+    def __init__(self, original_size):
+        self.original_size = original_size
 
 # ------------------------------------------------------------------------------
 # Callback function to monitor generation.
 # ------------------------------------------------------------------------------
-def _callback(iteration, step, timestep, extra_step_kwargs):
-    """
-    Callback to monitor the inpainting process during generation.
-    
-    Parameters:
-        iteration: Overall iteration count.
-        step: Current denoising step.
-        timestep: Current timestep.
-        extra_step_kwargs: Additional keyword arguments, which may include tensors.
-    
-    Returns:
-        The (possibly modified) extra_step_kwargs.
-    """
-    # Interrupt check.
-    if _check_interrupt():
-        raise RuntimeError("Interrupt detected! Stopping generation.")
+def _make_callback(context):
+    def _callback(iteration, step, timestep, extra_step_kwargs):
+        if _check_interrupt():
+            raise RuntimeError("Interrupt detected! Stopping generation.")
 
-    # Try to obtain the tensor from extra_step_kwargs (e.g., latents).
-    image_tensor = extra_step_kwargs.get("latents")
-    if image_tensor is not None:
-        # If the image tensor is sparse, convert it to a dense tensor.
-        if hasattr(image_tensor, "is_sparse") and image_tensor.is_sparse:
-            image_tensor = image_tensor.to_dense()
-        with torch.no_grad():
-            # Scale the latent tensor using the coefficient before decoding.
-            image_tensor = image_tensor / 0.18215
-            decoded = pipe.vae.decode(image_tensor)
-            # Convert decoded output from [-1, 1] to [0, 1].
-            image_tensor = (decoded.sample + 1) / 2
+        image_tensor = extra_step_kwargs.get("latents")
+        if image_tensor is not None:
+            if hasattr(image_tensor, "is_sparse") and image_tensor.is_sparse:
+                image_tensor = image_tensor.to_dense()
 
-        # Ensure the tensor has a batch dimension.
-        if image_tensor.dim() == 3:
-            image_tensor = image_tensor.unsqueeze(0)
+            with torch.no_grad():
+                image_tensor = image_tensor / 0.18215
+                decoded = pipe.vae.decode(image_tensor)
+                image_tensor = (decoded.sample + 1) / 2
 
-        # Convert tensor from [batch, channels, height, width] to [batch, height, width, channels]
-        with torch.no_grad():
-            processed_image = image_tensor.cpu().permute(0, 2, 3, 1).float().numpy()
-            # Send the latest preview image (last in batch).
-            _send_image(processed_image[-1])
+            if image_tensor.dim() == 3:
+                image_tensor = image_tensor.unsqueeze(0)
 
-    return extra_step_kwargs
+            with torch.no_grad():
+                preview = image_tensor.cpu().permute(0, 2, 3, 1).float().numpy()[-1]
+                image = (preview * 255).clip(0, 255).astype(np.uint8)
+
+                if context.original_size:
+                    image = cv2.resize(image, context.original_size, interpolation=cv2.INTER_LANCZOS4)
+
+                _send_image(image)
+
+        return extra_step_kwargs
+    return _callback
 
 
 def _preprocess_mask(mask_image: np.ndarray) -> np.ndarray:
@@ -108,29 +99,25 @@ def predict(input_image: np.ndarray,
         np.ndarray: The inpainted image resized to original image dimensions.
     """
     # Store original image dimensions
-    original_size = (input_image.shape[1], input_image.shape[0])  # (width, height)
+    original_size = (input_image.shape[1], input_image.shape[0])
+    context = InpaintContext(original_size)
 
-    # Preprocess the mask: negate and fill contours
     processed_mask = _preprocess_mask(mask_image)
 
-    # Convert input and mask to PIL and resize to 512x512
     img = Image.fromarray(input_image.astype('uint8'), 'RGB').resize((512, 512))
     mask = Image.fromarray(processed_mask.astype('uint8'), 'RGB').resize((512, 512))
 
-    # Create torch generator with seed
     generator = torch.Generator(device=device).manual_seed(seed)
 
-    # Run the inpainting pipeline
     outcome = pipe(
         prompt=prompt,
         image=img,
         mask_image=mask,
         negative_prompt=negative_prompt,
         generator=generator,
-        callback_on_step_end=_callback,
+        callback_on_step_end=_make_callback(context),
         callback_on_step_end_tensor_inputs=["latents"],
     )
 
-    # Resize result to original size and return as NumPy array
     result = outcome.images[0].resize(original_size, resample=Image.LANCZOS)
     return np.array(result)
