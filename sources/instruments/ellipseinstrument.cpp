@@ -41,7 +41,7 @@ void EllipseInstrument::mousePressEvent(QMouseEvent *event, ImageArea &imageArea
     {
         mStartPoint = mEndPoint = event->pos() / imageArea.getZoomFactor();
         imageArea.setIsPaint(true);
-        mImageCopy = *imageArea.getImage();
+        stash(imageArea);
         makeUndoCommand(imageArea);
     }
 }
@@ -51,7 +51,7 @@ void EllipseInstrument::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
     if(imageArea.isPaint())
     {
         mEndPoint = event->pos() / imageArea.getZoomFactor();
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->buttons() & Qt::LeftButton)
         {
             paint(imageArea, false);
@@ -67,7 +67,7 @@ void EllipseInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageAr
 {
     if(imageArea.isPaint())
     {
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->button() == Qt::LeftButton)
         {
             paint(imageArea, false);
@@ -82,8 +82,10 @@ void EllipseInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageAr
 
 void EllipseInstrument::paint(ImageArea &imageArea, bool isSecondaryColor, bool)
 {
-    QPainter painter(imageArea.getImage());
-    painter.setPen(QPen(DataSingleton::Instance()->getPrimaryColor(),
+    const bool isMarkup = imageArea.isMarkupMode() && !isSecondaryColor;
+
+    QPainter painter(isMarkup? imageArea.getMarkup() : imageArea.getImage());
+    painter.setPen(QPen(isMarkup ? Qt::black : DataSingleton::Instance()->getPrimaryColor(),
                         DataSingleton::Instance()->getPenSize(), // * imageArea.getZoomFactor(),
                         Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     if(isSecondaryColor)

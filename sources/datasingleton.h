@@ -108,6 +108,9 @@ public:
     void setResetCurve(bool b) { mIsResetCurve = b; }
     bool isResetCurve() { return mIsResetCurve; }
 
+    void setMarkupMode(bool b) { mMarkupMode = b; }
+    bool isMarkupMode() { return mMarkupMode; }
+
     void readSetting();
     void writeSettings();
     void readState();
@@ -132,6 +135,7 @@ private:
     QString mScriptPath;
 
     bool mIsResetCurve; /**< Needs to correct work of Bezier curve instrument */
+    bool mMarkupMode = false;
     int mAutoSaveInterval, mHistoryDepth;
     QString mAppLanguage;
     QString mLastFilePath; /* last opened file */

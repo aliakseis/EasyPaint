@@ -25,17 +25,20 @@
 
 #include "undocommand.h"
 
-UndoCommand::UndoCommand(const QImage *img, ImageArea &imgArea, QUndoCommand *parent)
-    : QUndoCommand(parent), mPrevImage(*img), mImageArea(imgArea)
+UndoCommand::UndoCommand(ImageArea &imgArea, QUndoCommand *parent)
+    : QUndoCommand(parent), mPrevImage(*imgArea.getImage()), mPrevMarkup(*imgArea.getMarkup()), mImageArea(imgArea)
 {
     mCurrImage = mPrevImage;
+    mCurrMarkup = mPrevMarkup;
 }
 
 void UndoCommand::undo()
 {
     mImageArea.clearSelection();
     mCurrImage = *(mImageArea.getImage());
+    mCurrMarkup = *(mImageArea.getMarkup());
     mImageArea.setImage(mPrevImage);
+    mImageArea.setMarkup(mPrevMarkup);
     mImageArea.fixSize(true);
     mImageArea.update();
     mImageArea.saveImageChanges();
@@ -44,6 +47,7 @@ void UndoCommand::undo()
 void UndoCommand::redo()
 {
     mImageArea.setImage(mCurrImage);
+    mImageArea.setMarkup(mCurrMarkup);
     mImageArea.fixSize(true);
     mImageArea.update();
     mImageArea.saveImageChanges();

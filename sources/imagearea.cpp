@@ -62,7 +62,7 @@
 #include <QtCore/QDir>
 #include <QMessageBox>
 #include <QClipboard>
-
+#include <QBitmap>
 
 namespace {
 
@@ -244,6 +244,8 @@ void ImageArea::open(const QString &filePath)
     if(mImage.load(filePath))
     {
         mImage = mImage.convertToFormat(QImage::Format_ARGB32_Premultiplied);
+        mMarkup = QImage(mImage.size(), QImage::Format_Grayscale8);
+        mMarkup.fill(Qt::white);
         mFilePath = filePath;
         DataSingleton::Instance()->setLastFilePath(filePath);
         fixSize();
@@ -448,7 +450,7 @@ void ImageArea::mouseMoveEvent(QMouseEvent *event)
     {
         if (!mIsSavedBeforeResize)
         {
-            pushUndoCommand(new UndoCommand(getImage(), *this));
+            pushUndoCommand(new UndoCommand(*this));
             mIsSavedBeforeResize = true;
         }
         doResizeCanvas(this, pos.x(), pos.y(), false, false);
@@ -511,6 +513,16 @@ void ImageArea::paintEvent(QPaintEvent *event)
         painter.save();
         painter.scale(mZoomFactor, mZoomFactor);
         painter.drawImage(QPoint(0, 0), mImage);
+
+        // Convert monochrome mask to a QBitmap and then QRegion:
+        QImage monoMask = mMarkup.convertToFormat(QImage::Format_Mono);
+        QBitmap bitmapMask = QBitmap::fromImage(monoMask);
+        QRegion clipRegion(bitmapMask);
+
+        painter.setClipRegion(clipRegion);
+
+        painter.fillRect(mImage.rect(), DataSingleton::Instance()->getPrimaryColor());
+
         painter.restore();
     }
 
@@ -751,4 +763,9 @@ void ImageArea::pushUndoCommand(UndoCommand *command)
 {
     if(command != 0)
         mUndoStack->push(command);
+}
+
+bool ImageArea::isMarkupMode()
+{
+    return DataSingleton::Instance()->isMarkupMode();
 }

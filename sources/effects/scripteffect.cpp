@@ -12,6 +12,10 @@ ImageArea* ScriptEffect::applyEffect(ImageArea* imageArea)
     if (imageArea)
     {
         args << *(imageArea->getImage());
+        if (mFunctionInfo.usesMarkup())
+        {
+            args << *(imageArea->getMarkup());
+        }
     }
     QVariant result = mScriptModel->call(mFunctionInfo.name, args);
     if (!imageArea)

@@ -19,12 +19,16 @@ AbstractEffectSettings* ScriptEffectWithSettings::getSettingsWidget()
     return new ScriptEffectSettings(mFunctionInfo, effectSettings);
 }
 
-void ScriptEffectWithSettings::convertImage(const QImage* source, QImage& image, const QVariantList& matrix, std::weak_ptr<EffectRunCallback> callback)
+void ScriptEffectWithSettings::convertImage(const QImage* source, const QImage* markup, QImage& image, const QVariantList& matrix, std::weak_ptr<EffectRunCallback> callback)
 {
     QVariantList args;
     if (source)
     {
         args << *source;
+    }
+    if (markup && mFunctionInfo.usesMarkup())
+    {
+        args << *markup;
     }
     args << matrix;
     

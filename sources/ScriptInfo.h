@@ -23,4 +23,9 @@ struct FunctionInfo {
     {
         return parameters.empty() || parameters[0].annotation != "<class 'numpy.ndarray'>";
     }
+    bool usesMarkup() const
+    {
+        return parameters.size() > 1 && parameters[1].annotation == "<class 'numpy.ndarray'>";
+    }
+
 };

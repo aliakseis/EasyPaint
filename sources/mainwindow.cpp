@@ -297,6 +297,15 @@ void MainWindow::initializeMainMenu()
     createAction(tr("Text"), ":/media/instruments-icons/text.png", TEXT);
     // TODO: Add new instrument action here
 
+    mInstrumentsMenu->addSeparator();
+
+    {
+        QAction* action = new QAction(tr("Markup mode"), this);
+        action->setCheckable(true);
+        connect(action, SIGNAL(triggered(bool)), this, SLOT(onMarkupMode(bool)));
+        mInstrumentsMenu->addAction(action);
+    }
+
     mEffectsMenu = menuBar()->addMenu(tr("E&ffects"));
 
     // Define a mapping of effect types to their display names
@@ -759,6 +768,11 @@ void MainWindow::instumentsAct(bool state)
         if(currentAction == mInstrumentsActMap[CURSOR])
             DataSingleton::Instance()->setPreviousInstrument(mInstrumentsActMap.key(currentAction));
     }
+}
+
+void MainWindow::onMarkupMode(bool state)
+{
+    DataSingleton::Instance()->setMarkupMode(state);
 }
 
 void MainWindow::enableActions(int index)

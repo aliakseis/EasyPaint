@@ -51,7 +51,7 @@ void CurveLineInstrument::mousePressEvent(QMouseEvent *event, ImageArea &imageAr
         {
         //draw linear Bezier curve
         case 0:
-            mImageCopy = *imageArea.getImage();
+            stash(imageArea);
             mStartPoint = mEndPoint = mFirstControlPoint = mSecondControlPoint = event->pos() / imageArea.getZoomFactor();
             ++mPointsCount;
             break;
@@ -91,7 +91,7 @@ void CurveLineInstrument::mouseMoveEvent(QMouseEvent *event, ImageArea &imageAre
             break;
         }
 
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->buttons() & Qt::LeftButton)
             paint(imageArea, false);
         else if(event->buttons() & Qt::RightButton)
@@ -103,7 +103,7 @@ void CurveLineInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &image
 {
     if(imageArea.isPaint())
     {
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->button() == Qt::LeftButton)
             paint(imageArea, false);
         else if(event->button() == Qt::RightButton)
@@ -114,14 +114,16 @@ void CurveLineInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &image
 
 void CurveLineInstrument::paint(ImageArea &imageArea, bool isSecondaryColor, bool)
 {
-    QPainter painter(imageArea.getImage());
+    const bool isMarkup = imageArea.isMarkupMode() && !isSecondaryColor;
+
+    QPainter painter(isMarkup ? imageArea.getMarkup() : imageArea.getImage());
     //make Bezier curve path
     QPainterPath path;
     path.moveTo(mStartPoint);
     path.cubicTo(mFirstControlPoint, mSecondControlPoint, mEndPoint);
     //choose color
     painter.setPen(QPen(isSecondaryColor ? DataSingleton::Instance()->getSecondaryColor() :
-                                           DataSingleton::Instance()->getPrimaryColor(),
+        (isMarkup ? Qt::black : DataSingleton::Instance()->getPrimaryColor()),
                         DataSingleton::Instance()->getPenSize(), // * imageArea.getZoomFactor(),
                         Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     //draw Bezier curve with given path

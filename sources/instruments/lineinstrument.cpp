@@ -42,7 +42,7 @@ void LineInstrument::mousePressEvent(QMouseEvent *event, ImageArea &imageArea)
     {
         mStartPoint = mEndPoint = event->pos() / imageArea.getZoomFactor();
         imageArea.setIsPaint(true);
-        mImageCopy = *imageArea.getImage();
+        stash(imageArea);
         makeUndoCommand(imageArea);
     }
 }
@@ -52,7 +52,7 @@ void LineInstrument::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
     if(imageArea.isPaint())
     {
         mEndPoint = event->pos() / imageArea.getZoomFactor();
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->buttons() & Qt::LeftButton)
         {
             paint(imageArea, false);
@@ -68,7 +68,7 @@ void LineInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageArea)
 {
     if(imageArea.isPaint())
     {
-        imageArea.setImage(mImageCopy);
+        applyStash(imageArea);
         if(event->button() == Qt::LeftButton)
         {
             paint(imageArea, false);
@@ -83,19 +83,13 @@ void LineInstrument::mouseReleaseEvent(QMouseEvent *event, ImageArea &imageArea)
 
 void LineInstrument::paint(ImageArea &imageArea, bool isSecondaryColor, bool)
 {
-    QPainter painter(imageArea.getImage());
-    if(isSecondaryColor)
-    {
-        painter.setPen(QPen(DataSingleton::Instance()->getSecondaryColor(),
-                            DataSingleton::Instance()->getPenSize(), // * imageArea.getZoomFactor(),
-                            Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    }
-    else
-    {
-        painter.setPen(QPen(DataSingleton::Instance()->getPrimaryColor(),
-                            DataSingleton::Instance()->getPenSize(), // * imageArea.getZoomFactor(),
-                            Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    }
+    const bool isMarkup = imageArea.isMarkupMode() && !isSecondaryColor;
+
+    QPainter painter(isMarkup ? imageArea.getMarkup() : imageArea.getImage());
+    painter.setPen(QPen(isSecondaryColor ? DataSingleton::Instance()->getSecondaryColor() :
+        (isMarkup ? Qt::black : DataSingleton::Instance()->getPrimaryColor()),
+                        DataSingleton::Instance()->getPenSize(), // * imageArea.getZoomFactor(),
+                        Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
 
     if(mStartPoint != mEndPoint)
     {

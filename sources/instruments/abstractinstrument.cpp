@@ -34,5 +34,17 @@ AbstractInstrument::AbstractInstrument(QObject *parent) :
 
 void AbstractInstrument::makeUndoCommand(ImageArea &imageArea)
 {
-    imageArea.pushUndoCommand(new UndoCommand(imageArea.getImage(), imageArea));
+    imageArea.pushUndoCommand(new UndoCommand(imageArea));
+}
+
+void AbstractInstrument::stash(ImageArea& imageArea)
+{
+    mImageCopy = *imageArea.getImage();
+    mMarkupCopy = *imageArea.getMarkup();
+}
+
+void AbstractInstrument::applyStash(ImageArea& imageArea)
+{
+    imageArea.setImage(mImageCopy);
+    imageArea.setMarkup(mMarkupCopy);
 }
