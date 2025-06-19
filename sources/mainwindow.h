@@ -112,7 +112,7 @@ private:
     QUndoGroup *mUndoStackGroup;
     bool mPrevInstrumentSetted; /**< Used for magnifier */
 
-    enum { MaxRecentFiles = 5 };
+    enum { MaxRecentFiles = 20 };
     QAction* recentFileActs[MaxRecentFiles];
 
     ScriptModel* mScriptModel = nullptr;
