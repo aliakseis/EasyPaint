@@ -20,12 +20,14 @@ class array;
 
 }
 
+const char CHECK_PYTHON_OPTION[] = "--checkPython";
+
 class ScriptModel  : public QObject
 {
     Q_OBJECT
 
 public:
-    ScriptModel(QObject *parent);
+    ScriptModel(QWidget *parent);
     ~ScriptModel();
 
     void LoadScript(const QString& path);
@@ -34,10 +36,13 @@ public:
 
     QVariant call(const QString& callable, const QVariantList& args = QVariantList(), std::weak_ptr<EffectRunCallback> callback = {}, const QVariantMap & kwargs = QVariantMap());
 
+    static int ValidatePythonSystem();
+
 private:
     bool send_image(const pybind11::array& image);
     bool check_interrupt();
 
+    bool mValid = false;
     std::weak_ptr<EffectRunCallback> mCallback;
     class PythonScope;
     std::unique_ptr<PythonScope> mPythonScope;

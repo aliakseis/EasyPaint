@@ -34,6 +34,7 @@
 #include "mainwindow.h"
 #include "datasingleton.h"
 #include "set_dark_theme.h"
+#include "ScriptModel.h"
 
 void printHelpMessage()
 {
@@ -64,7 +65,9 @@ int main(int argc, char *argv[])
     QRegExp rxArgVersion("--version");
     QRegExp rxArgV("-v");
 
-    bool isHelp(false), isVer(false);
+    QRegExp rxCheckPython(CHECK_PYTHON_OPTION);
+
+    bool isHelp(false), isVer(false), isCheckPython(false);
     QStringList filePaths;
 
     for(int i(1); i < args.size(); ++i)
@@ -78,6 +81,10 @@ int main(int argc, char *argv[])
                  rxArgV.indexIn(args.at(i)) != -1)
         {
             isVer = true;
+        }
+        else if (rxCheckPython.indexIn(args.at(i)) != -1)
+        {
+            isCheckPython = true;
         }
         else
         {
@@ -93,15 +100,19 @@ int main(int argc, char *argv[])
 
     }
 
-    if(isHelp)
+    if (isHelp)
     {
         printHelpMessage();
         return 0;
     }
-    else if(isVer)
+    else if (isVer)
     {
         printVersion();
         return 0;
+    }
+    else if (isCheckPython)
+    {
+        return ScriptModel::ValidatePythonSystem();
     }
 
     QApplication::setStyle(QStyleFactory::create("Fusion"));

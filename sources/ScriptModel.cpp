@@ -16,7 +16,9 @@
 #include <QImage>
 #include <QAction>
 #include <QMenu>
-
+#include <QProcess>
+#include <QCoreApplication>
+#include <QMessageBox>
 
 #undef slots
 
@@ -34,6 +36,15 @@ namespace py = pybind11;
 using namespace py::literals;
 
 namespace {
+
+bool isPythonInstalled()
+{
+    const int status =
+        QProcess::execute(QCoreApplication::applicationFilePath(),
+            QStringList() << CHECK_PYTHON_OPTION);
+
+    return status == 0;
+}
 
 //------------------------------------------------------------------------------
 // Converts a QImage to a contiguous pybind11::array (NumPy array).
@@ -221,13 +232,25 @@ class ScriptModel::PythonScope
 // ----------------------------------------------------------------
 // ScriptModel implementation using pybind11 for embedding Python.
 
-ScriptModel::ScriptModel(QObject* parent)
-    : QObject(parent), mPythonScope(std::make_unique<PythonScope>())
+ScriptModel::ScriptModel(QWidget* parent)
+    : QObject(parent)
 {
+    mValid = isPythonInstalled();
+    if (mValid)
+        mPythonScope = std::make_unique<PythonScope>();
+    else
+        QMessageBox::warning(
+            parent,
+            QObject::tr("Matching Python is not installed."),
+            QObject::tr("Matching Python is not installed: ") + PY_VERSION
+        );
 }
 
 void ScriptModel::LoadScript(const QString& path)
 {
+    if (!mValid)
+        return;
+
     py::gil_scoped_acquire acquire;  // Ensures proper GIL acquisition
     // Get the sys module and adjust sys.path.
     py::module_ sys = py::module_::import("sys");
@@ -357,7 +380,11 @@ ScriptModel::~ScriptModel() {
     std::unique_lock<std::mutex> lock(mCallMutex);
 }
 
-void ScriptModel::setupActions(QMenu* fileMenu, QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap) {
+void ScriptModel::setupActions(QMenu* fileMenu, QMenu* effectsMenu, QMap<int, QAction*>& effectsActMap)
+{
+    if (!mValid)
+        return;
+
     const auto parent = this->parent();
     const auto firstAction = fileMenu->actions().isEmpty() ? nullptr : fileMenu->actions().first();
     for (const auto& funcInfo : mFunctionInfos) {
@@ -392,6 +419,9 @@ QVariant ScriptModel::call(const QString& callable,
     auto stateGuard = MakeGuard(this, [](ScriptModel* pThis) {
         qDebug() << "Leaving ScriptModel::call.";
         });
+
+    if (!mValid)
+        return {};
 
     if (auto obj = mCallback.lock())
     {
@@ -482,4 +512,40 @@ bool ScriptModel::check_interrupt()
     }
 
     return true;
+}
+
+int ScriptModel::ValidatePythonSystem() {
+    //*
+    try {
+        py::scoped_interpreter interpreter;
+        py::gil_scoped_release release_gil;
+
+        // Acquire the GIL so that Python calls are thread-safe.
+        py::gil_scoped_acquire acquire;
+
+        // Import sys module.
+        py::module_ sys = py::module_::import("sys");
+
+        // Check that sys.path exists and is a non-empty list.
+        py::object sysPathObj = sys.attr("path");
+        if (!py::isinstance<py::list>(sysPathObj)) {
+            qWarning() << "Python system invalid: sys.path is not a list.";
+            return 1;
+        }
+        py::list sysPath = sysPathObj.cast<py::list>();
+        if (sysPath.size() == 0) {
+            qWarning() << "Python system invalid: sys.path is empty.";
+            return 2;
+        }
+
+        // Attempt to import a common module; using 'os' as an example.
+        py::module_::import("os");
+
+    }
+    catch (const std::exception& e) {
+        qWarning() << "Python system validation failed:" << e.what();
+        return 3;
+    }
+    //*/
+    return 0; // Python system appears valid.
 }
