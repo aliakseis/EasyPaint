@@ -1,19 +1,14 @@
-import torch
-import cv2
-import numpy as np
-from PIL import Image
 from diffusers import StableDiffusionImg2ImgPipeline
+import torch, cv2, numpy as np
+from PIL import Image
 
-# ——————————————————————————————————————————————
-# Load the Img2Img pipeline once for efficiency
-# ——————————————————————————————————————————————
+# Load once, move to GPU, enable memory optimizations
 device = "cuda"
 pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
-    "runwayml/stable-diffusion-v1-5",         # or your favorite SD checkpoint
+    "runwayml/stable-diffusion-v1-5",
     torch_dtype=torch.float16,
     use_safetensors=True,
 ).to(device)
-
 pipe.enable_sequential_cpu_offload()
 pipe.enable_xformers_memory_efficient_attention()
 pipe.enable_attention_slicing()
@@ -22,7 +17,6 @@ pipe.enable_attention_slicing()
 class InpaintContext:
     def __init__(self, original_size):
         self.original_size = original_size
-
 
 def _get_proportional_resize_dims(original_width, original_height,
                                   target_area=1024 * 512, divisor=8):
@@ -36,33 +30,23 @@ def _get_proportional_resize_dims(original_width, original_height,
 
 
 def _make_callback(context):
-    """
-    Callback for preview images at each diffusion step.
-    Signature for Img2Img: callback(step, timestep, latents)
-    """
     def _callback(step, timestep, latents):
-        # Interrupt check
         if _check_interrupt():
-            raise RuntimeError("Interrupt detected! Stopping generation.")
+            raise RuntimeError("Interrupt detected!")
 
-        # latents: torch.FloatTensor [batch, channels, h, w]
+        # decode latents -> image tensor [B,H,W,C]
         with torch.no_grad():
-            # scale and decode latents via VAE
-            image_tensor = latents / 0.18215
-            decoded = pipe.vae.decode(image_tensor).sample  # decode returns an object
-            img_tensor = (decoded + 1) / 2                  # [0,1] range
+            img_tensor = pipe.vae.decode(latents / 0.18215).sample
+            img_tensor = (img_tensor + 1) / 2
 
-            # take last in batch, convert to NumPy HWC uint8
-            preview = img_tensor.cpu().permute(0, 2, 3, 1).numpy()[-1]
-            image = (preview * 255).clip(0, 255).astype(np.uint8)
+        preview = img_tensor.cpu().permute(0, 2, 3, 1).numpy()[-1]
+        image = (preview * 255).clip(0, 255).astype(np.uint8)
 
-            # resize back to original if needed
-            if context.original_size:
-                image = cv2.resize(image,
-                                   context.original_size,
-                                   interpolation=cv2.INTER_LANCZOS4)
-
-            _send_image(image)
+        if context.original_size:
+            image = cv2.resize(
+                image, context.original_size, interpolation=cv2.INTER_LANCZOS4
+            )
+        _send_image(image)
 
     return _callback
 
@@ -87,27 +71,26 @@ def generate_img2img(input_image: np.ndarray,
     Returns:
         H*W*3 uint8 RGB NumPy array of the result.
     """
-    original_size = (input_image.shape[1], input_image.shape[0])
-    resize_dims  = _get_proportional_resize_dims(*original_size)
-    context = InpaintContext(original_size)
+    # Prepare sizes & PIL image
+    h, w = input_image.shape[:2]
+    context = InpaintContext((w, h))
+    new_w, new_h = _get_proportional_resize_dims(w, h)
+    init_img = Image.fromarray(input_image, "RGB").resize((new_w, new_h), Image.LANCZOS)
 
-    # PIL image for the pipeline
-    init_img = Image.fromarray(input_image, "RGB") \
-                   .resize(resize_dims, Image.LANCZOS)
+    gen = torch.Generator(device=device).manual_seed(seed)
 
-    generator = torch.Generator(device=device).manual_seed(seed)
-
-    output = pipe(
+    # *** Notice `image=init_img` (not `init_image`) *** 
+    out = pipe(
         prompt=prompt,
         negative_prompt=negative_prompt,
-        init_image=init_img,
+        image=init_img,
         strength=strength,
         guidance_scale=guidance_scale,
-        generator=generator,
-        callback=_make_callback(context),
-        callback_steps=1,      # call back every step
+        generator=gen,
+        callback_on_step_end=_make_callback(context),
+        callback_on_step_end_tensor_inputs=["latents"],
     )
 
-    # take the first (and only) output image, resize back and return as NumPy
-    result = output.images[0].resize(original_size, resample=Image.LANCZOS)
+    # Final resize back to original
+    result = out.images[0].resize((w, h), resample=Image.LANCZOS)
     return np.array(result)
