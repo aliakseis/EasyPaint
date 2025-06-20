@@ -29,35 +29,55 @@ def _get_proportional_resize_dims(original_width, original_height,
     return new_width, new_height
 
 
+# Callback function to monitor generation
 def _make_callback(context):
-    # accept step, timestep, *args, **kwargs
-    def _callback(step, timestep, *args, **kwargs):
-        # get latents (we asked for them via callback_on_step_end_tensor_inputs)
-        latents = kwargs.get("latents", None)
-        if latents is None:
-            return
-
-        # interrupt check
+    def _callback(iteration, step, timestep, extra_step_kwargs):
+        # Interrupt check
         if _check_interrupt():
             raise RuntimeError("Interrupt detected! Stopping generation.")
 
+        # Try to get the tensor; if not, try "latents"
+        image_tensor = extra_step_kwargs.get("image")
+        if image_tensor is None:
+            image_tensor = extra_step_kwargs.get("latents")
+            if image_tensor is None:
+                return extra_step_kwargs  # Nothing to process
+
+            # Convert to dense if sparse
+            if hasattr(image_tensor, "is_sparse") and image_tensor.is_sparse:
+                image_tensor = image_tensor.to_dense()
+            with torch.no_grad():
+                image_tensor = image_tensor / 0.18215
+                decoded = pipe.vae.decode(image_tensor)
+                # Access the tensor inside the DecoderOutput object via .sample,
+                # then scale from [-1, 1] to [0, 1]
+                image_tensor = (decoded.sample + 1) / 2
+        else:
+            # If the provided image_tensor is sparse, convert to dense
+            if hasattr(image_tensor, "is_sparse") and image_tensor.is_sparse:
+                image_tensor = image_tensor.to_dense()
+
+        # Ensure image_tensor has a batch dimension (dimensions: [batch, channels, height, width])
+        if image_tensor.dim() == 3:
+            image_tensor = image_tensor.unsqueeze(0)
+
+        # Option: Only process every n-th step (e.g., every 5 steps)
+        #if step % 5 != 0:
+        #    return extra_step_kwargs
+
         with torch.no_grad():
-            # decode the latents
-            image_tensor = pipe.vae.decode(latents / 0.18215).sample
-            image_tensor = (image_tensor + 1) / 2  # scale to [0,1]
+            # Convert tensor shape from [batch, channels, height, width] to [batch, height, width, channels]
+            #processed_image = image_tensor.cpu().permute(0, 2, 3, 1).float().numpy()
+            #_send_image(processed_image[-1])  # Send the latest preview image
+            preview = image_tensor.cpu().permute(0, 2, 3, 1).float().numpy()[-1]
+            image = (preview * 255).clip(0, 255).astype(np.uint8)
 
-        # convert to HWC uint8 numpy
-        preview = image_tensor.cpu().permute(0, 2, 3, 1).numpy()[-1]
-        image = (preview * 255).clip(0, 255).astype(np.uint8)
+            if context.original_size:
+                image = cv2.resize(image, context.original_size, interpolation=cv2.INTER_LANCZOS4)
 
-        # resize back to original
-        if context.original_size:
-            image = cv2.resize(
-                image, context.original_size, interpolation=cv2.INTER_LANCZOS4
-            )
+            _send_image(image)
 
-        _send_image(image)
-
+        return extra_step_kwargs
     return _callback
 
 
