@@ -1,4 +1,4 @@
-from diffusers import StableDiffusionImg2ImgPipeline
+from diffusers import StableDiffusionImg2ImgPipeline, DPMSolverMultistepScheduler
 import torch, cv2, numpy as np
 from PIL import Image
 
@@ -9,6 +9,12 @@ pipe = StableDiffusionImg2ImgPipeline.from_pretrained(
     torch_dtype=torch.float16,
     use_safetensors=True,
 ).to(device)
+
+# Replace the default scheduler with a DPM scheduler.
+# This creates a DPMSolverMultistepScheduler instance with the same config as the pipeline's current scheduler.
+pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
+
+
 pipe.enable_sequential_cpu_offload()
 pipe.enable_xformers_memory_efficient_attention()
 pipe.enable_attention_slicing()
@@ -86,6 +92,7 @@ def generate_img2img(input_image: np.ndarray,
                      negative_prompt: str = "",
                      strength: float = 0.15,
                      guidance_scale: float = 7.5,
+                     num_steps: int = 50,
                      seed: int = 21) -> np.ndarray:
     """
     Transforms an input image using StableDiffusionImg2ImgPipeline.
@@ -116,6 +123,7 @@ def generate_img2img(input_image: np.ndarray,
         image=init_img,
         strength=strength,
         guidance_scale=guidance_scale,
+        num_inference_steps=num_steps,
         generator=gen,
         callback_on_step_end=_make_callback(context),
         callback_on_step_end_tensor_inputs=["latents"],
