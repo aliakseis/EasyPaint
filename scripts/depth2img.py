@@ -2,7 +2,7 @@ import torch
 import cv2
 import numpy as np
 from PIL import Image
-from diffusers import StableDiffusionDepth2ImgPipeline
+from diffusers import StableDiffusionDepth2ImgPipeline, DPMSolverMultistepScheduler
 
 
 # Load pipeline once for efficiency
@@ -12,6 +12,11 @@ pipe = StableDiffusionDepth2ImgPipeline.from_pretrained(
     torch_dtype=torch.float16,
     use_safetensors=True,
 ).to(device)
+
+# Replace the default scheduler with a DPM scheduler.
+# This creates a DPMSolverMultistepScheduler instance with the same config as the pipeline's current scheduler.
+pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
+
 
 pipe.enable_sequential_cpu_offload()
 pipe.enable_xformers_memory_efficient_attention()
@@ -100,7 +105,7 @@ def _make_callback(context):
 
 
 # Core function to run Depth2Img
-def generate_depth_image(input_image: np.ndarray, prompt: str, negative_prompt: str = "", strength: float = 0.15, seed: int = 21) -> np.ndarray:
+def generate_depth_image(input_image: np.ndarray, prompt: str, negative_prompt: str = "", strength: float = 0.15, guidance_scale: float = 7.5, num_steps: int = 50, seed: int = 21) -> np.ndarray:
     """Enhances an image using Stable Diffusion Depth2Img.
 
     Args:
@@ -128,6 +133,8 @@ def generate_depth_image(input_image: np.ndarray, prompt: str, negative_prompt: 
         image=img,
         negative_prompt=negative_prompt,
         strength=strength,
+        guidance_scale=guidance_scale,
+        num_inference_steps=num_steps,
         generator=generator,
         callback_on_step_end=_make_callback(context),  # Integrate callback
         callback_on_step_end_tensor_inputs=["latents"],  # Ensure latents are passed
