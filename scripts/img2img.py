@@ -30,22 +30,32 @@ def _get_proportional_resize_dims(original_width, original_height,
 
 
 def _make_callback(context):
-    def _callback(step, timestep, latents):
+    # accept step, timestep, *args, **kwargs
+    def _callback(step, timestep, *args, **kwargs):
+        # get latents (we asked for them via callback_on_step_end_tensor_inputs)
+        latents = kwargs.get("latents", None)
+        if latents is None:
+            return
+
+        # interrupt check
         if _check_interrupt():
-            raise RuntimeError("Interrupt detected!")
+            raise RuntimeError("Interrupt detected! Stopping generation.")
 
-        # decode latents -> image tensor [B,H,W,C]
         with torch.no_grad():
-            img_tensor = pipe.vae.decode(latents / 0.18215).sample
-            img_tensor = (img_tensor + 1) / 2
+            # decode the latents
+            image_tensor = pipe.vae.decode(latents / 0.18215).sample
+            image_tensor = (image_tensor + 1) / 2  # scale to [0,1]
 
-        preview = img_tensor.cpu().permute(0, 2, 3, 1).numpy()[-1]
+        # convert to HWC uint8 numpy
+        preview = image_tensor.cpu().permute(0, 2, 3, 1).numpy()[-1]
         image = (preview * 255).clip(0, 255).astype(np.uint8)
 
+        # resize back to original
         if context.original_size:
             image = cv2.resize(
                 image, context.original_size, interpolation=cv2.INTER_LANCZOS4
             )
+
         _send_image(image)
 
     return _callback
