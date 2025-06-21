@@ -18,14 +18,19 @@ ImageArea* ScriptEffect::applyEffect(ImageArea* imageArea)
         }
     }
     QVariant result = mScriptModel->call(mFunctionInfo.name, args);
-    if (!imageArea)
-    {
-        imageArea = initializeNewTab();
+    if (result.canConvert<QImage>()) {
+        QImage image = result.value<QImage>();
+        if (!image.isNull()) {
+            if (!imageArea)
+            {
+                imageArea = initializeNewTab();
+            }
+            imageArea->setImage(image);
+            imageArea->fixSize(true);
+            imageArea->setEdited(true);
+            imageArea->update();
+        }
     }
-    imageArea->setImage(result.value<QImage>());
-    imageArea->fixSize(true);
-    imageArea->setEdited(true);
-    imageArea->update();
 
     return imageArea;
 }
