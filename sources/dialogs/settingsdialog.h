@@ -88,6 +88,7 @@ private:
 
     QCheckBox* mLoadScriptCheckbox;
     QLineEdit* mScriptPathInput;
+    QLineEdit* mVenvPathInput;
     
 signals:
     

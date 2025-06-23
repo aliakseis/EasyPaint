@@ -27,7 +27,7 @@ class ScriptModel  : public QObject
     Q_OBJECT
 
 public:
-    ScriptModel(QWidget *parent);
+    ScriptModel(QWidget *parent, const QString& venvPath);
     ~ScriptModel();
 
     void LoadScript(const QString& path);
@@ -49,4 +49,6 @@ private:
     std::mutex mCallMutex;
     std::vector<FunctionInfo> mFunctionInfos;
     std::atomic_bool mIsShuttingDown = false;
+
+    QString mVenvPath;
 };

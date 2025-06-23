@@ -232,12 +232,36 @@ class ScriptModel::PythonScope
 // ----------------------------------------------------------------
 // ScriptModel implementation using pybind11 for embedding Python.
 
-ScriptModel::ScriptModel(QWidget* parent)
-    : QObject(parent)
+ScriptModel::ScriptModel(QWidget* parent, const QString& venvPath)
+    : QObject(parent), mVenvPath(venvPath.trimmed())
 {
-    mValid = isPythonInstalled();
-    if (mValid)
-        mPythonScope = std::make_unique<PythonScope>();
+    if (isPythonInstalled())
+    {
+        if (!mVenvPath.isEmpty())
+        {
+            // 1. Set VIRTUAL_ENV
+            qputenv("VIRTUAL_ENV", mVenvPath.toUtf8());
+
+            // 2. Prepend Scripts/ or bin/ to PATH
+#ifdef Q_OS_WIN
+            QString scriptsPath = mVenvPath + "/Scripts";
+#else
+            QString scriptsPath = venvPath + "/bin";
+#endif
+            QByteArray currentPath = qgetenv("PATH");
+            qputenv("PATH", (scriptsPath + ";" + currentPath).toUtf8());
+
+            // 3. Optionally unset PYTHONHOME to avoid conflicts
+            qputenv("PYTHONHOME", QByteArray());
+        }
+        try {
+            mPythonScope = std::make_unique<PythonScope>();
+            mValid = true;
+        }
+        catch (const std::exception& e) {
+            qWarning() << "Error initializing Python: " << e.what();
+        }
+    }
     else
         QMessageBox::warning(
             parent,
@@ -261,13 +285,17 @@ void ScriptModel::LoadScript(const QString& path)
         QString qpath = QString::fromStdString(pathStr) + "/site-packages";
         if (QFileInfo::exists(qpath)) {
             // Append path to sys.path if needed.
-            sys.attr("path").attr("append")(qpath.toStdString());
+            if (mVenvPath.isEmpty())
+                sys.attr("path").attr("append")(qpath.toStdString());
 #ifdef Q_OS_WIN
             QString root = QFileInfo(QString::fromStdString(pathStr)).dir().path();
             SetDllDirectoryW(reinterpret_cast<LPCWSTR>(root.utf16()));
 #endif
         }
     }
+
+    if (!mVenvPath.isEmpty())
+        sys.attr("path").attr("insert")(0, (mVenvPath + "/Lib/site-packages").toStdString());
 
     // (Optional) Redirect Python stdout/stderr by reassigning sys.stdout/sys.stderr if desired.
 

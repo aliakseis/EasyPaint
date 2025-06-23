@@ -84,6 +84,10 @@ public:
     void setIsLoadScript(bool isLoadScript) { mIsLoadScript = isLoadScript; }
     QString getScriptPath() { return mScriptPath; }
     void setScriptPath(const QString& scriptPath) { mScriptPath = scriptPath; }
+    QString getVirtualEnvPath() { return mVirtualEnvironmentPath; }
+    void setVirtualEnvPath(const QString& virtualEnvironmentPath) { 
+        mVirtualEnvironmentPath = virtualEnvironmentPath; 
+    }
 
     QString getLastFilePath() { return mLastFilePath; }
     void setLastFilePath(const QString &lastFilePath) { mLastFilePath = lastFilePath; }
@@ -133,6 +137,7 @@ private:
     bool mIsAutoSave, mIsRestoreWindowSize, mIsAskCanvasSize, mIsDarkMode;
     bool mIsLoadScript;
     QString mScriptPath;
+    QString mVirtualEnvironmentPath;
 
     bool mIsResetCurve; /**< Needs to correct work of Bezier curve instrument */
     bool mMarkupMode = false;

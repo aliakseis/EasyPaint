@@ -185,45 +185,101 @@ QGroupBox* SettingsDialog::createShortcutSettings() {
 }
 
 // Helper function to create script - loading settings
-QGroupBox* SettingsDialog::createScriptSettings() {
+QGroupBox* SettingsDialog::createScriptSettings()
+{
+    // Script Section
+
     mLoadScriptCheckbox = new QCheckBox(tr("Load Script"));
-    mLoadScriptCheckbox->setChecked(DataSingleton::Instance()->getIsLoadScript());
+    mLoadScriptCheckbox->setChecked(
+        DataSingleton::Instance()->getIsLoadScript()
+    );
 
     QLabel* scriptPathLabel = new QLabel(tr("Script Path:"));
-    mScriptPathInput = new QLineEdit();
-    mScriptPathInput->setText(DataSingleton::Instance()->getScriptPath());
+    mScriptPathInput = new QLineEdit(
+        DataSingleton::Instance()->getScriptPath()
+    );
     mScriptPathInput->setEnabled(mLoadScriptCheckbox->isChecked());
 
-    auto mChooseScriptButton = new QPushButton(tr("Browse..."));
-    mChooseScriptButton->setEnabled(mLoadScriptCheckbox->isChecked());
+    QPushButton* chooseScriptBtn = new QPushButton(tr("Browse..."));
+    chooseScriptBtn->setEnabled(mLoadScriptCheckbox->isChecked());
 
-    // Enable/disable script path input & button based on checkbox state
-    connect(mLoadScriptCheckbox, &QCheckBox::toggled, [this, mChooseScriptButton](bool checked) {
-        mScriptPathInput->setEnabled(checked);
-        mChooseScriptButton->setEnabled(checked);
+    // toggle enabling of script widgets
+    connect(mLoadScriptCheckbox, &QCheckBox::toggled,
+        this, [=](bool on) {
+            mScriptPathInput->setEnabled(on);
+            chooseScriptBtn->setEnabled(on);
         });
 
-    // Open file dialog to choose a script file
-    connect(mChooseScriptButton, &QPushButton::clicked, [this]() {
-        QString scriptPath = QFileDialog::getOpenFileName(this, tr("Select Script"), QString(), tr("Python Scripts (*.py);;All Files (*)"));
-        if (!scriptPath.isEmpty()) {
-            mScriptPathInput->setText(scriptPath);
-        }
+    // file-picker for .py
+    connect(chooseScriptBtn, &QPushButton::clicked, this, [=]() {
+        QString f = QFileDialog::getOpenFileName(
+            this,
+            tr("Select Script"),
+            QString(),
+            tr("Python Scripts (*.py);;All Files (*)")
+        );
+        if (!f.isEmpty())
+            mScriptPathInput->setText(f);
         });
 
-    // Layout for script settings
-    QHBoxLayout* scriptLayout = new QHBoxLayout();
+    QHBoxLayout* scriptLayout = new QHBoxLayout;
     scriptLayout->addWidget(scriptPathLabel);
     scriptLayout->addWidget(mScriptPathInput);
-    scriptLayout->addWidget(mChooseScriptButton);
+    scriptLayout->addWidget(chooseScriptBtn);
 
-    QVBoxLayout* vLayout = new QVBoxLayout();
+    // Virtual-Env Section
+
+    //mUseVenvCheckbox = new QCheckBox(tr("Use Virtual Environment"));
+    //mUseVenvCheckbox->setChecked(
+    //    DataSingleton::Instance()->getUseVirtualEnv()
+    //);
+
+    QLabel* venvPathLabel = new QLabel(tr("Venv Path:"));
+    mVenvPathInput = new QLineEdit(
+        DataSingleton::Instance()->getVirtualEnvPath()
+    );
+    mVenvPathInput->setClearButtonEnabled(true);
+    mVenvPathInput->setEnabled(mLoadScriptCheckbox->isChecked());
+
+    QPushButton* chooseVenvBtn = new QPushButton(tr("Browse..."));
+    chooseVenvBtn->setEnabled(mLoadScriptCheckbox->isChecked());
+
+    // toggle enabling of venv widgets
+    connect(mLoadScriptCheckbox, &QCheckBox::toggled,
+        this, [=](bool on) {
+            mVenvPathInput->setEnabled(on);
+            chooseVenvBtn->setEnabled(on);
+        });
+
+    // folder-picker for virtual env directory
+    connect(chooseVenvBtn, &QPushButton::clicked, this, [=]() {
+        QString d = QFileDialog::getExistingDirectory(
+            this,
+            tr("Select Virtual Environment"),
+            QString(),
+            QFileDialog::ShowDirsOnly |
+            QFileDialog::DontResolveSymlinks
+        );
+        if (!d.isEmpty())
+            mVenvPathInput->setText(d);
+        });
+
+    QHBoxLayout* venvLayout = new QHBoxLayout;
+    venvLayout->addWidget(venvPathLabel);
+    venvLayout->addWidget(mVenvPathInput);
+    venvLayout->addWidget(chooseVenvBtn);
+
+    // Combine Everything
+
+    QVBoxLayout* vLayout = new QVBoxLayout;
     vLayout->addWidget(mLoadScriptCheckbox);
     vLayout->addLayout(scriptLayout);
+    vLayout->addSpacing(10);               // small gap
+    //vLayout->addWidget(mUseVenvCheckbox);
+    vLayout->addLayout(venvLayout);
 
-    QGroupBox* groupBox = new QGroupBox(tr("Script Settings"));
+    QGroupBox* groupBox = new QGroupBox(tr("Script & Virtual-Env Settings"));
     groupBox->setLayout(vLayout);
-
     return groupBox;
 }
 
@@ -286,6 +342,7 @@ void SettingsDialog::sendSettingsToSingleton()
     DataSingleton::Instance()->setAutoSaveInterval(mAutoSaveInterval->value());
     DataSingleton::Instance()->setIsLoadScript(mLoadScriptCheckbox->isChecked());
     DataSingleton::Instance()->setScriptPath(mScriptPathInput->text());
+    DataSingleton::Instance()->setVirtualEnvPath(mVenvPathInput->text());
 
     QStringList languages;
     languages << "system" << "easypaint_en_EN" << "easypaint_cs_CZ" << "easypaint_fr_FR" << "easypaint_ru_RU" << "easypaint_zh_CN";

@@ -89,7 +89,7 @@ MainWindow::MainWindow(QStringList filePaths, QWidget *parent)
     if (DataSingleton::Instance()->getIsLoadScript())
     {
         mStatusLabel->setText(tr("Loading script..."));
-        mScriptModel = new ScriptModel(this);
+        mScriptModel = new ScriptModel(this, DataSingleton::Instance()->getVirtualEnvPath());
         auto future = QtConcurrent::run([this, path = DataSingleton::Instance()->getScriptPath()] {
             mScriptModel->LoadScript(path);
         });

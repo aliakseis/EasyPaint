@@ -84,6 +84,7 @@ void DataSingleton::readSetting()
     mIsDarkMode = settings.value("/Settings/IsDarkMode", false).toBool();
     mIsLoadScript = settings.value("/Settings/IsLoadScript", false).toBool();
     mScriptPath = settings.value("/Settings/ScriptPath").toString();
+    mVirtualEnvironmentPath = settings.value("/Settings/VirtualEnvironmentPath").toString();
 
     //read shortcuts for file menu
     mFileShortcuts.insert("New", settings.value("/Shortcuts/File/New", QKeySequence(QKeySequence::New)).value<QKeySequence>());
@@ -134,6 +135,7 @@ void DataSingleton::writeSettings()
     settings.setValue("/Settings/IsAskCanvasSize", mIsAskCanvasSize);
     settings.setValue("/Settings/IsLoadScript", mIsLoadScript);
     settings.setValue("/Settings/ScriptPath", mScriptPath);
+    settings.setValue("/Settings/VirtualEnvironmentPath", mVirtualEnvironmentPath);
 
     //write shortcuts for file menu
     settings.setValue("/Shortcuts/File/New", mFileShortcuts["New"]);
