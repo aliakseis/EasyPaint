@@ -28,6 +28,7 @@
 #include "../effects/effectwithsettings.h"
 #include "../widgets/abstracteffectsettings.h"
 
+#include "SpinnerOverlay.h"
 
 #include <QVariant>
 #include <QHBoxLayout>
@@ -117,46 +118,35 @@ public:
 
     QImage getResult(bool disableUI)
     {
+        // If already done, just return
         if (mFuture.isFinished())
             return mFuture.result();
 
-        QEventLoop loop;  // Message loop to keep UI responsive
+        // Connect a watcher to the future
+        QFutureWatcher<QImage> watcher;
+        watcher.setFuture(mFuture);
 
-        QObject::connect(&watcher, &QFutureWatcher<QImage>::finished, [&loop]() {
-            loop.quit();
-            });
+        // Setup an event loop that quits when the future is ready
+        QEventLoop loop;
+        QObject::connect(&watcher, &QFutureWatcher<QImage>::finished,
+            &loop, &QEventLoop::quit);
 
-        if (disableUI && mainWindow)
-        {
-            mainWindow->setEnabled(false);  // Disable UI
+        // Optionally disable the main UI and spin
+        std::unique_ptr<SpinnerOverlay> spinner;
+        if (disableUI && mainWindow) {
+            mainWindow->setEnabled(false);
+            spinner.reset(new SpinnerOverlay(mainWindow));
+        }
 
-            QScopedPointer<QLabel> spinner(new QLabel(mainWindow));
-            const QPixmap pixmap(":/media/logo/easypaint_64.png");
-            spinner->setPixmap(pixmap);
-            spinner->setAlignment(Qt::AlignCenter);
-            spinner->setGeometry(mainWindow->width() / 2 - 64, mainWindow->height() / 2 - 64, 128, 128);
-            spinner->show();  // Explicitly show spinner before loop starts
-            QTimer timer;
-            QObject::connect(&timer, &QTimer::timeout, [&]() {
-                static int angle = 0;
-                angle = (angle + 10) % 360;
-                QTransform transform;
-                transform.rotate(angle);
-                spinner->setPixmap(pixmap.transformed(transform));
-                });
+        // Block here (but UI stays responsive)
+        loop.exec();
 
-            timer.start(50);
-            loop.exec();  // Start message loop
-
-            timer.stop();
-            spinner->hide();
+        // Tear down spinner + re-enable UI automatically via RAII
+        if (disableUI && mainWindow) {
             mainWindow->setEnabled(true);
         }
-        else
-        {
-            loop.exec();
-        }
 
+        // Finally return the result
         return watcher.result();
     }
 

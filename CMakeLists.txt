@@ -29,6 +29,7 @@ set (HEADERS
     sources/effects/scripteffect.h
     sources/effects/scripteffectwithsettings.h
     sources/effects/sharpeneffect.h
+    sources/makeguard.h
     sources/set_dark_theme.h
     sources/ScriptInfo.h
     sources/ScriptModel.h
@@ -47,6 +48,7 @@ set (HEADERS
     sources/dialogs/settingsdialog.h
     sources/dialogs/textdialog.h
     sources/dialogs/effectsettingsdialog.h
+    sources/dialogs/SpinnerOverlay.h
     sources/instruments/abstractinstrument.h
     sources/instruments/abstractselection.h
     sources/instruments/selectioninstrument.h

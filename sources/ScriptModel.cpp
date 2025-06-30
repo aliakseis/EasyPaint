@@ -275,6 +275,8 @@ void ScriptModel::LoadScript(const QString& path)
     if (!mValid)
         return;
 
+    std::unique_lock<std::mutex> lock(mCallMutex);
+
     py::gil_scoped_acquire acquire;  // Ensures proper GIL acquisition
     // Get the sys module and adjust sys.path.
     py::module_ sys = py::module_::import("sys");
