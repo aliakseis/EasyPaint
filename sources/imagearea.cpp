@@ -80,6 +80,9 @@ QImage doResizeImage(const QImage& source, const QSize& newSize)
     case QImage::Format_RGB888:
         step = 3;
         break;
+    case QImage::Format_Grayscale8:
+        step = 1;
+        break;
     default: return source.scaled(newSize);
     }
 
@@ -108,15 +111,26 @@ void doResizeCanvas(ImageArea *mPImageArea, int width, int height, bool flag, bo
 
     if(width < 1 || height < 1)
         return;
-    QImage *tempImage = new QImage(width, height, QImage::Format_ARGB32_Premultiplied);
-    QPainter painter(tempImage);
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(QBrush(Qt::white));
-    painter.drawRect(QRect(0, 0, width, height));
-    painter.drawImage(0, 0, *mPImageArea->getImage());
-    painter.end();
-
-    mPImageArea->setImage(*tempImage);
+    {
+        QImage tempImage(width, height, QImage::Format_ARGB32_Premultiplied);
+        QPainter painter(&tempImage);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QBrush(Qt::white));
+        painter.drawRect(QRect(0, 0, width, height));
+        painter.drawImage(0, 0, *mPImageArea->getImage());
+        painter.end();
+        mPImageArea->setImage(tempImage);
+    }
+    {
+        QImage tempImage(width, height, QImage::Format_Grayscale8);
+        QPainter painter(&tempImage);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(QBrush(Qt::white));
+        painter.drawRect(QRect(0, 0, width, height));
+        painter.drawImage(0, 0, *mPImageArea->getMarkup());
+        painter.end();
+        mPImageArea->setMarkup(tempImage);
+    }
     if (resizeWindow)
     {
         mPImageArea->fixSize();
@@ -211,8 +225,10 @@ ImageArea::~ImageArea()
 
 void ImageArea::initializeImage()
 {
-    mImage = QImage(DataSingleton::Instance()->getBaseSize(),
-                        QImage::Format_ARGB32_Premultiplied);
+    const auto size = DataSingleton::Instance()->getBaseSize();
+    mImage = QImage(size, QImage::Format_ARGB32_Premultiplied);
+    mMarkup = QImage(size, QImage::Format_Grayscale8);
+    mMarkup.fill(Qt::white);
 }
 
 void ImageArea::open()
@@ -358,6 +374,7 @@ void ImageArea::resizeImage()
     if (resizeDialog.exec() == QDialog::Accepted)
     {
         setImage(doResizeImage(*getImage(), resizeDialog.getNewSize())); //mPImageArea->getImage()->scaled(resizeDialog.getNewSize()));
+        setMarkup(doResizeImage(*getMarkup(), resizeDialog.getNewSize()));
         fixSize(true);
         setEdited(true);
     }
@@ -380,6 +397,7 @@ void ImageArea::rotateImage(bool flag)
     QTransform transform;
     transform.rotate(flag? 90 : -90);
     setImage(getImage()->transformed(transform));
+    setMarkup(getMarkup()->transformed(transform));
     resize(getImage()->rect().right() * mZoomFactor + 6, getImage()->rect().bottom() * mZoomFactor + 6);
     update();
     setEdited(true);
