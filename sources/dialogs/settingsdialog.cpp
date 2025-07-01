@@ -46,8 +46,15 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent)
 {
     initializeGui();
-    layout()->setSizeConstraint(QLayout::SetFixedSize);
+    layout()->setSizeConstraint(QLayout::SetMinimumSize);
     setWindowTitle(tr("Settings"));
+
+    // After layout is initialized and widgets added
+    adjustSize();  // Compute natural size based on layout
+
+    // Now scale the width proportionally (e.g. 1.3x wider)
+    QSize size = this->size();
+    resize(static_cast<int>(size.width() * 1.3), size.height());
 }
 
 SettingsDialog::~SettingsDialog()
@@ -200,8 +207,9 @@ QGroupBox* SettingsDialog::createScriptSettings()
     );
     mScriptPathInput->setEnabled(mLoadScriptCheckbox->isChecked());
 
-    QPushButton* chooseScriptBtn = new QPushButton(tr("Browse..."));
+    QPushButton* chooseScriptBtn = new QPushButton(QString::fromUtf8("\xF0\x9F\x93\x84"));
     chooseScriptBtn->setEnabled(mLoadScriptCheckbox->isChecked());
+    chooseScriptBtn->setFixedWidth(chooseScriptBtn->fontMetrics().height() * 2);
 
     // toggle enabling of script widgets
     connect(mLoadScriptCheckbox, &QCheckBox::toggled,
@@ -241,8 +249,9 @@ QGroupBox* SettingsDialog::createScriptSettings()
     mVenvPathInput->setClearButtonEnabled(true);
     mVenvPathInput->setEnabled(mLoadScriptCheckbox->isChecked());
 
-    QPushButton* chooseVenvBtn = new QPushButton(tr("Browse..."));
+    QPushButton* chooseVenvBtn = new QPushButton(QString::fromUtf8("\xF0\x9F\x93\x82"));
     chooseVenvBtn->setEnabled(mLoadScriptCheckbox->isChecked());
+    chooseVenvBtn->setFixedWidth(chooseVenvBtn->fontMetrics().height() * 2);
 
     // toggle enabling of venv widgets
     connect(mLoadScriptCheckbox, &QCheckBox::toggled,
