@@ -1,56 +1,52 @@
 #pragma once
 
 #include <QLabel>
-#include <QTimer>
+#include <QMovie>
 
-// A simple RAII helper for showing a spinning overlay
+// A simple RAII helper for showing an animated-GIF overlay
 class SpinnerOverlay {
 public:
-  SpinnerOverlay(QWidget* parent, int size = 64, int interval = 50)
-    : _parent(parent),
-      _label(new QLabel(parent)),
-      _timer(new QTimer(parent)),
-      _pixmap(":/media/logo/easypaint_64.png"),
-      _angle(0)
-  {
-    // prepare label
-    _label->setPixmap(_pixmap);
-    _label->setAlignment(Qt::AlignCenter);
-    _label->setAttribute(Qt::WA_TransparentForMouseEvents);
-    //_label->setFixedSize(size, size);
-    centerOnParent();
+    /// parent: the widget to overlay
+    /// gifPath: resource path or filesystem path to your .gif
+    /// size: desired width/height of the spinner in px
+    SpinnerOverlay(QWidget* parent,
+        const QString& gifPath = ":/media/gray_circles_rotate.gif",
+        int size = 240)
+        : _parent(parent),
+        _label(new QLabel(parent)),
+        _movie(new QMovie(gifPath, QByteArray(), parent))
+    {
+        // Prepare label
+        _label->setAttribute(Qt::WA_TransparentForMouseEvents);
+        _label->setAttribute(Qt::WA_NoSystemBackground);
+        _label->setAttribute(Qt::WA_TranslucentBackground);
+        _label->setAlignment(Qt::AlignCenter);
 
-    // prepare timer
-    _timer->setInterval(interval);
-    QObject::connect(_timer, &QTimer::timeout, [this]() {
-      _angle = (_angle + 10) % 360;
-      _label->setPixmap(_pixmap.transformed(QTransform().rotate(_angle)));
-    });
+        // Prepare movie
+        _movie->setCacheMode(QMovie::CacheAll);
+        _movie->setScaledSize(QSize(size, size));
+        _label->setMovie(_movie);
 
-    // show
-    _label->show();
-    _timer->start();
-  }
+        // Position and show
+        centerOnParent(size);
+        _label->show();
+        _movie->start();
+    }
 
-  ~SpinnerOverlay() {
-    _timer->stop();
-    _label->hide();
-  }
+    ~SpinnerOverlay() {
+        _movie->stop();
+        _label->hide();
+    }
 
 private:
-  void centerOnParent() {
-    if (!_parent) return;
-    //const auto pw = _parent->width();
-    //const auto ph = _parent->height();
-    //const auto cw = _label->width();
-    //const auto ch = _label->height();
-    //_label->move((pw - cw)/2, (ph - ch)/2);
-    _label->setGeometry(_parent->width() / 2 - 64, _parent->height() / 2 - 64, 128, 128);
-  }
+    void centerOnParent(int size) {
+        if (!_parent) return;
+        const int x = (_parent->width() - size) / 2;
+        const int y = (_parent->height() - size) / 2;
+        _label->setGeometry(x, y, size, size);
+    }
 
-  QWidget*      _parent;
-  QLabel*       _label;
-  QTimer*       _timer;
-  QPixmap       _pixmap;
-  int           _angle;
+    QWidget* _parent;
+    QLabel* _label;
+    QMovie* _movie;
 };
