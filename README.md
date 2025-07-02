@@ -33,8 +33,6 @@ EasyPaint is distributed under the [MIT license](http://www.opensource.org/licen
 Python scripting
 ----------------
 
-![image](EasyPaint_demo.jpg)
-
 Enable Instruments -> Markup mode to use markup:
 
-![image](EasyPaint_demo2.jpg)
+![image](EasyPaint_demo.jpg)
