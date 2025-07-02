@@ -835,7 +835,7 @@ void MainWindow::helpAct()
     QMessageBox::about(this, tr("About EasyPaint"),
                        QString("<b>EasyPaint</b> %1: %2 <br> <br> %3: "
                                "<a href=\"https://github.com/aliakseis/EasyPaint/\">https://github.com/aliakseis/EasyPaint/</a>"
-                               "<br> <br>Copyright (c) 2012 EasyPaint team"
+                               "<br> <br>Copyright (c) EasyPaint team"
                                "<br> <br>%4:<ul>"
                                "<li><a href=\"mailto:grin.minsk@gmail.com\">Nikita Grishko</a> (Gr1N)</li>"
                                "<li><a href=\"mailto:faulknercs@yandex.ru\">Artem Stepanyuk</a> (faulknercs)</li>"

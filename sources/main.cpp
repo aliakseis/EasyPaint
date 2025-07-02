@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
     QApplication::setApplicationName("EasyPaint");
     QApplication::setOrganizationName("EasyPaint");
     QApplication::setOrganizationDomain("github.com");
-    QApplication::setApplicationVersion("0.1.1");
+    QApplication::setApplicationVersion(EASYPAINT_VERSION);
 
     QStringList args = a.arguments();
 
