@@ -1,9 +1,7 @@
 EasyPaint
 =========
 
-EasyPaint is a simple graphics painting program
-
-You may watch screenshots [here](http://qt-apps.org/content/show.php?content=140877).
+EasyPaint is a simple graphics painting program.
 
 EasyPaint is a part of QtDesktop project.
 
@@ -27,9 +25,16 @@ Install EasyPaint using the commands, if you use qmake:
     make
     make install
 
-Also you could find packages for linux distributions [here](http://qt-apps.org/content/show.php?content=140877).
-
 License
 -------
 
 EasyPaint is distributed under the [MIT license](http://www.opensource.org/licenses/MIT).
+
+Python scripting
+----------------
+
+![image](EasyPaint_demo.jpg)
+
+Enable Instruments -> Markup mode to use markup:
+
+![image](EasyPaint_demo2.jpg)
