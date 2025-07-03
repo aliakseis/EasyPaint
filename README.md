@@ -17,14 +17,6 @@ Install EasyPaint using the commands, if you use CMake:
     make
     make install
 
-Install EasyPaint using the commands, if you use qmake:
-
-    cd ./EasyPaint/sources
-    lrelease easypaint.pro
-    qmake
-    make
-    make install
-
 License
 -------
 
