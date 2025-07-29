@@ -25,6 +25,8 @@ EasyPaint is distributed under the [MIT license](http://www.opensource.org/licen
 Python scripting
 ----------------
 
+See scripts folder for examples.
+
 Enable Instruments -> Markup mode to use markup:
 
 ![image](EasyPaint_demo.jpg)
