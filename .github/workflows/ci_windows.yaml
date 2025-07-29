@@ -1,0 +1,114 @@
+name: CI - Windows
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: ${{ github.head_ref != '' }}
+
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      actions: write
+
+    strategy:
+      matrix:
+        platform: [x86, x64]
+        include:
+          - platform: x86
+            arch: Win32
+            qt_arch: win32_msvc2019
+            vcpkg_triplet: x86-windows-md-release
+          - platform: x64
+            arch: x64
+            qt_arch: win64_msvc2019_64
+            vcpkg_triplet: x64-windows-md-release
+
+    env:
+      vcpkg_path: "c:/vcpkg"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: true  # Ensure submodules are checked out
+
+      - name: Setup devcmd
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install build tools
+        run: |
+          if ((Get-Command "ninja.exe" -ErrorAction SilentlyContinue) -eq $null) {
+             choco install ninja
+          }
+          where.exe ninja
+          ninja --version
+
+      # https://learn.microsoft.com/en-us/vcpkg/users/binarycaching#gha
+      - name: Set variables for vcpkg
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_CACHE_URL', (process.env.ACTIONS_CACHE_URL || ''));
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', (process.env.ACTIONS_RUNTIME_TOKEN || ''));
+
+      - name: Install dependencies with vcpkg
+        run: |
+          # create our own triplet for 64-bit
+          New-Item `
+            -Force `
+            -ItemType File `
+            -Path "${{ env.vcpkg_path }}/triplets_overlay/${{ matrix.vcpkg_triplet }}.cmake"
+          # OpenSSL isn't compatible with `/guard:cf` flag so we omit it for now, see: https://github.com/openssl/openssl/issues/22554
+          Add-Content `
+            -Path "${{ env.vcpkg_path }}/triplets_overlay/${{ matrix.vcpkg_triplet }}.cmake" `
+            -Value @("set(VCPKG_TARGET_ARCHITECTURE ${{ matrix.platform }})",
+              "set(VCPKG_LIBRARY_LINKAGE dynamic)",
+              "set(VCPKG_CRT_LINKAGE dynamic)",
+              "set(VCPKG_BUILD_TYPE release)")
+          # clear buildtrees after each package installation to reduce disk space requirements
+          $packages = `
+            "python3:${{ matrix.vcpkg_triplet }}",
+            "pybind11:${{ matrix.vcpkg_triplet }}"
+          ${{ env.vcpkg_path }}/vcpkg.exe upgrade `
+            --no-dry-run `
+            --overlay-triplets="${{ env.vcpkg_path }}/triplets_overlay"
+          ${{ env.vcpkg_path }}/vcpkg.exe install `
+            --binarysource="clear;x-gha,readwrite" `
+            --clean-after-build `
+            --overlay-triplets="${{ env.vcpkg_path }}/triplets_overlay" `
+            $packages
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "5.15.2"
+          arch: ${{ matrix.qt_arch }}
+          archives: qtbase qtquickcontrols2 qtdeclarative qttools d3dcompiler_47
+          cache: true
+
+      - name: Build EasyPaint
+        run: |
+          cmake `
+            -B build `
+            -G "Visual Studio 17 2022" `
+            -A ${{ matrix.arch }} `
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo `
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON `
+            -DCMAKE_TOOLCHAIN_FILE="${{ env.vcpkg_path }}/scripts/buildsystems/vcpkg.cmake" `
+            -DMSVC_RUNTIME_DYNAMIC=ON `
+            -DVCPKG_TARGET_TRIPLET=${{ matrix.vcpkg_triplet }} `
+            -DVERBOSE_CONFIGURE=ON
+          cmake --build build --config RelWithDebInfo
+          cmake --install build --config RelWithDebInfo
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{matrix.platform}}
+          path: ./build/bin
