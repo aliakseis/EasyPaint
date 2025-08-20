@@ -287,7 +287,7 @@ QGroupBox* SettingsDialog::createScriptSettings()
     //vLayout->addWidget(mUseVenvCheckbox);
     vLayout->addLayout(venvLayout);
 
-    QGroupBox* groupBox = new QGroupBox(tr("Script & Virtual-Env Settings"));
+    QGroupBox* groupBox = new QGroupBox(tr("Python Script and Virtual-Env Settings"));
     groupBox->setLayout(vLayout);
     return groupBox;
 }
