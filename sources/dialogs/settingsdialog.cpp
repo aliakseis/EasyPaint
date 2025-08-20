@@ -130,10 +130,10 @@ QGroupBox* SettingsDialog::createImageSettings() {
     mHistoryDepth->setValue(DataSingleton::Instance()->getHistoryDepth());
     mHistoryDepth->setFixedWidth(80);
 
-    mIsAutoSave = new QCheckBox(tr("Autosave"));
+    mIsAutoSave = new QCheckBox(tr("Autosave interval (sec):"));
     mIsAutoSave->setChecked(DataSingleton::Instance()->getIsAutoSave());
 
-    QLabel* labelAutoSave = new QLabel(tr("Autosave interval (sec):"));
+    //QLabel* labelAutoSave = new QLabel(tr("Autosave interval (sec):"));
     mAutoSaveInterval = new QSpinBox();
     mAutoSaveInterval->setRange(1, 3000);
     mAutoSaveInterval->setValue(DataSingleton::Instance()->getAutoSaveInterval());
@@ -145,8 +145,8 @@ QGroupBox* SettingsDialog::createImageSettings() {
     gridLayout->addWidget(labelHistoryDepth, 1, 0);
     gridLayout->addWidget(mHistoryDepth, 1, 1);
     gridLayout->addWidget(mIsAutoSave, 2, 0);
-    gridLayout->addWidget(labelAutoSave, 3, 0);
-    gridLayout->addWidget(mAutoSaveInterval, 3, 1);
+    //gridLayout->addWidget(labelAutoSave, 3, 0);
+    gridLayout->addWidget(mAutoSaveInterval, 2, 1);
 
     QGroupBox* groupBox = new QGroupBox(tr("Image Settings"));
     groupBox->setLayout(gridLayout);
