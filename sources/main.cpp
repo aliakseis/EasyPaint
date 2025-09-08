@@ -50,7 +50,7 @@ void printVersion()
     qDebug()<< QApplication::applicationVersion();
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     QApplication a(argc, argv);
     QApplication::setApplicationName("EasyPaint");
@@ -59,45 +59,58 @@ int main(int argc, char *argv[])
     QApplication::setApplicationVersion(EASYPAINT_VERSION);
 
     QStringList args = a.arguments();
-
-    QRegExp rxArgHelp("--help");
-    QRegExp rxArgH("-h");
-    QRegExp rxArgVersion("--version");
-    QRegExp rxArgV("-v");
-
+    QRegExp rxArgHelp("--help"), rxArgH("-h");
+    QRegExp rxArgVersion("--version"), rxArgV("-v");
     QRegExp rxCheckPython(CHECK_PYTHON_OPTION);
+    QRegExp rxArgScript("--script"), rxArgScriptShort("-s");
 
     bool isHelp(false), isVer(false), isCheckPython(false);
     QStringList filePaths;
+    QString pythonScriptPath;
 
-    for(int i(1); i < args.size(); ++i)
+    for (int i = 1; i < args.size(); ++i)
     {
-        if (rxArgHelp.indexIn(args.at(i)) != -1  ||
-                rxArgH.indexIn(args.at(i)) != -1)
+        const QString& arg = args.at(i);
+
+        if (rxArgHelp.indexIn(arg) != -1 || rxArgH.indexIn(arg) != -1)
         {
             isHelp = true;
         }
-        else if (rxArgVersion.indexIn(args.at(i)) != -1  ||
-                 rxArgV.indexIn(args.at(i)) != -1)
+        else if (rxArgVersion.indexIn(arg) != -1 || rxArgV.indexIn(arg) != -1)
         {
             isVer = true;
         }
-        else if (rxCheckPython.indexIn(args.at(i)) != -1)
+        else if (rxCheckPython.indexIn(arg) != -1)
         {
             isCheckPython = true;
         }
-        else
+        else if (rxArgScript.indexIn(arg) != -1 || rxArgScriptShort.indexIn(arg) != -1)
         {
-            if(QFile::exists(args.at(i)))
+            if (i + 1 < args.size())
             {
-                filePaths.append(args.at(i));
+                QString candidate = args.at(++i);
+                if (candidate.endsWith(".py", Qt::CaseInsensitive)
+                    && QFile::exists(candidate))
+                {
+                    pythonScriptPath = candidate;
+                }
+                else
+                {
+                    qDebug() << "Python script not found or invalid:" << candidate;
+                }
             }
             else
             {
-                qDebug()<<QString("File %1 not found").arg(args.at(i));
+                qDebug() << "--script option requires a file path";
             }
         }
-
+        else
+        {
+            if (QFile::exists(arg))
+                filePaths.append(arg);
+            else
+                qDebug() << "File not found:" << arg;
+        }
     }
 
     if (isHelp)
@@ -105,21 +118,19 @@ int main(int argc, char *argv[])
         printHelpMessage();
         return 0;
     }
-    else if (isVer)
+    if (isVer)
     {
         printVersion();
         return 0;
     }
-    else if (isCheckPython)
+    if (isCheckPython)
     {
         return ScriptModel::ValidatePythonSystem();
     }
 
     QApplication::setStyle(QStyleFactory::create("Fusion"));
     if (DataSingleton::Instance()->getIsDarkMode())
-    {
         ui_utils::setDarkTheme(true);
-    }
 
     QTranslator appTranslator;
     QString translationsPath(
@@ -130,15 +141,16 @@ int main(int argc, char *argv[])
 #endif
     );
     QString appLanguage = DataSingleton::Instance()->getAppLanguage();
-    if(appLanguage == "system")
-    {
-        appTranslator.load(translationsPath + "easypaint_" + QLocale::system().name());
-    }
-    else
-    {
-        appTranslator.load(translationsPath + appLanguage);
-    }
+    appTranslator.load(translationsPath + ((appLanguage == "system")
+        ? ("easypaint_" + QLocale::system().name())
+        : appLanguage));
     a.installTranslator(&appTranslator);
+
+    if (!pythonScriptPath.isEmpty())
+    {
+        DataSingleton::Instance()->setIsLoadScript(true);
+        DataSingleton::Instance()->setScriptPath(pythonScriptPath);
+    }
 
     MainWindow w(filePaths);
     w.show();

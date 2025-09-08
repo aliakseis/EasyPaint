@@ -8,13 +8,17 @@ device = "cuda"
 # Load the pipeline correctly
 pipe = StableDiffusionPipeline.from_pretrained(
     "runwayml/stable-diffusion-v1-5",
-    torch_dtype=torch.float16
+    torch_dtype=torch.float16,
+    use_safetensors=True,
+    safety_checker=None
 ).to(device)
 
 # Replace the default scheduler with a DPM scheduler.
 # This creates a DPMSolverMultistepScheduler instance with the same config as the pipeline's current scheduler.
 pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
 
+pipe.enable_sequential_cpu_offload()
+pipe.enable_xformers_memory_efficient_attention()
 # Optional: Enable attention slicing (helps with memory usage) without quality loss.
 pipe.enable_attention_slicing()
 # Optional: For large image generation, you can also try VAE slicing.
