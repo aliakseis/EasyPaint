@@ -457,6 +457,8 @@ QVariant ScriptModel::call(const QString& callable,
     std::weak_ptr<EffectRunCallback> callback,
     const QVariantMap& kwargs)
 {
+    const bool isStoppable = !callback.expired();
+
     qDebug() << "Entering ScriptModel::call.";
 
     auto stateGuard = MakeGuard(this, [](ScriptModel* pThis) {
@@ -508,9 +510,12 @@ QVariant ScriptModel::call(const QString& callable,
     }
     catch (const std::exception& e) {
         qWarning() << "Error calling function" << callable << ":" << e.what();
-        showErrorAsync(nullptr,
-            QObject::tr("Python Call Error"),
-            QObject::tr("Error calling function ") + callable + ": " + e.what());
+        auto ptr = callback.lock();
+        if (!isStoppable || (ptr && !ptr->isInterrupted())) {
+            showErrorAsync(nullptr,
+                QObject::tr("Python Call Error"),
+                QObject::tr("Error calling function ") + callable + ": " + e.what());
+        }
         return QVariant();
     }
 
