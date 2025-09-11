@@ -94,7 +94,7 @@ void RectangleInstrument::paint(ImageArea &imageArea, bool isSecondaryColor, boo
     }
     if(mStartPoint != mEndPoint)
     {
-        painter.drawRect(QRect(mStartPoint, mEndPoint));
+        painter.drawRect(QRectF(mStartPoint, mEndPoint));
     }
     imageArea.setEdited(true);
 //    int rad(DataSingleton::Instance()->getPenSize() + round(sqrt((mStartPoint.x() - mEndPoint.x()) *

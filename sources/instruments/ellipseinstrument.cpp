@@ -94,7 +94,7 @@ void EllipseInstrument::paint(ImageArea &imageArea, bool isSecondaryColor, bool)
     }
     if(mStartPoint != mEndPoint)
     {
-        painter.drawEllipse(QRect(mStartPoint, mEndPoint));
+        painter.drawEllipse(QRectF(mStartPoint, mEndPoint));
     }
     imageArea.setEdited(true);
 //    int rad(DataSingleton::Instance()->getPenSize() + round(sqrt((mStartPoint.x() - mEndPoint.x()) *
