@@ -37,6 +37,16 @@ using namespace py::literals;
 
 namespace {
 
+void showErrorAsync(QWidget* parent, const QString& title, const QString& message) {
+    QMetaObject::invokeMethod(
+        qApp,
+        [parent, title, message]() {
+            QMessageBox::critical(parent, title, message);
+        },
+        Qt::QueuedConnection);
+}
+
+
 bool isPythonInstalled()
 {
     const int status =
@@ -356,6 +366,9 @@ def _get_all_functions_info():
     }
     catch (const std::exception& e) {
         qWarning() << "Error executing script.py:" << e.what();
+        showErrorAsync(nullptr,
+            QObject::tr("Script Execution Error"),
+            QObject::tr("Error executing script: ") + e.what());
     }
 
     // Retrieve the functions info by calling _get_all_functions_info.
@@ -495,6 +508,9 @@ QVariant ScriptModel::call(const QString& callable,
     }
     catch (const std::exception& e) {
         qWarning() << "Error calling function" << callable << ":" << e.what();
+        showErrorAsync(nullptr,
+            QObject::tr("Python Call Error"),
+            QObject::tr("Error calling function ") + callable + ": " + e.what());
         return QVariant();
     }
 
