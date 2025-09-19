@@ -62,6 +62,68 @@ Scripts can leverage all installed Python libraries.
 - ✅ Extensible via Python
 - ✅ Supports external libs (Hugging Face, OpenCV, etc.)
 
+## Python Scripts Overview
+
+These Python scripts extend a Qt/C++ paint application with **image generation, transformation, and enhancement features**.  
+
+---
+
+### `depth2img.py`
+This script focuses on **depth-guided image transformation**. It transforms images using depth maps to maintain scene geometry.
+
+- **Functions**
+  - `generate_depth_image` — Transforms an image based on depth information, preserving scene structure.
+
+---
+
+### `generate.py`
+This script provides a **basic image generation entry point** for creating images from scratch.
+
+- **Functions**
+  - `generate_image` — Creates an image from scratch, typically using a generative model (e.g., diffusion).
+
+---
+
+### `img2img.py`
+This script supports **image-to-image translation**, transforming an existing picture while keeping its overall structure.
+
+- **Functions**
+  - `generate_img2img` — Produces a modified version of an input image while maintaining its overall structure.
+
+---
+
+### `inpaint.py`
+This script specializes in **inpainting**, i.e., filling in missing or masked areas with contextually appropriate content.
+
+- **Functions**
+  - `predict` — Performs inpainting by filling missing or masked image areas with context-aware content.
+
+---
+
+### `script.py`
+This script provides **general-purpose image processing and procedural generation tools**.  
+It includes filtering, corrections, resizing, and fractal/texture generators.
+
+- **Functions**
+  - `denoise_image` — Reduces unwanted noise or grain in an image.  
+  - `blur_image` — Applies a blur filter.  
+  - `deblur_image` — Restores sharpness to a blurred image.  
+  - `gamma_correct` — Adjusts brightness and contrast through gamma correction.  
+  - `enhance_contrast` — Improves visibility of details by adjusting contrast.  
+  - `resize_image` — Rescales an image to new dimensions.  
+  - `generate_mandelbrot` — Produces a Mandelbrot fractal image.  
+  - `generate_julia` — Produces a Julia set fractal image.  
+  - `generate_plasma` — Creates a plasma-like procedural texture.
+
+---
+
+### `style_transfer.py`
+This script implements **style transfer**, allowing users to apply the artistic style of one image to another.
+
+- **Functions**
+  - `set_as_style` — Selects an image as a reference style.  
+  - `transfer_style` — Transfers the reference style onto another image.
+
 See scripts folder for examples.
 
 Enable Instruments -> Markup mode to use markup:
