@@ -64,7 +64,8 @@ Scripts can leverage all installed Python libraries.
 
 ## Python Scripts Overview
 
-These Python scripts extend a Qt/C++ paint application with **image generation, transformation, and enhancement features**.  
+These Python scripts extend the paint application with **image generation, transformation, and enhancement features**.  
+See scripts folder for examples.
 
 ---
 
@@ -123,8 +124,6 @@ This script implements **style transfer**, allowing users to apply the artistic 
 - **Functions**
   - `set_as_style` — Selects an image as a reference style.  
   - `transfer_style` — Transfers the reference style onto another image.
-
-See scripts folder for examples.
 
 Enable Instruments -> Markup mode to use markup:
 
