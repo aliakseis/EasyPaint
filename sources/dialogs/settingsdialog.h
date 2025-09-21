@@ -85,11 +85,14 @@ private:
     QTreeWidget *mShortcutsTree;
     QCheckBox *mIsAskCanvasSize;
     QCheckBox* mIsDarkMode;
+    QCheckBox* mStartAppOnStartingOSCheckbox;
 
     QCheckBox* mLoadScriptCheckbox;
     QLineEdit* mScriptPathInput;
     QLineEdit* mVenvPathInput;
     
+    bool mStartAppOnStartingOS;
+
 signals:
     
 private slots:

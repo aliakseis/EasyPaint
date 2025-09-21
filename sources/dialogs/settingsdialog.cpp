@@ -26,6 +26,7 @@
 #include "settingsdialog.h"
 #include "../datasingleton.h"
 #include "../widgets/shortcutedit.h"
+#include "../autorun_utils.h"
 
 #include <QVBoxLayout>
 #include <QHBoxLayout>
@@ -43,7 +44,7 @@
 #include <QFileDialog>
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
-    QDialog(parent)
+    QDialog(parent), mStartAppOnStartingOS(utilities::isAutorunEnabled())
 {
     initializeGui();
     layout()->setSizeConstraint(QLayout::SetMinimumSize);
@@ -96,10 +97,14 @@ QGroupBox* SettingsDialog::createUISettings() {
     mIsDarkMode = new QCheckBox(tr("Enable dark mode"));
     mIsDarkMode->setChecked(DataSingleton::Instance()->getIsDarkMode());
 
+    mStartAppOnStartingOSCheckbox = new QCheckBox(tr("Start App on Starting OS"));
+    mStartAppOnStartingOSCheckbox->setChecked(mStartAppOnStartingOS);
+
     QVBoxLayout* layout = new QVBoxLayout();
     layout->addWidget(mIsRestoreWindowSize);
     layout->addWidget(mIsAskCanvasSize);
     layout->addWidget(mIsDarkMode);
+    layout->addWidget(mStartAppOnStartingOSCheckbox);
 
     QGroupBox* groupBox = new QGroupBox(tr("User Interface"));
     groupBox->setLayout(layout);
@@ -384,6 +389,12 @@ void SettingsDialog::sendSettingsToSingleton()
                                                                 item->child(y)->data(1, Qt::DisplayRole).value<QKeySequence>());
             }
         }
+    }
+
+    const bool startAppOnStartingOS = mStartAppOnStartingOSCheckbox->isChecked();
+    if (startAppOnStartingOS != mStartAppOnStartingOS)
+    {
+        utilities::setAutorun(startAppOnStartingOS);
     }
 }
 

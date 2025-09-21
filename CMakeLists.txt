@@ -19,6 +19,7 @@ set (HEADERS
     sources/easypaintenums.h
     sources/imagearea.h
     sources/datasingleton.h
+    sources/autorun_utils.h
     sources/effects/effectruncallback.h
     sources/effects/abstracteffect.h
     sources/effects/negativeeffect.h
@@ -72,6 +73,7 @@ set (SOURCES
     sources/mainwindow.cpp
     sources/imagearea.cpp
     sources/datasingleton.cpp
+    sources/autorun_utils.cpp
     sources/effects/abstracteffect.cpp
     sources/effects/customeffect.cpp
     sources/effects/negativeeffect.cpp
