@@ -343,11 +343,18 @@ def _get_function_info(func):
 def _get_all_functions_info():
     functions_info = []
     for name, obj in globals().items():
-        if callable(obj) and not name.startswith('_'):
-            try:
-                functions_info.append(_get_function_info(obj))
-            except Exception as e:
-                pass
+        if name.startswith('_'):
+            continue
+        if not inspect.isfunction(obj):         # only real function objects
+            continue
+        if obj.__module__ != __name__:          # only functions defined in this module
+            continue
+        if '.' in obj.__qualname__:             # skip nested functions and class methods
+            continue
+        try:
+            functions_info.append(_get_function_info(obj))
+        except Exception:
+            pass
     return functions_info
     )", globals);
 
