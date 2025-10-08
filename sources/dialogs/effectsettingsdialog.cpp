@@ -223,11 +223,16 @@ void EffectSettingsDialog::updatePreview(const QImage& image) {
         mImage = image;
         if (!mAccepted)
         {
+            const bool shown = mShown;
+            mShown = true;
             mPreviewScene->clear();
             auto mPreviewPixmapItem = mPreviewScene->addPixmap(QPixmap::fromImage(image));
             //mPreviewScene->setSceneRect(mPreviewPixmapItem->boundingRect());
-            mPreviewView->fitInView(mPreviewPixmapItem, Qt::KeepAspectRatio);
-            zoomFactor = mPreviewView->transform().m11();  // Extract current scale from transformation
+            if (!shown)
+            {
+                mPreviewView->fitInView(mPreviewPixmapItem, Qt::KeepAspectRatio);
+                zoomFactor = mPreviewView->transform().m11();  // Extract current scale from transformation
+            }
         }
     }
 }
@@ -262,6 +267,7 @@ void EffectSettingsDialog::applyMatrix()
         mApplyNeeded = false;
         mApplyButton->setEnabled(false);
         mInterruptButton->setEnabled(true);
+        mShown = false;
     }
 }
 

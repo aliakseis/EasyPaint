@@ -103,6 +103,8 @@ private:
 
     bool mAccepted = false;
 
+    bool mShown = false;
+
 private slots:
     void applyMatrix();
     void onParametersChanged();
