@@ -33,6 +33,9 @@ set (HEADERS
     sources/effects/scripteffectwithsettings.h
     sources/effects/sharpeneffect.h
     sources/makeguard.h
+    sources/qtsingleapplication/qtlocalpeer.h
+    sources/qtsingleapplication/qtsingleapplication.h
+    sources/qtsingleapplication/qtsinglecoreapplication.h
     sources/set_dark_theme.h
     sources/ScriptInfo.h
     sources/ScriptModel.h
@@ -83,6 +86,9 @@ set (SOURCES
     sources/effects/gammaeffect.cpp
     sources/effects/scripteffect.cpp
     sources/effects/scripteffectwithsettings.cpp
+    sources/qtsingleapplication/qtlocalpeer.cpp
+    sources/qtsingleapplication/qtsingleapplication.cpp
+    sources/qtsingleapplication/qtsinglecoreapplication.cpp
     sources/set_dark_theme.cpp
     sources/ScriptModel.cpp
     sources/undocommand.cpp
@@ -134,8 +140,8 @@ project (${PROJECT})
 
 include_directories (./)
 
-find_package(QT NAMES Qt5 COMPONENTS Widgets PrintSupport LinguistTools REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent PrintSupport LinguistTools REQUIRED)
+find_package(QT NAMES Qt5 COMPONENTS Widgets Concurrent Network PrintSupport LinguistTools REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Network PrintSupport LinguistTools REQUIRED)
 #include (${QT_USE_FILE})
 qt5_add_resources (QRC_SOURCES ${RESOURCES})
 qt5_wrap_cpp (MOC_SOURCES ${HEADERS})
@@ -157,7 +163,7 @@ find_package(pybind11 CONFIG REQUIRED)
 #-------  build executable from sources ----------
 add_executable (${PROJECT} ${HEADERS} ${SOURCES} ${MOC_SOURCES} ${QRC_SOURCES} ${TRANSLATIONS_QM})
 
-target_link_libraries (${PROJECT} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Concurrent Qt${QT_VERSION_MAJOR}::PrintSupport ${Python3_LIBRARIES} pybind11::pybind11)
+target_link_libraries (${PROJECT} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Concurrent Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::PrintSupport ${Python3_LIBRARIES} pybind11::pybind11)
 
 #-------  installing ----------
 if(UNIX AND NOT APPLE)

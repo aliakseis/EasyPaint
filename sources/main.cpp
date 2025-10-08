@@ -36,6 +36,8 @@
 #include "set_dark_theme.h"
 #include "ScriptModel.h"
 
+#include "qtsingleapplication/qtsingleapplication.h"
+
 void printHelpMessage()
 {
     qDebug()<<"EasyPaint - simple graphics painting program\n"
@@ -52,7 +54,14 @@ void printVersion()
 
 int main(int argc, char* argv[])
 {
-    QApplication a(argc, argv);
+    QtSingleApplication a(argc, argv);
+    if (a.isRunning())
+    {
+        qDebug() << "Another application is already running; exiting ...";
+        a.sendMessage("");
+        return 0;
+    }
+
     QApplication::setApplicationName("EasyPaint");
     QApplication::setOrganizationName("EasyPaint");
     QApplication::setOrganizationDomain("github.com");
@@ -154,6 +163,8 @@ int main(int argc, char* argv[])
 
     MainWindow w(filePaths);
     w.show();
+
+    a.setActivationWindow(&w);
 
     return a.exec();
 }
