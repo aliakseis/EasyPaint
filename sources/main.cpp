@@ -55,12 +55,6 @@ void printVersion()
 int main(int argc, char* argv[])
 {
     QtSingleApplication a(argc, argv);
-    if (a.isRunning())
-    {
-        qDebug() << "Another application is already running; exiting ...";
-        a.sendMessage("");
-        return 0;
-    }
 
     QApplication::setApplicationName("EasyPaint");
     QApplication::setOrganizationName("EasyPaint");
@@ -106,6 +100,7 @@ int main(int argc, char* argv[])
                 else
                 {
                     qDebug() << "Python script not found or invalid:" << candidate;
+                    DataSingleton::Instance()->setIsLoadScript(false);
                 }
             }
             else
@@ -135,6 +130,13 @@ int main(int argc, char* argv[])
     if (isCheckPython)
     {
         return ScriptModel::ValidatePythonSystem();
+    }
+
+    if (a.isRunning())
+    {
+        qDebug() << "Another application is already running; exiting ...";
+        a.sendMessage("");
+        return 0;
     }
 
     QApplication::setStyle(QStyleFactory::create("Fusion"));
