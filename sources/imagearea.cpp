@@ -468,7 +468,7 @@ void ImageArea::mouseMoveEvent(QMouseEvent *event)
     {
         if (!mIsSavedBeforeResize)
         {
-            pushUndoCommand(new UndoCommand(*this));
+            pushUndoCommand(new UndoCommand(*this, nullptr, true));
             mIsSavedBeforeResize = true;
         }
         doResizeCanvas(this, pos.x(), pos.y(), false, false);

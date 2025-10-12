@@ -39,16 +39,17 @@
 class UndoCommand : public QUndoCommand
 {
 public:
-    UndoCommand(ImageArea &imgArea, QUndoCommand *parent = 0);
+    UndoCommand(ImageArea &imgArea, QUndoCommand *parent = nullptr, bool fixSise = false);
 
-    virtual void undo();
-    virtual void redo();
+    void undo() override;
+    void redo() override;
 private:
     QImage mPrevImage;
     QImage mCurrImage;
     QImage mPrevMarkup;
     QImage mCurrMarkup;
     ImageArea& mImageArea;
+    bool mFixSize;
 };
 
 #endif // UNDOCOMMAND_H

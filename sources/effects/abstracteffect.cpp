@@ -37,8 +37,9 @@ AbstractEffect::AbstractEffect(QObject *parent) :
 
 void AbstractEffect::makeUndoCommand(ImageArea* imageArea)
 {
+    // effects can change image size
     if (imageArea)
-        imageArea->pushUndoCommand(new UndoCommand(*imageArea));
+        imageArea->pushUndoCommand(new UndoCommand(*imageArea, nullptr, true));
 }
 
 ImageArea* AbstractEffect::initializeNewTab()
