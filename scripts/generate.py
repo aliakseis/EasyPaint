@@ -1,7 +1,11 @@
+import logging
+from diffusers import logging as dlogging
 import torch
+import random
 from diffusers import StableDiffusionPipeline, DPMSolverMultistepScheduler
 import numpy as np
 
+logger = logging.getLogger("diffusers")
 
 device = "cuda"
 
@@ -23,6 +27,9 @@ pipe.enable_xformers_memory_efficient_attention()
 pipe.enable_attention_slicing()
 # Optional: For large image generation, you can also try VAE slicing.
 pipe.enable_vae_slicing()
+
+dlogging.set_verbosity_info()
+
 
 # Callback function to monitor generation
 def _callback(iter, i, t, extra_step_kwargs):
@@ -48,13 +55,19 @@ def _callback(iter, i, t, extra_step_kwargs):
     return extra_step_kwargs
 
 # Correct function signature with parameters
-def generate_image(prompt: str, negative_prompt: str = "", guidance_scale: float = 7.5, num_steps: int = 50):
+def generate_image(prompt: str, negative_prompt: str = "", guidance_scale: float = 7.5, num_steps: int = 50, seed: int = -1):
+    if seed == -1:
+        seed = random.randint(0, 2**31 - 1)
+    gen = torch.Generator(device=device).manual_seed(seed)
+    logger.info(f'Using seed: {seed}')
+
     """Generates an image using Stable Diffusion with monitoring."""
     image = pipe(
         prompt=prompt,
         negative_prompt=negative_prompt,
         guidance_scale=guidance_scale,
         num_inference_steps=num_steps,
+        generator=gen,
         callback_on_step_end=_callback
     ).images[0]
     return np.array(image)  # Convert RGB to BGR (OpenCV format)
