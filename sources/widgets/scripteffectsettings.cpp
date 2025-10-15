@@ -27,7 +27,7 @@ ScriptEffectSettings::ScriptEffectSettings(const FunctionInfo& functionInfo, QVa
 
         if (annotationLower.contains("int")) {
             QSpinBox* spinBox = new QSpinBox(this);
-            spinBox->setRange(-100000, 100000);
+            spinBox->setRange(std::numeric_limits<int>::min(), std::numeric_limits<int>::max());
             spinBox->setValue(param.defaultValue.isValid() ? param.defaultValue.toInt() : 0);
             control = spinBox;
             dxLambda = [spinBox](QVariant& var, bool save) {
