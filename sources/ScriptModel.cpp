@@ -319,45 +319,6 @@ void ScriptModel::LoadScript(const QString& path)
     globals["_send_image"] = py::cpp_function([this](const py::array& image) { send_image(image); });
     globals["_check_interrupt"] = py::cpp_function([this]() { return check_interrupt(); });
 
-    // Load helper functions via exec.
-    py::exec(R"(
-import inspect
-def _get_function_info(func):
-    sig = inspect.signature(func)
-    parameters = []
-    for name, param in sig.parameters.items():
-        parameters.append({
-            'name': name,
-            'kind': str(param.kind),
-            'default': None if param.default is param.empty else param.default,
-            'annotation': None if param.annotation is param.empty else str(param.annotation)
-        })
-    info = {
-        'name': func.__name__,
-        'signature': str(sig),
-        'parameters': parameters,
-        'doc': inspect.getdoc(func) or ""
-    }
-    return info
-
-def _get_all_functions_info():
-    functions_info = []
-    for name, obj in globals().items():
-        if name.startswith('_'):
-            continue
-        if not inspect.isfunction(obj):         # only real function objects
-            continue
-        if obj.__module__ != __name__:          # only functions defined in this module
-            continue
-        if '.' in obj.__qualname__:             # skip nested functions and class methods
-            continue
-        try:
-            functions_info.append(_get_function_info(obj))
-        except Exception:
-            pass
-    return functions_info
-    )", globals);
-
     // Execute an external script file.
     // (Assuming "script.py" is accessible—adjust the path as needed.)
     try {
@@ -378,48 +339,84 @@ def _get_all_functions_info():
             QObject::tr("Error executing script: ") + e.what());
     }
 
-    // Retrieve the functions info by calling _get_all_functions_info.
-    py::object allFuncsObj = globals["_get_all_functions_info"]();
-    std::vector<py::object> allFunctionsInfo = allFuncsObj.cast<std::vector<py::object>>();
-    qDebug() << "Found" << allFunctionsInfo.size() << "functions.";
+    py::module_ inspect = py::module_::import("inspect");
+    // cache Parameter.empty
+    py::object param_empty = inspect.attr("Parameter").attr("empty");
 
-    // Iterate over the returned list and convert to FunctionInfo.
-    for (const auto& funcInfoObj : allFunctionsInfo) {
-        py::dict funcDict = funcInfoObj.cast<py::dict>();
+    // get items as an iterable
+    py::object items = globals.attr("items")();
+    for (py::handle item : items) {
+        py::tuple pair = item.cast<py::tuple>();
+        std::string name = py::str(pair[0]).cast<std::string>();
+        py::object obj = pair[1];
+
+        if (name.empty() || name[0] == '_')
+            continue;
+
+        if (!inspect.attr("isfunction")(obj).cast<bool>())
+            continue;
+
+        if (py::str(obj.attr("__module__")).cast<std::string>() != "__main__")
+            continue;
+
+        std::string qualname = py::str(obj.attr("__qualname__")).cast<std::string>();
+        if (qualname.find('.') != std::string::npos)
+            continue;
 
         FunctionInfo info;
-        info.name = QString::fromStdString(py::str(funcDict["name"]));
-        info.signature = QString::fromStdString(py::str(funcDict["signature"]));
-        info.doc = QString::fromStdString(py::str(funcDict["doc"]));
+        info.name = QString::fromStdString(name);
+
+        py::object sig = inspect.attr("signature")(obj);
+        info.signature = QString::fromStdString(py::str(sig).cast<std::string>());
+
+        py::object docObj = inspect.attr("getdoc")(obj);
+        std::string docStr = docObj.is_none() ? std::string() : py::str(docObj).cast<std::string>();
+        info.doc = QString::fromStdString(docStr);
+
         auto docInfo = parseDocstring(info.doc);
         info.fullName = docInfo.first.isEmpty() ? info.name : docInfo.first;
 
-        // Retrieve the parameters list.
-        py::list paramsList = funcDict["parameters"];
-        for (py::handle paramHandle : paramsList) {
-            py::dict paramDict = paramHandle.cast<py::dict>();
+        // parameters is an ordered mapping; iterate items()
+        py::object params_items = sig.attr("parameters").attr("items")();
+        for (py::handle paramItem : params_items) {
+            py::tuple p = paramItem.cast<py::tuple>();
+            std::string paramName = py::str(p[0]).cast<std::string>();
+            py::object paramObj = p[1];
+
             ParameterInfo param;
-            param.name = QString::fromStdString(py::str(paramDict["name"]));
+            param.name = QString::fromStdString(paramName);
             param.fullName = param.name;
-            param.kind = QString::fromStdString(py::str(paramDict["kind"]));
-            // Save default value as a string for simplicity (or use QVariant conversion if needed)
-            py::object defVal = paramDict["default"];
-            if (!defVal.is_none())
-                param.defaultValue = QString::fromStdString(py::str(defVal));
-            else
-                param.defaultValue = QVariant();
-            param.annotation = QString::fromStdString(py::str(paramDict["annotation"]));
-            // If extra parameter description exists, update it.
-            if (docInfo.second.find(param.name) != docInfo.second.end()) {
-                auto iter = docInfo.second.find(param.name);
-                if (!iter->second.description.isEmpty()) {
-                    param.fullName = iter->second.description;
-                    param.description = iter->second.description;
-                }
+            param.kind = QString::fromStdString(py::str(paramObj.attr("kind")).cast<std::string>());
+
+            py::object def = paramObj.attr("default");
+            if (!def.is_none() && def.ptr() != param_empty.ptr()) {
+                param.defaultValue = QString::fromStdString(py::str(def).cast<std::string>());
+            }
+            else {
+                qDebug() << "Default for " << param.name << " is missing.";
+                //param.defaultValue = QVariant();
+            }
+
+            py::object ann = paramObj.attr("annotation");
+            if (ann.ptr() != param_empty.ptr()) {
+                param.annotation = QString::fromStdString(py::str(ann).cast<std::string>());
+            }
+            else {
+                qDebug() << "Annotation for " << param.name << " is missing.";
+                //param.annotation.clear();
+            }
+
+            // Convert paramName to the same key type as docInfo.second before lookup
+            QString qParamName = QString::fromStdString(paramName);
+            auto it = docInfo.second.find(qParamName);
+            if (it != docInfo.second.end() && !it->second.description.isEmpty()) {
+                param.fullName = it->second.description;
+                param.description = it->second.description;
             }
 
             info.parameters.push_back(std::move(param));
         }
+
         mFunctionInfos.push_back(std::move(info));
     }
     qDebug() << "All functions' info loaded.";
