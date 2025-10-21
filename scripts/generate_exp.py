@@ -21,7 +21,7 @@ pipe = StableDiffusionPipeline.from_pretrained(
 
 # Replace the default scheduler with a DPM scheduler.
 # This creates a DPMSolverMultistepScheduler instance with the same config as the pipeline's current scheduler.
-pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
+pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True, algorithm_type="dpmsolver++")
 
 #pipe.enable_sequential_cpu_offload()
 pipe.enable_xformers_memory_efficient_attention()
