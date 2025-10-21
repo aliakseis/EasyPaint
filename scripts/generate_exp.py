@@ -138,52 +138,64 @@ def encode_subprompts_to_embeds(subprompts: List[Tuple[str, float]],
                                 device: torch.device,
                                 max_length: int) -> Tuple[torch.FloatTensor, torch.LongTensor]:
     """
-    Given list of (text, weight), encode each text separately and combine embeddings:
-    - Each subprompt is encoded (tokenized, passed through text_encoder)
-    - Its embedding is multiplied by its weight and summed into a single prompt_embeds vector
-    - If resulting seq_len exceeds tokenizer.model_max_length, we concatenate embeddings across chunks
-      (we create a single sequence by concatenating encoded token embeddings)
-    Returns:
-      prompt_embeds: (1, seq_len_total, dim)
-      attention_mask: (1, seq_len_total)
+    Batch-encode subprompts. Tokenize all non-empty subprompts together with padding='longest'
+    so we only pad to the longest subprompt in this batch, not to model_max_length per item.
+    Returns prompt_embeds (1, total_seq_len, dim) and attention_mask (1, total_seq_len).
     """
     device = torch.device(device)
-    # encode each subprompt, collect last_hidden_state and attention_mask
-    encoded_embeds: List[torch.FloatTensor] = []
-    encoded_masks: List[torch.LongTensor] = []
-    with torch.no_grad():
-        for text, weight in subprompts:
-            if text == "":
-                continue
-            inputs = tokenizer(
-                text,
-                padding="max_length",
-                truncation=True,
-                max_length=max_length,
-                return_tensors="pt",
-            )
-            input_ids = inputs.input_ids.to(device)
-            attention_mask = inputs.attention_mask.to(device)
-            outputs = text_encoder(input_ids=input_ids, attention_mask=attention_mask)
-            emb = outputs.last_hidden_state  # (1, seq_len, dim)
-            # apply weight: multiply entire token embeddings by weight
-            if weight != 1.0:
-                emb = emb * float(weight)
-            # store only up to tokenizer.model_max_length tokens; later we concatenate
-            encoded_embeds.append(emb)
-            encoded_masks.append(attention_mask)
-    if not encoded_embeds:
-        # encode an empty prompt (should not happen for normal prompts)
-        inputs = tokenizer("", return_tensors="pt", padding="max_length", truncation=True, max_length=max_length)
+    # Collect only non-empty subprompts
+    items = [(t.strip(), w) for t, w in subprompts if t and t.strip()]
+    if not items:
+        # fallback to encode empty prompt once
+        inputs = tokenizer("", padding=True, truncation=True, max_length=max_length, return_tensors="pt")
         input_ids = inputs.input_ids.to(device)
         attention_mask = inputs.attention_mask.to(device)
-        outputs = text_encoder(input_ids=input_ids, attention_mask=attention_mask)
-        return outputs.last_hidden_state, attention_mask
+        with torch.no_grad():
+            out = text_encoder(input_ids=input_ids, attention_mask=attention_mask)
+        return out.last_hidden_state, attention_mask
 
-    # Concatenate embeddings along seq_len to form one long prompt embedding sequence
-    prompt_embeds = torch.cat(encoded_embeds, dim=1)     # (1, total_seq_len, dim)
-    attention_mask = torch.cat(encoded_masks, dim=1)     # (1, total_seq_len)
-    return prompt_embeds, attention_mask
+    texts, weights = zip(*items)  # lists
+    # Tokenize the batch, pad to longest in this batch only
+    inputs = tokenizer(
+        list(texts),
+        padding="longest",
+        truncation=True,
+        max_length=max_length,
+        return_tensors="pt",
+    )
+    input_ids = inputs.input_ids.to(device)
+    attention_mask = inputs.attention_mask.to(device)
+
+    with torch.no_grad():
+        outputs = text_encoder(input_ids=input_ids, attention_mask=attention_mask)
+        emb_batch = outputs.last_hidden_state  # (batch, seq_len, dim)
+
+    batch_size, seq_len, dim = emb_batch.shape
+
+    # Apply weights per-sentence by multiplying token embeddings for each row
+    if any(float(w) != 1.0 for w in weights):
+        # weights -> tensor (batch, 1, 1) to broadcast over seq_len and dim
+        w_tensor = torch.tensor(weights, dtype=emb_batch.dtype, device=emb_batch.device).view(batch_size, 1, 1)
+        emb_batch = emb_batch * w_tensor
+
+    # Trim each row to real token length (attention_mask sum per row) and concatenate
+    trimmed_embeds = []
+    trimmed_masks = []
+    for i in range(batch_size):
+        real_len = int(attention_mask[i].sum().item())
+        if real_len == 0:
+            # keep at least one token (safety)
+            real_len = 1
+        emb_i = emb_batch[i:i+1, :real_len, :].contiguous()               # (1, real_len, dim)
+        mask_i = attention_mask[i:i+1, :real_len].contiguous()            # (1, real_len)
+        trimmed_embeds.append(emb_i)
+        trimmed_masks.append(mask_i)
+
+    # Concatenate along seq_len to form (1, total_seq_len, dim) and (1, total_seq_len)
+    prompt_embeds = torch.cat(trimmed_embeds, dim=1)   # (1, total_seq_len, dim)
+    attention_mask = torch.cat(trimmed_masks, dim=1)  # (1, total_seq_len)
+
+    return prompt_embeds.to(device), attention_mask.to(device)
 
 # Helper to build classifier-free guidance embeddings expected by the pipeline
 def build_prompt_embeds(pipe, prompt: str, negative_prompt: str = "", base_emph: float = 1.1):
