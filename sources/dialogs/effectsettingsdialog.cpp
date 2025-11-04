@@ -109,7 +109,7 @@ public:
             });
     }
 
-    FutureContext::~FutureContext()
+    ~FutureContext()
     {
         QObject::disconnect(mImageConnection);
     }

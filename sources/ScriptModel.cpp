@@ -172,7 +172,7 @@ py::object convertQVariantToPyObject(const QVariant& var)
     if (var.canConvert<QVariantList>()) {
         QVariantList list = var.toList();
         py::list pyList;
-        for (const QVariant& item : list) {
+        for (const QVariant& item : qAsConst(list)) {
             pyList.append(convertQVariantToPyObject(item));
         }
         return pyList;
@@ -433,7 +433,7 @@ void ScriptModel::setupActions(QMenu* fileMenu, QMenu* effectsMenu, QMap<int, QA
         return;
 
     const auto parent = this->parent();
-    const auto firstAction = fileMenu->actions().isEmpty() ? nullptr : fileMenu->actions().first();
+    const auto firstAction = fileMenu->actions().isEmpty() ? nullptr : fileMenu->actions().constFirst();
     for (const auto& funcInfo : mFunctionInfos) {
         QAction* effectAction = new QAction(funcInfo.fullName, parent);
         if (funcInfo.isCreatingFunction())

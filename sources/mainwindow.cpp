@@ -850,7 +850,7 @@ void MainWindow::helpAct()
                                "<a href=\"https://github.com/avaneev/avir/\">AVIR - Image Resizing Algorithm</a>"
                                "<br>Python version " PY_VERSION)
                                //"<br> %5")
-                       .arg(tr("version")).arg(QApplication::applicationVersion()).arg(tr("Site")).arg(tr("Authors")));
+                       .arg(tr("version"), QApplication::applicationVersion(), tr("Site"), tr("Authors")));
                        //.arg(tr("If you like <b>EasyPaint</b> and you want to share your opinion, or send a bug report, or want to suggest new features, we are waiting for you on our <a href=\"https://github.com/Gr1N/EasyPaint/issues?milestone=&sort=created&direction=desc&state=open\">tracker</a>.")));
 }
 
