@@ -30,6 +30,9 @@ ehthumbs.db
 Icon?
 Thumbs.db
 
+# QtCreator CMake
+CMakeLists.txt.user*
+
 .vs/
 out/
 build/
