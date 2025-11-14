@@ -17,7 +17,7 @@
 #include <QAction>
 #include <QMenu>
 #include <QProcess>
-#include <QCoreApplication>
+#include <QApplication>
 #include <QMessageBox>
 
 #undef slots
@@ -37,15 +37,16 @@ using namespace py::literals;
 
 namespace {
 
-void showErrorAsync(QWidget* parent, const QString& title, const QString& message) {
+void showErrorAsync(const QString& title, const QString& message) {
     QMetaObject::invokeMethod(
         qApp,
-        [parent, title, message]() {
+        [title, message]() {
+            QApplication *app = qobject_cast<QApplication*>(QCoreApplication::instance());
+            QWidget *parent = app ? app->activeWindow() : nullptr;
             QMessageBox::critical(parent, title, message);
         },
         Qt::QueuedConnection);
 }
-
 
 bool isPythonInstalled()
 {
@@ -334,8 +335,7 @@ void ScriptModel::LoadScript(const QString& path)
     }
     catch (const std::exception& e) {
         qWarning() << "Error executing script.py:" << e.what();
-        showErrorAsync(nullptr,
-            QObject::tr("Script Execution Error"),
+        showErrorAsync(QObject::tr("Script Execution Error"),
             QObject::tr("Error executing script: ") + e.what());
     }
 
@@ -516,8 +516,7 @@ QVariant ScriptModel::call(const QString& callable,
         qWarning() << "Error calling function" << callable << ":" << e.what();
         auto ptr = callback.lock();
         if (!isStoppable || (ptr && !ptr->isInterrupted())) {
-            showErrorAsync(nullptr,
-                QObject::tr("Python Call Error"),
+            showErrorAsync(QObject::tr("Python Call Error"),
                 QObject::tr("Error calling function ") + callable + ": " + e.what());
         }
         return QVariant();
