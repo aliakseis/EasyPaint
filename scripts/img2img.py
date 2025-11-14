@@ -1,6 +1,11 @@
+import logging
+import random
 from diffusers import StableDiffusionImg2ImgPipeline, DPMSolverMultistepScheduler
 import torch, cv2, numpy as np
 from PIL import Image
+from diffusers import logging as dlogging
+
+logger = logging.getLogger("diffusers")
 
 # Load once, move to GPU, enable memory optimizations
 device = "cuda"
@@ -93,7 +98,7 @@ def generate_img2img(input_image: np.ndarray,
                      strength: float = 0.15,
                      guidance_scale: float = 7.5,
                      num_steps: int = 50,
-                     seed: int = 21) -> np.ndarray:
+                     seed: int = -1) -> np.ndarray:
     """
     Transforms an input image using StableDiffusionImg2ImgPipeline.
 
@@ -114,6 +119,9 @@ def generate_img2img(input_image: np.ndarray,
     new_w, new_h = _get_proportional_resize_dims(w, h)
     init_img = Image.fromarray(input_image, "RGB").resize((new_w, new_h), Image.LANCZOS)
 
+    if seed == -1:
+        seed = random.randint(0, 2**31 - 1)
+        logger.info(f'Using seed: {seed}')
     gen = torch.Generator(device=device).manual_seed(seed)
 
     # *** Notice `image=init_img` (not `init_image`) *** 

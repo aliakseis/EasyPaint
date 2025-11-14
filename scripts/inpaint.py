@@ -1,8 +1,13 @@
+import logging
 import torch
 import cv2
+import random
 import numpy as np
 from PIL import Image
 from diffusers import StableDiffusionInpaintPipeline
+from diffusers import logging as dlogging
+
+logger = logging.getLogger("diffusers")
 
 # ------------------------------------------------------------------------------
 # Select device and create the inpainting pipeline.
@@ -121,7 +126,7 @@ def predict(input_image: np.ndarray,
             mask_image: np.ndarray,
             prompt: str,
             negative_prompt: str = "",
-            seed: int = 21,
+            seed: int = -1,
             num_inference_steps: int = 50,
             guidance_scale: float = 7.5) -> np.ndarray:
     """
@@ -157,6 +162,9 @@ def predict(input_image: np.ndarray,
     img = Image.fromarray(input_image.astype('uint8'), 'RGB').resize(resize_dims, Image.LANCZOS)
     mask = Image.fromarray(processed_mask.astype('uint8'), 'RGB').resize(resize_dims, Image.LANCZOS)
 
+    if seed == -1:
+        seed = random.randint(0, 2**31 - 1)
+        logger.info(f'Using seed: {seed}')
     generator = torch.Generator(device=device).manual_seed(seed)
 
     outcome = pipe(

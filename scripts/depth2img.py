@@ -1,9 +1,13 @@
+import logging
 import torch
 import cv2
+import random
 import numpy as np
 from PIL import Image
 from diffusers import StableDiffusionDepth2ImgPipeline, DPMSolverMultistepScheduler
+from diffusers import logging as dlogging
 
+logger = logging.getLogger("diffusers")
 
 # Load pipeline once for efficiency
 device = "cuda"
@@ -105,7 +109,7 @@ def _make_callback(context):
 
 
 # Core function to run Depth2Img
-def generate_depth_image(input_image: np.ndarray, prompt: str, negative_prompt: str = "", strength: float = 0.15, guidance_scale: float = 7.5, num_steps: int = 50, seed: int = 21) -> np.ndarray:
+def generate_depth_image(input_image: np.ndarray, prompt: str, negative_prompt: str = "", strength: float = 0.15, guidance_scale: float = 7.5, num_steps: int = 50, seed: int = -1) -> np.ndarray:
     """Enhances an image using Stable Diffusion Depth2Img.
 
     Args:
@@ -126,6 +130,9 @@ def generate_depth_image(input_image: np.ndarray, prompt: str, negative_prompt: 
 
     img = Image.fromarray(input_image.astype('uint8'), 'RGB').resize(resize_dims, Image.LANCZOS)
 
+    if seed == -1:
+        seed = random.randint(0, 2**31 - 1)
+        logger.info(f'Using seed: {seed}')
     generator = torch.Generator(device=device).manual_seed(seed)
 
     outcome = pipe(
