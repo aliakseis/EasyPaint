@@ -77,19 +77,164 @@ This script focuses on **depth-guided image transformation**. It transforms imag
 
 ---
 
-### `generate.py`
-This script provides a **basic image generation entry point** for creating images from scratch.
-
-- **Functions**
-  - `generate_image` — Creates an image from scratch, typically using a generative model (e.g., diffusion).
-
----
-
 ### `img2img.py`
 This script supports **image-to-image translation**, transforming an existing picture while keeping its overall structure.
 
 - **Functions**
   - `generate_img2img` — Produces a modified version of an input image while maintaining its overall structure.
+
+**Key Technical Differences**
+=============================
+
+1\. **Model architecture**
+--------------------------
+
+### img2img.py
+
+Uses **SD 1.5 img2img**, which:
+
+*   Adds noise according to strength
+    
+*   Re-generates the image guided by the prompt➡️ **No understanding of scene depth**.➡️ Geometry/sizes may drift or distort.
+    
+
+### depth2img.py
+
+Uses **SD2 depth-guided diffusion**, where the model gets:
+
+*   The RGB image
+    
+*   A predicted **depth map**
+    
+*   The prompt
+    
+
+➡️ Much stronger preservation of layout and shapes➡️ Camera angle, perspective, object proportions remain stable
+
+2\. **Capabilities**
+--------------------
+
+### **img2img — what it’s good at**
+
+✔ Style transfer✔ Recoloring, mood changes✔ Artistic transformations✔ Turning sketches into paintings✔ Significant prompt-driven changes (faces, objects, lighting)✖ Geometry preservation is weak✖ Objects may shift or deform✖ Hard for realism with strict constraints
+
+### **depth2img — what it's good at**
+
+✔ Structure-preserving realism✔ Maintaining perspective, edges, contours✔ Photo → enhanced photo✔ Background replacement with stable foreground✔ Consistent character/object shape✔ Keeping hands, body positions, architecture stable✖ Less flexible for wild artistic transformations✖ More literal to original image
+
+3\. **Quality / Visual Differences**
+------------------------------------
+
+### img2img output tends to:
+
+*   Drift away from the original image at higher strengths
+    
+*   Change shapes, edges, even composition
+    
+*   Be more creative (good or bad)
+    
+
+### depth2img output tends to:
+
+*   Stay loyal to the original layout
+    
+*   Preserve contours, buildings, bodies
+    
+*   Produce realism with stable object boundaries
+    
+*   Allow big _semantic_ changes while preserving geometry
+    
+
+4\. **Strength parameter differences**
+--------------------------------------
+
+### In img2img:
+
+strength = how much noise is added
+
+*   0.1 → slight stylization
+    
+*   0.5 → strong change
+    
+*   0.9 → almost full re-generation
+    
+
+### In depth2img:
+
+Depth condition provides stability even with high strength
+
+*   0.1 → mild color/stylistic tweaks
+    
+*   0.5 → significant transformation but geometry kept
+    
+*   0.9 → still retains shapes better than img2img
+    
+
+5\. **Underlying Model Versions**
+---------------------------------
+
+### img2img.py → **Stable Diffusion 1.5**
+
+*   Better for stylization
+    
+*   Less realistic
+    
+*   More artifacts
+    
+*   Weaker at human anatomy
+    
+
+### depth2img.py → **Stable Diffusion 2.0–depth**
+
+*   Better depth understanding
+    
+*   Realistic rendering
+    
+*   Much more stable human shapes
+    
+*   Preserves backgrounds and structure
+    
+
+🧠 **Summary: When to choose which?**
+=====================================
+
+### Use **img2img.py** if:
+
+*   You want creative variation
+    
+*   You want to heavily stylize or reimagine
+    
+*   You want surreal / artistic transformations
+    
+*   You don't need strict preservation of shapes
+    
+
+### Use **depth2img.py** if:
+
+*   You want to keep the geometry
+    
+*   You want realistic or photographic edits
+    
+*   You want to keep perspective and composition stable
+    
+*   You want to change style but preserve structure
+    
+*   You are editing photos or production artwork
+    
+
+🚀 **Practical example**
+========================
+
+Input: photo of a building**img2img** → might reshape windows, add floors, distort lines**depth2img** → keeps building straight, only changes textures/colors
+Input: portrait**img2img** → risks face changes**depth2img** → keeps same face geometry, pose, lighting
+
+---
+
+### `generate.py`
+This script provides a **basic image generation entry point** for creating images from scratch.
+
+- **Functions**
+  - `generate_image` — Creates an image from scratch, typically using a generative model (e.g., diffusion).
 
 ---
 
