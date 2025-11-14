@@ -56,7 +56,7 @@ def _get_proportional_resize_dims(original_width, original_height, target_area=1
 
 # Lightweight depth estimator (optional). Produces a single-channel depth-like image (uint8).
 # If you already have a reliable depth map, skip this and pass it to generate_depth_image via control_image.
-def estimate_depth_map(input_image: np.ndarray, target_size=(512, 512)) -> Image.Image:
+def _estimate_depth_map(input_image: np.ndarray, target_size=(512, 512)) -> Image.Image:
     gray = cv2.cvtColor(input_image, cv2.COLOR_RGB2GRAY)
     # Fast edge-aware smoothing + distance transform as a cheap depth proxy
     blur = cv2.bilateralFilter(gray, d=9, sigmaColor=75, sigmaSpace=75)
@@ -128,7 +128,7 @@ def generate_depth_image(input_image: np.ndarray, prompt: str, negative_prompt: 
 
     init_img = Image.fromarray(input_image.astype("uint8"), "RGB").resize(resize_dims, Image.LANCZOS)
 
-    control_image = estimate_depth_map(input_image, target_size=resize_dims)
+    control_image = _estimate_depth_map(input_image, target_size=resize_dims)
 
     # control_image should be PIL.Image matching the init_img resolution
     control_image = control_image.resize(resize_dims, Image.LANCZOS)
