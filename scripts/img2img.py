@@ -24,6 +24,7 @@ pipe.enable_sequential_cpu_offload()
 pipe.enable_xformers_memory_efficient_attention()
 pipe.enable_attention_slicing()
 
+dlogging.set_verbosity_info()
 
 class InpaintContext:
     def __init__(self, original_size):

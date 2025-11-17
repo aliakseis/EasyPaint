@@ -21,10 +21,11 @@ pipe = StableDiffusionDepth2ImgPipeline.from_pretrained(
 # This creates a DPMSolverMultistepScheduler instance with the same config as the pipeline's current scheduler.
 pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config, use_karras_sigmas=True)
 
-
 pipe.enable_sequential_cpu_offload()
 pipe.enable_xformers_memory_efficient_attention()
 pipe.enable_attention_slicing()
+
+dlogging.set_verbosity_info()
 
 class InpaintContext:
     def __init__(self, original_size):
