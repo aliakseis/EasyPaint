@@ -78,6 +78,7 @@ private:
     void clear();
     void paint(ImageArea &imageArea, bool = false, bool = false);
     void showMenu(ImageArea &);
+    void doCopy(ImageArea& imageArea);
 
     QImage mSelectedImage; /**< Copy of selected image. */
 

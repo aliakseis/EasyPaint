@@ -159,28 +159,21 @@ void SelectionInstrument::move(ImageArea &)
 
 void SelectionInstrument::completeSelection(ImageArea &imageArea)
 {
-    mSelectedImage = imageArea.getImage()->copy(mTopLeftPoint.x(),
-                                                mTopLeftPoint.y(),
-                                                mWidth, mHeight);
+    doCopy(imageArea);
     emit sendEnableCopyCutActions(true);
 }
 
 void SelectionInstrument::completeResizing(ImageArea &imageArea)
 {
-    mSelectedImage = imageArea.getImage()->copy(mTopLeftPoint.x(),
-                                                mTopLeftPoint.y(),
-                                                mWidth, mHeight);
+    doCopy(imageArea);
 }
 
 void SelectionInstrument::completeMoving(ImageArea &imageArea)
 {
     if (mIsSelectionAdjusting)
     {
-        mSelectedImage = imageArea.getImage()->copy(mTopLeftPoint.x(),
-                                                   mTopLeftPoint.y(),
-                                                   mWidth, mHeight);
+        doCopy(imageArea);
     }
-
 }
 
 void SelectionInstrument::clearSelectionBackground(ImageArea &imageArea)
@@ -222,4 +215,12 @@ void SelectionInstrument::paint(ImageArea &imageArea, bool, bool)
 
 void SelectionInstrument::showMenu(ImageArea &)
 {
+}
+
+void SelectionInstrument::doCopy(ImageArea& imageArea)
+{
+    QImage* src = imageArea.getImage();
+    mSelectedImage = src->copy(mTopLeftPoint.x(),
+        mTopLeftPoint.y(),
+        mWidth, mHeight);
 }

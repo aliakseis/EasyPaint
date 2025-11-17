@@ -30,6 +30,12 @@
 
 #include <QPainter>
 
+static QPoint clampPointToRect(const QRect& r, const QPoint& p)
+{
+    return { qBound(r.left(), p.x(), r.right()), qBound(r.top(), p.y(), r.bottom()) };
+}
+
+
 AbstractSelection::AbstractSelection(QObject *parent) :
     AbstractInstrument(parent)
 {
@@ -100,7 +106,9 @@ void AbstractSelection::mousePressEvent(QMouseEvent *event, ImageArea &imageArea
     }
     if (event->button() == Qt::LeftButton)
     {
-        mBottomRightPoint = mTopLeftPoint = pos / imageArea.getZoomFactor();
+        mBottomRightPoint = mTopLeftPoint = clampPointToRect(
+            { { 0, 0 }, imageArea.getImage()->size() },
+            event->pos() / imageArea.getZoomFactor());
         mHeight =  mWidth = 0;
         stash(imageArea);
         startSelection(imageArea);
@@ -110,7 +118,8 @@ void AbstractSelection::mousePressEvent(QMouseEvent *event, ImageArea &imageArea
 
 void AbstractSelection::mouseMoveEvent(QMouseEvent *event, ImageArea &imageArea)
 {
-    const auto pos = event->pos() / imageArea.getZoomFactor();
+    const auto pos = clampPointToRect({ { 0, 0 }, imageArea.getImage()->size() },
+        event->pos() / imageArea.getZoomFactor());
 
     mIsMouseMoved = true;
     if (mIsSelectionExists)
