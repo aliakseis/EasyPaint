@@ -74,10 +74,16 @@ protected:
     void updateCursor(QMouseEvent *event, ImageArea &imageArea);
 
     QPoint mBottomRightPoint, mTopLeftPoint, mMoveDiffPoint;
-    bool mIsPaint, mIsSelectionExists, mIsSelectionMoving, mIsSelectionResizing, mIsImageSelected,
-         mIsMouseMoved, mIsSelectionAdjusting;
-    int mHeight, mWidth;
-    Qt::MouseButton mButton;
+    bool mIsPaint = false;
+    bool mIsSelectionExists = false;
+    bool mIsSelectionMoving = false;
+    bool mIsSelectionResizing = false;
+    bool mIsImageSelected = false;
+    bool mIsMouseMoved = false;
+    bool mIsSelectionAdjusting = false;
+    int mHeight = 0; 
+    int mWidth = 0;
+    Qt::MouseButton mButton{};
 };
 
 #endif // ABSTRACTSELECTION_H

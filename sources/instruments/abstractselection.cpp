@@ -39,9 +39,6 @@ static QPoint clampPointToRect(const QRect& r, const QPoint& p)
 AbstractSelection::AbstractSelection(QObject *parent) :
     AbstractInstrument(parent)
 {
-    mIsSelectionExists = mIsSelectionMoving = mIsSelectionResizing
-            = mIsPaint = mIsImageSelected = mIsMouseMoved
-            = mIsSelectionAdjusting = false;
 }
 
 void AbstractSelection::mousePressEvent(QMouseEvent *event, ImageArea &imageArea)
