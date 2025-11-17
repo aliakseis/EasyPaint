@@ -23,6 +23,13 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "mainwindow.h"
+#include "datasingleton.h"
+#include "set_dark_theme.h"
+#include "ScriptModel.h"
+
+#include "qtsingleapplication/qtsingleapplication.h"
+
 #include <QApplication>
 #include <QtCore/QStringList>
 #include <QtCore/QDebug>
@@ -30,13 +37,9 @@
 #include <QtCore/QTranslator>
 #include <QDir>
 #include <QStyleFactory>
+#include <QKeyEvent>
 
-#include "mainwindow.h"
-#include "datasingleton.h"
-#include "set_dark_theme.h"
-#include "ScriptModel.h"
-
-#include "qtsingleapplication/qtsingleapplication.h"
+namespace {
 
 void printHelpMessage()
 {
@@ -52,9 +55,113 @@ void printVersion()
     qDebug()<< QApplication::applicationVersion();
 }
 
+class KeypadNormalizer : public QObject {
+public:
+    explicit KeypadNormalizer(QObject* parent = nullptr)
+        : QObject(parent)
+    {
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override
+    {
+        // Only handle key events
+        if (event->type() != QEvent::KeyPress &&
+            event->type() != QEvent::KeyRelease)
+        {
+            return QObject::eventFilter(watched, event);
+        }
+
+        QKeyEvent* ke = static_cast<QKeyEvent*>(event);
+
+        const bool isKeypad = (ke->modifiers() & Qt::KeypadModifier);
+
+        // Some systems deliver weird keypad minus codes (locale + NumLock)
+        constexpr int OddKeypadMinus = 16908289;
+
+        // Fast path – ignore non-keypad/non-odd keys
+        if (!isKeypad && ke->key() != OddKeypadMinus)
+            return QObject::eventFilter(watched, event);
+
+        int canonicalKey = 0;
+
+        switch (ke->key()) {
+        case Qt::Key_0: case Qt::Key_1: case Qt::Key_2: case Qt::Key_3:
+        case Qt::Key_4: case Qt::Key_5: case Qt::Key_6: case Qt::Key_7:
+        case Qt::Key_8: case Qt::Key_9:
+            canonicalKey = ke->key();
+            break;
+
+        case Qt::Key_Minus:
+        case OddKeypadMinus:
+            canonicalKey = Qt::Key_Minus;
+            break;
+
+        case Qt::Key_Plus:
+        case Qt::Key_Equal:
+            canonicalKey = Qt::Key_Plus;
+            break;
+
+        case Qt::Key_Enter:
+        case Qt::Key_Return:
+            canonicalKey = Qt::Key_Return;
+            break;
+
+        default:
+            // Unknown keypad code -> let Qt handle it normally
+            return QObject::eventFilter(watched, event);
+        }
+
+        // Remove keypad-specific modifier to normalize shortcuts
+        Qt::KeyboardModifiers mods = (ke->modifiers() & ~Qt::KeypadModifier);
+
+        QString text = ke->text();
+        if (canonicalKey == Qt::Key_Minus && text.isEmpty())
+            text = QLatin1String("-");
+
+#if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
+        //
+        // Qt 6 constructor (new-style)
+        //
+        QKeyEvent mapped(
+            ke->type(),
+            canonicalKey,
+            mods,
+            ke->nativeScanCode(),
+            ke->nativeVirtualKey(),
+            ke->nativeModifiers(),
+            text,
+            ke->isAutoRepeat(),
+            ke->count()
+        );
+#else
+        //
+        // Qt 5 constructor (legacy)
+        //
+        QKeyEvent mapped(
+            ke->type(),
+            canonicalKey,
+            mods,
+            text,
+            ke->isAutoRepeat(),
+            ke->count()
+        );
+#endif
+
+        // Deliver the normalized event
+        QCoreApplication::sendEvent(watched, &mapped);
+
+        // Consume the original event
+        return true;
+    }
+};
+
+}
+
 int main(int argc, char* argv[])
 {
     QtSingleApplication a(argc, argv);
+
+    a.installEventFilter(new KeypadNormalizer(qApp));
 
     QApplication::setApplicationName("EasyPaint");
     QApplication::setOrganizationName("EasyPaint");
