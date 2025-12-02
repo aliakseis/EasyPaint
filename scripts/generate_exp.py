@@ -49,32 +49,7 @@ def _replace_innermost(text: str, open_ch: str, close_ch: str, weight: float) ->
     new_text = text[:m.start()] + new_group + text[m.end():]
     return new_text, True
 
-def apply_prompt_weighting(prompt: str, emph: float = 1.1) -> str:
-    """
-    Convert nested () and [] groups into explicit '(text:weight)' style.
-    Parentheses amplify by emph, square brackets de-amplify by 1/emph.
-    This returns a human-readable prompt string but is mainly for debugging.
-    """
-    deemph = 1.0 / emph
-    out = prompt
-    changed = True
-    while changed:
-        changed = False
-        # innermost parentheses -> emphasis
-        while True:
-            out, did = _replace_innermost(out, "(", ")", emph)
-            if not did:
-                break
-            changed = True
-        # innermost square brackets -> de-emphasis (converted to parentheses with weight < 1)
-        while True:
-            out, did = _replace_innermost(out, "[", "]", deemph)
-            if not did:
-                break
-            changed = True
-    return re.sub(r"\s+", " ", out).strip()
-
-def prompt_to_weighted_subprompts(prompt: str, base_emph: float = 1.1) -> List[Tuple[str, float]]:
+def _prompt_to_weighted_subprompts(prompt: str, base_emph: float = 1.1) -> List[Tuple[str, float]]:
     """
     Parse prompt into list of (subprompt_text, cumulative_weight).
     - Splits by explicit separators (| or ,) only after grouping handling.
@@ -132,7 +107,7 @@ def prompt_to_weighted_subprompts(prompt: str, base_emph: float = 1.1) -> List[T
     return final
 
 # --- Embedding encoding and concatenation ------------------------------------
-def encode_subprompts_to_embeds(subprompts: List[Tuple[str, float]],
+def _encode_subprompts_to_embeds(subprompts: List[Tuple[str, float]],
                                 tokenizer,
                                 text_encoder,
                                 device: torch.device,
@@ -198,19 +173,19 @@ def encode_subprompts_to_embeds(subprompts: List[Tuple[str, float]],
     return prompt_embeds.to(device), attention_mask.to(device)
 
 # Helper to build classifier-free guidance embeddings expected by the pipeline
-def build_prompt_embeds(pipe, prompt: str, negative_prompt: str = "", base_emph: float = 1.1):
+def _build_prompt_embeds(pipe, prompt: str, negative_prompt: str = "", base_emph: float = 1.1):
     tokenizer = pipe.tokenizer
     text_encoder = pipe.text_encoder
     max_length = tokenizer.model_max_length
 
     # Parse and encode conditional prompt into weighted subprompts
-    conditional_subs = prompt_to_weighted_subprompts(prompt, base_emph=base_emph)
-    cond_embeds, cond_mask = encode_subprompts_to_embeds(conditional_subs, tokenizer, text_encoder, pipe.device, max_length)
+    conditional_subs = _prompt_to_weighted_subprompts(prompt, base_emph=base_emph)
+    cond_embeds, cond_mask = _encode_subprompts_to_embeds(conditional_subs, tokenizer, text_encoder, pipe.device, max_length)
 
     # Negative prompt handling
     if negative_prompt and negative_prompt.strip():
-        negative_subs = prompt_to_weighted_subprompts(negative_prompt, base_emph=base_emph)
-        neg_embeds, neg_mask = encode_subprompts_to_embeds(negative_subs, tokenizer, text_encoder, pipe.device, max_length)
+        negative_subs = _prompt_to_weighted_subprompts(negative_prompt, base_emph=base_emph)
+        neg_embeds, neg_mask = _encode_subprompts_to_embeds(negative_subs, tokenizer, text_encoder, pipe.device, max_length)
     else:
         # encode empty negative prompt (standard CF guidance)
         inputs = tokenizer("", padding="max_length", truncation=True, max_length=max_length, return_tensors="pt")
@@ -226,7 +201,7 @@ def build_prompt_embeds(pipe, prompt: str, negative_prompt: str = "", base_emph:
     return cond_embeds, cond_mask, neg_embeds, neg_mask
 
 
-def pad_embeds_and_masks(embeds_a: torch.Tensor, mask_a: torch.Tensor,
+def _pad_embeds_and_masks(embeds_a: torch.Tensor, mask_a: torch.Tensor,
                          embeds_b: torch.Tensor, mask_b: torch.Tensor,
                          dtype: torch.dtype = None, device: torch.device = None):
     """
@@ -310,7 +285,7 @@ def generate_image(prompt: str, negative_prompt: str = "", guidance_scale: float
 
 
     # === 1. Convert weighted prompt into embeddings ===
-    cond_embeds, cond_mask, neg_embeds, neg_mask = build_prompt_embeds(
+    cond_embeds, cond_mask, neg_embeds, neg_mask = _build_prompt_embeds(
         pipe,
         prompt,
         negative_prompt=negative_prompt,
@@ -326,7 +301,7 @@ def generate_image(prompt: str, negative_prompt: str = "", guidance_scale: float
 
     # cond_embeds: (1, seq_cond, dim), cond_mask: (1, seq_cond)
     # neg_embeds: (1, seq_neg, dim), neg_mask: (1, seq_neg)
-    cond_embeds, cond_mask, neg_embeds, neg_mask = pad_embeds_and_masks(
+    cond_embeds, cond_mask, neg_embeds, neg_mask = _pad_embeds_and_masks(
         cond_embeds, cond_mask, neg_embeds, neg_mask,
         dtype=cond_embeds.dtype, device=cond_embeds.device
     )
