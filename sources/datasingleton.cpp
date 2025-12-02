@@ -164,6 +164,8 @@ void DataSingleton::writeSettings()
     settings.setValue("/Shortcuts/Instruments/Fill", mInstrumentsShortcuts["Fill"]);
     settings.setValue("/Shortcuts/Instruments/Rect", mInstrumentsShortcuts["Rect"]);
     settings.setValue("/Shortcuts/Instruments/Ellipse", mInstrumentsShortcuts["Ellipse"]);
+    settings.setValue("/Shortcuts/Instruments/Curve", mInstrumentsShortcuts["Curve"]);
+    settings.setValue("/Shortcuts/Instruments/Text", mInstrumentsShortcuts["Text"]);
 
     //write shortcuts for tools menu
     settings.setValue("/Shortcuts/Tools/Zoom/ZoomIn", mToolsShortcuts["ZoomIn"]);
