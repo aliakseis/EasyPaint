@@ -89,7 +89,6 @@ private:
 
     QGraphicsView* mPreviewView;
     QGraphicsScene* mPreviewScene;
-    //QGraphicsPixmapItem* mPreviewPixmapItem;
     double zoomFactor = 1.;
 
     const QImage* mSourceImage;

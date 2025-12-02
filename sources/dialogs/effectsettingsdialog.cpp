@@ -52,7 +52,9 @@
 #include <QMainWindow>
 #include <QMessageBox>
 
-static QMainWindow* GetMainWindow()
+namespace {
+
+QMainWindow* GetMainWindow()
 {
     for (QWidget* widget : QApplication::topLevelWidgets()) {
         if (auto* w = qobject_cast<QMainWindow*>(widget)) {
@@ -77,6 +79,8 @@ bool isDummyImage(const QImage& image) {
     }
     return true;
 }
+
+} // namespace
 
 class EffectSettingsDialog::FutureContext
 {

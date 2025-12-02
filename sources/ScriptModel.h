@@ -14,11 +14,6 @@
 class QMenu;
 class QAction;
 
-namespace pybind11 {
-
-class array;
-
-}
 
 const char CHECK_PYTHON_OPTION[] = "--checkPython";
 
@@ -39,7 +34,6 @@ public:
     static int ValidatePythonSystem();
 
 private:
-    bool send_image(const pybind11::array& image);
     bool check_interrupt();
 
     bool mValid = false;

@@ -43,7 +43,7 @@ public:
     
 protected:
     // TODO: change type of widget
-    virtual AbstractEffectSettings *getSettingsWidget() { return new GaussianBlurFilterSettings(); }
+    AbstractEffectSettings *getSettingsWidget() override { return new GaussianBlurFilterSettings(); }
     
 };
 

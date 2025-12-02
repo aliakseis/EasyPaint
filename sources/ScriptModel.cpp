@@ -232,6 +232,21 @@ std::pair<QString, std::map<QString, DocParamInfo>> parseDocstring(const QString
     return { description, params };
 }
 
+bool send_image(const std::weak_ptr<EffectRunCallback>& mCallback, const pybind11::array& src)
+{
+    //qDebug() << "In send_image().";
+    if (auto obj = mCallback.lock())
+    {
+        if (obj->isInterrupted())
+            return false;
+        auto img = nparray_to_qimage(src);
+        //qDebug() << img;
+        emit obj->sendImage(img);
+        return true;
+    }
+    return false;
+}
+
 } // namespace
 
 class ScriptModel::PythonScope
@@ -317,7 +332,9 @@ void ScriptModel::LoadScript(const QString& path)
     py::dict globals = mainModule.attr("__dict__");
 
     // Inject functions into Python globals
-    globals["_send_image"] = py::cpp_function([this](const py::array& image) { send_image(image); });
+    globals["_send_image"] = py::cpp_function([this](const py::array& image) { 
+            send_image(mCallback, image);
+        });
     globals["_check_interrupt"] = py::cpp_function([this]() { return check_interrupt(); });
 
     // Execute an external script file.
@@ -538,21 +555,6 @@ QVariant ScriptModel::call(const QString& callable,
     // For other types, convert the result to a string.
     std::string resStr = py::str(result);
     return QVariant(QString::fromStdString(resStr));
-}
-
-bool ScriptModel::send_image(const pybind11::array& src)
-{
-    //qDebug() << "In send_image().";
-    if (auto obj = mCallback.lock())
-    {
-        if (obj->isInterrupted())
-            return false;
-        auto img = nparray_to_qimage(src);
-        //qDebug() << img;
-        emit obj->sendImage(img);
-        return true;
-    }
-    return false;
 }
 
 bool ScriptModel::check_interrupt()

@@ -39,7 +39,7 @@ public:
 
 protected:
     // TODO: change type of widget
-    virtual AbstractEffectSettings *getSettingsWidget() { return new SharpenFilterSettings(); }
+    AbstractEffectSettings *getSettingsWidget() override { return new SharpenFilterSettings(); }
 };
 
 #endif // SHARPENEFFECT_H
