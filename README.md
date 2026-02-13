@@ -48,7 +48,8 @@ Ensure the corresponding version of Python is installed.
 
 Use the provided requirements.txt to install extra libraries (e.g., Hugging Face, OpenCV):
 
-pip install -r requirements.txt
+    pip install torch==2.7.0+cu126 torchvision==0.22.0 torchaudio==2.7.0 --index-url https://download.pytorch.org/whl/cu126
+    pip install -r requirements.txt
 
 ### 4. Writing Scripts
 
@@ -116,11 +117,39 @@ Uses **SD2 depth-guided diffusion**, where the model gets:
 
 ### **img2img — what it’s good at**
 
-✔ Style transfer✔ Recoloring, mood changes✔ Artistic transformations✔ Turning sketches into paintings✔ Significant prompt-driven changes (faces, objects, lighting)✖ Geometry preservation is weak✖ Objects may shift or deform✖ Hard for realism with strict constraints
+✔ Style transfer
+
+✔ Recoloring, mood changes
+
+✔ Artistic transformations
+
+✔ Turning sketches into paintings
+
+✔ Significant prompt-driven changes (faces, objects, lighting)
+
+✖ Geometry preservation is weak
+
+✖ Objects may shift or deform
+
+✖ Hard for realism with strict constraints
 
 ### **depth2img — what it's good at**
 
-✔ Structure-preserving realism✔ Maintaining perspective, edges, contours✔ Photo → enhanced photo✔ Background replacement with stable foreground✔ Consistent character/object shape✔ Keeping hands, body positions, architecture stable✖ Less flexible for wild artistic transformations✖ More literal to original image
+✔ Structure-preserving realism
+
+✔ Maintaining perspective, edges, contours
+
+✔ Photo → enhanced photo
+
+✔ Background replacement with stable foreground
+
+✔ Consistent character/object shape
+
+✔ Keeping hands, body positions, architecture stable
+
+✖ Less flexible for wild artistic transformations
+
+✖ More literal to original image
 
 3\. **Quality / Visual Differences**
 ------------------------------------
@@ -225,8 +254,16 @@ Depth condition provides stability even with high strength
 🚀 **Practical example**
 ========================
 
-Input: photo of a building**img2img** → might reshape windows, add floors, distort lines**depth2img** → keeps building straight, only changes textures/colors
-Input: portrait**img2img** → risks face changes**depth2img** → keeps same face geometry, pose, lighting
+Input: photo of a building
+
+**img2img** → might reshape windows, add floors, distort lines
+
+**depth2img** → keeps building straight, only changes textures/colors
+Input: portrait
+
+**img2img** → risks face changes
+
+**depth2img** → keeps same face geometry, pose, lighting
 
 ---
 
