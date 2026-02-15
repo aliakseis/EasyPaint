@@ -311,5 +311,7 @@ Enable Instruments -> Markup mode to use markup:
 
 <img width="522" height="472" alt="Image" src="https://github.com/user-attachments/assets/1c988672-5008-48d5-afaf-e952605495f3" />
 
+![image](EasyPaint_demo2.jpg)
+
 ![image](EasyPaint_demo.jpg)
 See also https://github.com/aliakseis/EasyPaint/issues/4
