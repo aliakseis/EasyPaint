@@ -67,7 +67,7 @@ void ToolBar::initializeItems()
     mTextButton = createToolButton(mActMap[TEXT]);
 
     QGridLayout *bLayout = new QGridLayout();
-    bLayout->setMargin(3);
+    bLayout->setContentsMargins(3, 3, 3, 3);
     bLayout->addWidget(mCursorButton, 0, 0);
     bLayout->addWidget(mEraserButton, 0, 1);
     bLayout->addWidget(mColorPickerButton, 1, 0);
@@ -102,7 +102,7 @@ void ToolBar::initializeItems()
     connect(penSizeSpin, SIGNAL(valueChanged(int)), this, SLOT(penValueChanged(int)));
 
     QGridLayout *tLayout = new QGridLayout();
-    tLayout->setMargin(3);
+    tLayout->setContentsMargins(3, 3, 3, 3);
     tLayout->addWidget(mPColorChooser, 0, 0);
     tLayout->addWidget(mSColorChooser, 0, 1);
     tLayout->addWidget(penSizeSpin, 1, 0, 1, 2);

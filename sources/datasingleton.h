@@ -32,6 +32,7 @@
 #include <QtCore/QMap>
 #include <QKeySequence>
 #include <QFont>
+#include <QObject>
 
 #include "easypaintenums.h"
 

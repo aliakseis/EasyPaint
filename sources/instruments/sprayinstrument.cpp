@@ -31,6 +31,8 @@
 #include <QPainter>
 #include <math.h>
 
+#include <QRandomGenerator>
+
 SprayInstrument::SprayInstrument(QObject *parent) :
     AbstractInstrument(parent)
 {
@@ -95,32 +97,21 @@ void SprayInstrument::paint(ImageArea &imageArea, bool isSecondaryColor, bool)
                             Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     }
 
-    int x, y;
-    for(int i(0); i < 12; i++)
-    {
-        switch(i) {
-        case 0: case 1: case 2: case 3:
-            x = (qrand() % 5 - 2)
-                    * sqrt(DataSingleton::Instance()->getPenSize());
-            y = (qrand() % 5 - 2)
-                    * sqrt(DataSingleton::Instance()->getPenSize());
-            break;
-        case 4: case 5: case 6: case 7:
-            x = (qrand() % 10 - 4)
-                    * sqrt(DataSingleton::Instance()->getPenSize());
-            y = (qrand() % 10 - 4)
-                    * sqrt(DataSingleton::Instance()->getPenSize());
-            break;
-        case 8: case 9: case 10: case 11:
-            x = (qrand() % 15 - 7)
-                    * sqrt(DataSingleton::Instance()->getPenSize());
-            y = (qrand() % 15 - 7)
-                    * sqrt(DataSingleton::Instance()->getPenSize());
-            break;
-        }
+    const int penSize = DataSingleton::Instance()->getPenSize();
+    const double scale = std::sqrt(penSize);
+
+    static const int ranges[] = {5, 5, 5, 5,   // i = 0–3
+                                 10,10,10,10, // i = 4–7
+                                 15,15,15,15};// i = 8–11
+
+    for (auto range : ranges) {
+        int x = (QRandomGenerator::global()->bounded(range) - ((range - 1) / 2)) * scale;
+        int y = (QRandomGenerator::global()->bounded(range) - ((range - 1) / 2)) * scale;
+
         painter.drawPoint(mEndPoint.x() + x,
-                         mEndPoint.y() + y);
+                          mEndPoint.y() + y);
     }
+
     imageArea.setEdited(true);
     painter.end();
     imageArea.update();

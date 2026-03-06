@@ -140,95 +140,123 @@ project (${PROJECT})
 
 include_directories (./)
 
-find_package(QT NAMES Qt5 COMPONENTS Widgets Concurrent Network PrintSupport LinguistTools REQUIRED)
+# --- Qt detection (Qt6 preferred, fallback to Qt5) ---
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Concurrent Network PrintSupport LinguistTools REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Concurrent Network PrintSupport LinguistTools REQUIRED)
-#include (${QT_USE_FILE})
-qt5_add_resources (QRC_SOURCES ${RESOURCES})
-qt5_wrap_cpp (MOC_SOURCES ${HEADERS})
-qt5_add_translation( TRANSLATIONS_QM ${TRANSLATIONS} )
 
-add_definitions (-Wall)
+# --- Qt resource / MOC / translation handling ---
+if(QT_VERSION_MAJOR EQUAL 6)
+    qt_add_resources(QRC_SOURCES ${RESOURCES})
+    qt_wrap_cpp(MOC_SOURCES ${HEADERS})
+    #qt_add_translations(TRANSLATIONS_QM ${TRANSLATIONS})
+    #qt_add_translations(${PROJECT}_translations
+    #    TS_FILES ${TRANSLATIONS}
+    #    QM_FILES_OUTPUT_VARIABLE TRANSLATIONS_QM
+    #)
+    qt6_create_translation(TRANSLATIONS_QM
+        ${CMAKE_SOURCE_DIR}
+        ${TRANSLATIONS}
+    )
+else()
+    qt5_add_resources(QRC_SOURCES ${RESOURCES})
+    qt5_wrap_cpp(MOC_SOURCES ${HEADERS})
+    qt5_add_translation(TRANSLATIONS_QM ${TRANSLATIONS})
+endif()
 
-source_group ("Header Files" FILES ${HEADERS})
-source_group ("Source Files" FILES ${SOURCES})
-source_group ("Generated Files" FILES ${MOC_SOURCES})
-source_group ("Resource Files" FILES ${QRC_SOURCES})
+add_definitions(-Wall)
 
-find_package (Python3 COMPONENTS Interpreter Development REQUIRED)
+source_group("Header Files" FILES ${HEADERS})
+source_group("Source Files" FILES ${SOURCES})
+source_group("Generated Files" FILES ${MOC_SOURCES})
+source_group("Resource Files" FILES ${QRC_SOURCES})
 
-message ("    *** Python: (${Python3_INCLUDE_DIRS})")
+# --- Python & pybind11 ---
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+message("    *** Python: (${Python3_INCLUDE_DIRS})")
 
 find_package(pybind11 CONFIG REQUIRED)
 
-#-------  build executable from sources ----------
-add_executable (${PROJECT} ${HEADERS} ${SOURCES} ${MOC_SOURCES} ${QRC_SOURCES} ${TRANSLATIONS_QM})
+# --- Build executable ---
+add_executable(${PROJECT}
+    ${HEADERS}
+    ${SOURCES}
+    ${MOC_SOURCES}
+    ${QRC_SOURCES}
+    ${TRANSLATIONS_QM}
+)
 
-target_link_libraries (${PROJECT} Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Concurrent Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::PrintSupport ${Python3_LIBRARIES} pybind11::pybind11)
+target_link_libraries(${PROJECT}
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Network
+    Qt${QT_VERSION_MAJOR}::PrintSupport
+    ${Python3_LIBRARIES}
+    pybind11::pybind11
+)
 
-#-------  installing ----------
+# --- Installation (Linux) ---
 if(UNIX AND NOT APPLE)
-    # installing
-    INSTALL(TARGETS easypaint RUNTIME DESTINATION bin)
+    install(TARGETS easypaint RUNTIME DESTINATION bin)
+    install(FILES "sources/media/easypaint.desktop" DESTINATION share/applications)
+    install(FILES "sources/media/logo/easypaint_64.png" DESTINATION share/pixmaps)
+    install(FILES ${TRANSLATIONS_QM} DESTINATION share/easypaint/translations)
+endif()
 
-    # install desktop files
-    INSTALL(FILES "sources/media/easypaint.desktop" DESTINATION share/applications)
-
-    # install pixmap
-    INSTALL(FILES "sources/media/logo/easypaint_64.png" DESTINATION share/pixmaps)
-
-    INSTALL(FILES ${TRANSLATIONS_QM} DESTINATION share/easypaint/translations)
-endif(UNIX AND NOT APPLE)
-
+# --- Installation (Windows / MSVC) ---
 if(MSVC)
-	set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/bin")
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/bin")
+    set(BINARY_INSTALL_DIR .)
 
-	set(BINARY_INSTALL_DIR .)
+    install(TARGETS ${PROJECT_NAME} DESTINATION ${BINARY_INSTALL_DIR})
 
-	install(TARGETS ${PROJECT_NAME} DESTINATION ${BINARY_INSTALL_DIR})
+    set(BINARY_FILE "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.exe")
 
+    message(STATUS "CMAKE_TOOLCHAIN_FILE: ${CMAKE_TOOLCHAIN_FILE}")
 
-	set(BINARY_FILE "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.exe")
+    get_filename_component(CMAKE_TOOLCHAIN_DIRECTORY ${CMAKE_TOOLCHAIN_FILE} DIRECTORY)
 
-	message( STATUS "CMAKE_TOOLCHAIN_FILE: ${CMAKE_TOOLCHAIN_FILE}" )
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(CMAKE_INSTALL_PLATFORM "x64-windows")
+    else()
+        set(CMAKE_INSTALL_PLATFORM "x86-windows")
+    endif()
 
-	get_filename_component(CMAKE_TOOLCHAIN_DIRECTORY ${CMAKE_TOOLCHAIN_FILE} DIRECTORY)
+    install(CODE "execute_process(
+        COMMAND powershell -noprofile -executionpolicy Bypass
+                -file \"${CMAKE_TOOLCHAIN_DIRECTORY}/msbuild/applocal.ps1\"
+                -targetBinary \"${BINARY_FILE}\"
+                -installedDir \"${CMAKE_TOOLCHAIN_DIRECTORY}/../../installed/${CMAKE_INSTALL_PLATFORM}/bin\"
+                -OutVariable out
+    )")
 
-	#install(CODE "execute_process(COMMAND \"powershell\" \"-noprofile\" \"-executionpolicy\" \"Bypass\" \"-file\" \"${CMAKE_TOOLCHAIN_DIRECTORY}/msbuild/applocal.ps1\" \"-targetBinary\" \"${BINARY_FILE}\" \"-installedDir\" \"$ENV{GSTREAMER_ROOT_X86_64}/bin\" \"-OutVariable\" \"out\")")
+    # Install CRT
+    set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
+    set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+    set(CMAKE_INSTALL_OPENMP_LIBRARIES TRUE)
+    include(InstallRequiredSystemLibraries)
 
+    # Qt 6 deployment
+    if(QT_VERSION_MAJOR EQUAL 6)
+      if(EXISTS "${Qt6_DIR}/Qt6DeploySupport/Qt6DeploySupport.cmake")
+        include(Qt6DeploySupport)
+        qt_deploy_runtime_dependencies(
+            EXECUTABLES "${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}.exe"
+        )
+      else()
+        message(WARNING "Qt6DeploySupport not found — skipping Qt 6 deployment")
+      endif()
+    endif()
+    # windeployqt (Qt5 only)
+    if(QT_VERSION_MAJOR EQUAL 5)
+        get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
+        get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
+        find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
 
-	if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-	    set( CMAKE_INSTALL_PLATFORM "x64-windows" )
-	else ()
-	    set( CMAKE_INSTALL_PLATFORM "x86-windows" )
-	endif ()
+        install(CODE "execute_process(
+            COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" \"${BINARY_FILE}\"
+            WORKING_DIRECTORY \"${_qt_bin_dir}\"
+        )")
+    endif()
 
-	install(CODE "execute_process(COMMAND \"powershell\" \"-noprofile\" \"-executionpolicy\" \"Bypass\" \"-file\" \"${CMAKE_TOOLCHAIN_DIRECTORY}/msbuild/applocal.ps1\" \"-targetBinary\" \"${BINARY_FILE}\" \"-installedDir\" \"${CMAKE_TOOLCHAIN_DIRECTORY}/../../installed/${CMAKE_INSTALL_PLATFORM}/bin\" \"-OutVariable\" \"out\")")
-
-	# Install CRT
-	set(CMAKE_INSTALL_SYSTEM_RUNTIME_DESTINATION .)
-	#if(DEVELOPER_FEATURES)
-	#	set(CMAKE_INSTALL_DEBUG_LIBRARIES ON)
-	#endif(DEVELOPER_FEATURES)
-	set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
-	set(CMAKE_INSTALL_OPENMP_LIBRARIES TRUE)
-	include (InstallRequiredSystemLibraries)
-
-# Retrieve the absolute path to qmake and then use that path to find
-# the windeployqt binary
-	get_target_property(_qmake_executable Qt5::qmake IMPORTED_LOCATION)
-	get_filename_component(_qt_bin_dir "${_qmake_executable}" DIRECTORY)
-	find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
-
-	install(CODE "execute_process(COMMAND \"${WINDEPLOYQT_EXECUTABLE}\"  \"${BINARY_FILE}\" WORKING_DIRECTORY \"${_qt_bin_dir}\")")
-
-
-	#if (QT_QMAKE_EXECUTABLE)
-	#	get_filename_component(QT_BIN_DIRECTORY ${QT_QMAKE_EXECUTABLE} DIRECTORY)
-	#	install(CODE "execute_process(COMMAND \"${QT_BIN_DIRECTORY}/windeployqt\"  \"${BINARY_FILE}\" WORKING_DIRECTORY \"${QT_BIN_DIRECTORY}\")")
-	#else()
-	#	install(CODE "execute_process(COMMAND \"windeployqt\"  \"${BINARY_FILE}\" )")
-	#endif()
-
-    INSTALL(FILES ${TRANSLATIONS_QM} DESTINATION translations)
-
+    install(FILES ${TRANSLATIONS_QM} DESTINATION translations)
 endif()

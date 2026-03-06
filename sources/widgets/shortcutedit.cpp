@@ -60,7 +60,7 @@ void ShortcutEdit::keyPressEvent(QKeyEvent *event)
     if(event->isAutoRepeat() || isModifier(event->key()))
         return;
 \
-    QKeySequence keySeq(event->modifiers() + event->key());
+    QKeySequence keySeq(event->key(), event->modifiers());
     setText(keySeq.toString());
 }
 

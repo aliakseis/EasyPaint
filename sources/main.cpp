@@ -38,6 +38,7 @@
 #include <QDir>
 #include <QStyleFactory>
 #include <QKeyEvent>
+#include <QRegularExpression>
 
 namespace {
 
@@ -78,7 +79,7 @@ public:
         // Some systems deliver weird keypad minus codes (locale + NumLock)
         constexpr int OddKeypadMinus = 16908289;
 
-        // Fast path – ignore non-keypad/non-odd keys
+        // Fast path - ignore non-keypad/non-odd keys
         if (!isKeypad && ke->key() != OddKeypadMinus)
             return QObject::eventFilter(watched, event);
 
@@ -169,10 +170,16 @@ int main(int argc, char* argv[])
     QApplication::setApplicationVersion(EASYPAINT_VERSION);
 
     QStringList args = a.arguments();
-    QRegExp rxArgHelp("--help"), rxArgH("-h");
-    QRegExp rxArgVersion("--version"), rxArgV("-v");
-    QRegExp rxCheckPython(CHECK_PYTHON_OPTION);
-    QRegExp rxArgScript("--script"), rxArgScriptShort("-s");
+    QRegularExpression rxArgHelp(QStringLiteral("--help"));
+    QRegularExpression rxArgH(QStringLiteral("-h"));
+
+    QRegularExpression rxArgVersion(QStringLiteral("--version"));
+    QRegularExpression rxArgV(QStringLiteral("-v"));
+
+    QRegularExpression rxCheckPython{QString(CHECK_PYTHON_OPTION)};
+
+    QRegularExpression rxArgScript(QStringLiteral("--script"));
+    QRegularExpression rxArgScriptShort(QStringLiteral("-s"));
 
     bool isHelp(false), isVer(false), isCheckPython(false);
     QStringList filePaths;
@@ -182,19 +189,19 @@ int main(int argc, char* argv[])
     {
         const QString& arg = args.at(i);
 
-        if (rxArgHelp.indexIn(arg) != -1 || rxArgH.indexIn(arg) != -1)
+        if (rxArgHelp.match(arg).hasMatch() || rxArgH.match(arg).hasMatch())
         {
             isHelp = true;
         }
-        else if (rxArgVersion.indexIn(arg) != -1 || rxArgV.indexIn(arg) != -1)
+        else if (rxArgVersion.match(arg).hasMatch() || rxArgV.match(arg).hasMatch())
         {
             isVer = true;
         }
-        else if (rxCheckPython.indexIn(arg) != -1)
+        else if (rxCheckPython.match(arg).hasMatch())
         {
             isCheckPython = true;
         }
-        else if (rxArgScript.indexIn(arg) != -1 || rxArgScriptShort.indexIn(arg) != -1)
+        else if (rxArgScript.match(arg).hasMatch() || rxArgScriptShort.match(arg).hasMatch())
         {
             if (i + 1 < args.size())
             {
